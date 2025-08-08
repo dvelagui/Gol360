@@ -2,7 +2,7 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
 import { defineConfig } from '#q-app/wrappers';
-import { resolve } from 'path'
+import { resolve } from 'path';
 
 export default defineConfig((/* ctx */) => {
   return {
@@ -21,7 +21,7 @@ export default defineConfig((/* ctx */) => {
     extras: [
       // 'ionicons-v4',
       // 'mdi-v7',
-     'fontawesome-v6',
+      'fontawesome-v6',
       // 'eva-icons',
       // 'themify',
       // 'line-awesome',
@@ -33,13 +33,9 @@ export default defineConfig((/* ctx */) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
     build: {
-      vite: {
-      resolve: {
-        alias: {
-          '@': resolve(__dirname, './src')
-        }
-      }
-    },
+      alias: {
+        '@': resolve(__dirname, 'src'),
+      },
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
         node: 'node20',
