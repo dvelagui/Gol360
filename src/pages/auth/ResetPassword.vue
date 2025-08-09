@@ -52,7 +52,7 @@ async function onSubmit () {
   try {
     await userStore.sendPasswordReset(email.value.trim())
     $q.notify({ type: 'positive', message: 'Te enviamos un enlace para restablecer tu contraseña.' })
-    router.push('/login')
+    void router.push('/login')
   } catch (err) {
     $q.notify({ type: 'negative', message: authErrorMessage(err) })
   } finally {

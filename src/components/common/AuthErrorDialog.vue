@@ -22,5 +22,4 @@
 import { useDialogPluginComponent } from 'quasar'
 defineProps<{ message: string }>()
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-defineEmits()
 </script>

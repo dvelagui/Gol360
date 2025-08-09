@@ -60,14 +60,14 @@ onMounted(async () => {
   const code = (route.query.oobCode as string) || null
   if (!code) {
     console.log("Código de restablecido.");
-    return router.push('/login')
+    return  void router.push('/login')
   }
   oobCode.value = code
   try {
     email.value = await userStore.verifyResetCode(code)
   } catch (err) {
     console.log(err);
-    router.push('/login')
+    void router.push('/login')
   }
 })
 
@@ -77,7 +77,7 @@ async function onSubmit () {
   try {
     await userStore.confirmNewPassword(oobCode.value, password.value)
     $q.notify({ type: 'positive', message: 'Contraseña actualizada. Inicia sesión.' })
-    router.push('/login')
+    void router.push('/login')
   } catch (err) {
     $q.notify({ type: 'negative', message: authErrorMessage(err) })
   } finally {
