@@ -1,10 +1,4 @@
 <template>
-  <q-page class="row no-wrap full-height">
-    <div class="col-12 col-md-7 q-pa-none">
-      <q-img src="@/assets/img_login.png" class="full-height" style="object-fit: cover;" />
-    </div>
-    <div class="col-12 col-md-5 flex flex-column flex-center">
-
       <q-form @submit.prevent="handleLogin" class="q-pa-lg" style="max-width: 400px; width: 100%;">
         <div class="row justify-center q-mb-lg">
           <q-img src="@/assets/logo.png" alt="Logo Gol360" style="max-width: 150px;" contain />
@@ -30,10 +24,14 @@
                 contraseña?</span></p>
           </div>
           <q-btn label="Iniciar sesión" type="submit" color="primary" class="q-my-sm" :loading="loading" />
+        <div class="col-12 text-subtitle1 q-mt-lg">
+          Convierte tu torneo en una experiencia profesional
+        </div>
+        <div class="col-12 text-subtitle1">
+          <span class="text-primary cursor-pointer" @click="goToContact"><q-icon name="fa-brands fa-whatsapp"/> Contáctanos</span>
+        </div>
         </div>
       </q-form>
-    </div>
-  </q-page>
 </template>
 
 <script setup lang="ts">
@@ -64,7 +62,7 @@ async function handleLogin() {
   $q.dialog({
     component: AuthErrorDialog,
     componentProps: { message: authErrorMessage(err) }
-  }).onCancel(() => router.push('/auth/reset-password'))
+  }).onCancel(() => { void router.push('/auth/reset-password'); })
 }
   finally {
     loading.value = false
@@ -72,9 +70,11 @@ async function handleLogin() {
 }
 
 function goToReset() {
-//  router.push('/auth/reset-password')
-console.log('Go to reset password page');
+void router.push('/auth/reset-password');
+}
 
+function goToContact() {
+void router.push('/');
 }
 
 </script>
