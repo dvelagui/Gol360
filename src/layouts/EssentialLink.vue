@@ -8,8 +8,7 @@
     <q-list v-if="loaded" padding>
 
       <q-separator spaced />
-
-      <div class="column items-center q-mt-lg avatar-container" @click="goToProfile">
+      <div class="column items-center q-my-lg avatar-container" @click="goToProfile">
         <q-avatar size="70px">
           <img v-if="avatar" :src="avatar" alt="avatar" />
           <span v-else class="text-h6">{{ initials }}</span>
