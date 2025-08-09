@@ -32,7 +32,6 @@
       </q-item>
     </q-list>
 
-    <!-- Logout -->
     <div class="q-pa-md q-mt-auto">
       <q-btn
         outline
@@ -67,7 +66,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const loaded = ref(false)
-const role = ref<Role>('player')
+const role = ref<Role>('admin')
 const displayName = computed(() => userStore.user?.displayName || userStore.user?.email || '')
 const initials = computed(() => {
   const name = displayName.value || ''
