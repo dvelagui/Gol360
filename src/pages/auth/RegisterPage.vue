@@ -57,8 +57,9 @@ async function handleRegister() {
       role: role.value
     })
     await router.push('/')
-  } catch (err: any) {
-    Notify.create({ type: 'negative', message: err.message || 'No pudimos crear la cuenta' })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'No pudimos crear la cuenta'
+    Notify.create({ type: 'negative', message })
   } finally {
     loading.value = false
   }
