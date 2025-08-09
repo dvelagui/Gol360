@@ -1,11 +1,11 @@
 <template>
   <q-layout view="lHh lpR fFf">
-    <q-header elevated class="bg-primary text-white">
+    <q-header elevated class="bg-secondary text-white">
       <q-toolbar>
         <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" v-if="isLoggedIn" />
         <q-toolbar-title>Gol360</q-toolbar-title>
         <div v-if="isLoggedIn" class="row items-center q-gutter-sm">
-          <q-btn dense flat round icon="logout" @click="handleLogout" />
+          <q-btn dense flat round icon="logout" label="Cerrar sesión" @click="handleLogout" />
         </div>
       </q-toolbar>
     </q-header>
@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import EssentialLink from '@/components/EssentialLink.vue'
+import EssentialLink from './EssentialLink.vue'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 

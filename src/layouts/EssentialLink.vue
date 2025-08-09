@@ -1,5 +1,5 @@
 <template>
-  <div class="column justify-between full-height">
+  <div class="column justify-between full-height q-pa-lg">
     <q-list v-if="loaded" padding>
       <q-item>
         <q-item-section avatar>
