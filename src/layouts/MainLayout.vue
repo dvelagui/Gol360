@@ -1,11 +1,11 @@
 <template>
   <q-layout view="lHh lpR fFf">
-    <q-header elevated class="bg-secondary text-white">
+    <q-header elevated class="bg-white text-secondary">
       <q-toolbar>
-        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" v-if="isLoggedIn" />
-        <q-toolbar-title>Gol360</q-toolbar-title>
+        <q-btn class="menu" dense flat round icon="menu" @click="toggleLeftDrawer" v-if="isLoggedIn" />
+        <q-toolbar-title>Tu partido, como en la TV</q-toolbar-title>
         <div v-if="isLoggedIn" class="row items-center q-gutter-sm">
-          <q-btn dense flat round icon="logout" label="Cerrar sesión" @click="handleLogout" />
+          <q-btn dense flat round icon="info" label="Información" @click="handleLogout" />
         </div>
       </q-toolbar>
     </q-header>
@@ -53,3 +53,10 @@ async function handleLogout () {
   }
 }
 </script>
+<style scoped>
+@media (min-width: 725px) {
+  .menu {
+    display: none;
+  }
+}
+</style>
