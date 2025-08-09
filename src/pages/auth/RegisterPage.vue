@@ -32,8 +32,8 @@ import type { AppRole } from '@/types/auth'
 
 const roles = [
   { label: 'Jugador', value: 'player' },
-  { label: 'Capitán', value: 'captain' },
-  { label: 'Organizador', value: 'organizer' },
+  { label: 'Capitán', value: 'team' },
+  { label: 'Organizador', value: 'manager' },
   { label: 'Administrador', value: 'admin' }
 ] as const
 

@@ -15,7 +15,7 @@ import type { AppRole } from '@/types/auth';
 import type { User } from 'firebase/auth';
 import { useDatabaseStore } from '@/stores/database';
 
-const ALLOWED_ROLES: AppRole[] = ['admin', 'organizer', 'captain', 'player'];
+const ALLOWED_ROLES: AppRole[] = ['admin', 'manager', 'team', 'player'];
 const DEFAULT_AVATAR = 'https://cdn.quasar.dev/img/avatar.png';
 interface UserState {
   user: User | null;

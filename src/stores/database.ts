@@ -11,7 +11,7 @@ import {
   type Unsubscribe
 } from 'firebase/firestore'
 
-export type AppRole = 'admin' | 'organizer' | 'captain' | 'player'
+export type AppRole = 'admin' | 'manager' | 'team' | 'player'
 
 export interface AppUserProfile {
   uid: string

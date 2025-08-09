@@ -49,7 +49,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useDatabaseStore } from '@/stores/database'
 
-type Role = 'admin' | 'organizer' | 'captain' | 'player'
+type Role = 'admin' | 'manager' | 'team' | 'player'
 
 interface NavLink {
   id: string
@@ -68,8 +68,8 @@ const avatar = computed(() => (profile.value?.photoURL) || null)
 const displayName = computed(() => (profile.value?.displayName) || 'Nombre de Usuario')
 const role = computed<Role>(() => (profile.value?.role as Role) || '')
 const roleLabel = computed(() => role.value === 'admin' ? 'Administrador'
-  : role.value === 'organizer' ? 'Organizador'
-    : role.value === 'captain' ? 'Capitán' : 'Jugador')
+  : role.value === 'manager' ? 'Organizador'
+    : role.value === 'team' ? 'Capitán' : 'Jugador')
 const initials = computed(() => {
   const name = displayName.value.trim()
   const parts = name.split(' ')
@@ -78,8 +78,8 @@ const initials = computed(() => {
 
 const rolePermissions: Record<Role, string[]> = {
   admin: ['home', 'dashboard', 'teams', 'matches', 'videos', 'analytics', 'calendar', 'profile'],
-  organizer: ['home', 'dashboard', 'teams', 'matches', 'videos', 'calendar', 'profile'],
-  captain: ['home', 'team', 'matches', 'videos', 'profile'],
+  manager: ['home', 'dashboard', 'teams', 'matches', 'videos', 'calendar', 'profile'],
+  team: ['home', 'team', 'matches', 'videos', 'profile'],
   player: ['home', 'matches', 'videos', 'profile'],
 }
 

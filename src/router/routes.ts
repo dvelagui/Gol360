@@ -50,7 +50,56 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/admin',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'admin-dashboard',
+        component: () => import('pages/dashboard/AdminDashboard.vue'),
+        meta: { requiresAuth: true, requiresRole: 'admin' },
+      },
+    ],
+  },
+  {
+    path: '/manager',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'manager-dashboard',
+        component: () => import('pages/dashboard/ManagerDashboard.vue'),
+        meta: { requiresAuth: true, requiresRole: 'manager' },
+      },
+    ],
+  },
 
+  {
+    path: '/team',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'team-dashboard',
+        component: () => import('pages/dashboard/TeamDashboard.vue'),
+        meta: { requiresAuth: true, requiresRole: 'team' },
+      },
+    ],
+  },
+
+  {
+    path: '/player',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'player-dashboard',
+        component: () => import('pages/dashboard/PlayerDashboard.vue'),
+        meta: { requiresAuth: true, requiresRole: 'player' },
+      },
+    ],
+  },
 ];
 
 export default routes;
