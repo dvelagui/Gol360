@@ -24,6 +24,8 @@ export const useUserStore = defineStore('user', {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password)
         this.user = userCredential.user
+        console.log('Login successful:', this.user);
+
         return true
       } catch (error) {
         console.error('Login error:', error)

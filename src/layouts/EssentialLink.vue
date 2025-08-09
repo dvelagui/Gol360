@@ -1,13 +1,13 @@
 <template>
-  <div class="column justify-between full-height q-pa-lg">
+  <div class="column justify-center items-center q-pa-lg">
     <q-list v-if="loaded" padding>
-      <q-item>
+      <q-item align="center" class="q-mb-md">
         <q-item-section avatar>
-          <q-avatar color="primary" text-color="white">
+          <q-avatar color="primary" text-color="dark">
             {{ initials }}
           </q-avatar>
         </q-item-section>
-        <q-item-section>
+        <q-item-section style="color: var(--q-dark);">
           <q-item-label class="text-weight-medium">{{ displayName || 'Usuario' }}</q-item-label>
           <q-item-label caption>{{ roleLabel }}</q-item-label>
         </q-item-section>
@@ -36,7 +36,8 @@
     <div class="q-pa-md q-mt-auto">
       <q-btn
         outline
-        color="primary"
+        rounded
+        color="secondary"
         icon="logout"
         label="Cerrar sesión"
         class="full-width"
