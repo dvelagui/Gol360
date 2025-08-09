@@ -30,19 +30,27 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/auth/LoginPage.vue'),
         meta: { requiresGuest: true },
       },
-      { path: '/auth/reset-password', component: () => import('@/pages/auth/ResetPassword.vue') },
+      {
+        path: '/auth/reset-password',
+        name: 'reset-password',
+        component: () => import('@/pages/auth/ResetPassword.vue'),
+        meta: { requiresGuest: true },
+      },
       {
         path: '/auth/reset-password/confirm',
+        name: 'reset-password-confirm',
         component: () => import('@/pages/auth/ResetPasswordConfirm.vue'),
+        meta: { requiresGuest: true },
+      },
+      {
+        path: '/:catchAll(.*)*',
+        name: 'not-found',
+        component: () => import('@/pages/auth/LoginPage.vue'),
+        meta: { requiresGuest: true },
       },
     ],
   },
 
-  // Siempre al final
-  {
-    path: '/:catchAll(.*)*',
-    component: () => import('@/pages/ErrorNotFound.vue'),
-  },
 ];
 
 export default routes;
