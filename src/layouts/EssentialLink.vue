@@ -1,28 +1,29 @@
 <template>
- <div class="column justify-between  q-pa-lg">
+  <div class="column justify-between  q-pa-lg">
 
     <div class="text-center q-mb-xl">
-      <q-img
-        src="@/assets/logo.png"
-        fit="contain"
-        style="max-width: 140px"
-      />
+      <q-img src="@/assets/logo-w.png" fit="contain" style="max-width: 140px" />
     </div>
 
     <q-list v-if="loaded" padding>
 
-      <div class="column items-center q-mt-xl">
+      <q-separator spaced />
+
+      <div class="column items-center q-mt-lg avatar-container" @click="goToProfile">
         <q-avatar size="70px">
           <img v-if="avatar" :src="avatar" alt="avatar" />
           <span v-else class="text-h6">{{ initials }}</span>
+          <div class="avatar-overlay">
+            <q-icon name="edit" size="20px" class="q-mr-xs" />
+            <span>Editar</span>
+          </div>
         </q-avatar>
 
         <div class="text-h6 text-weight-bold q-mt-sm">
           {{ displayName }}
         </div>
-
         <div class="text-caption text-grey-7">
-          {{ email }}
+          {{ roleLabel }}
         </div>
       </div>
 
@@ -47,8 +48,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { db } from 'boot/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { useDatabaseStore } from '@/stores/database'
 
 type Role = 'admin' | 'organizer' | 'captain' | 'player'
 
@@ -61,12 +61,16 @@ interface NavLink {
 
 const router = useRouter()
 const userStore = useUserStore()
+const databaseStore = useDatabaseStore()
 
 const loaded = ref(false)
-const role = ref<Role>('player')
-const avatar = ref<string | null>(null)
-const email = computed(() => userStore.user?.email || '')
-const displayName = computed(() => userStore.user?.displayName || 'Usuario')
+const profile = ref(computed(() => databaseStore.userData))
+const avatar = computed(() => (profile.value?.photoURL) || null)
+const displayName = computed(() => (profile.value?.displayName) || 'Nombre de Usuario')
+const role = computed<Role>(() => (profile.value?.role as Role) || '')
+const roleLabel = computed(() => role.value === 'admin' ? 'Administrador'
+  : role.value === 'organizer' ? 'Organizador'
+    : role.value === 'captain' ? 'Capitán' : 'Jugador')
 const initials = computed(() => {
   const name = displayName.value.trim()
   const parts = name.split(' ')
@@ -96,32 +100,51 @@ const visibleLinks = computed(() => {
   return allLinks.filter(l => rolePermissions[role.value]?.includes(l.id))
 })
 
-async function fetchUserData() {
-  const uid = userStore.user?.uid
-  if (!uid) return
-  const snap = await getDoc(doc(db, 'users', uid))
-  if (snap.exists()) {
-    role.value = snap.data().role || 'player'
-    avatar.value = snap.data().avatar || null
-  }
+function go(path: string) {
+  void router.push(path)
 }
 
-function go(path: string) {
-  router.push(path)
+function goToProfile() {
+  void router.push('/profile')
 }
 
 async function logOut() {
   await userStore.logout()
-  router.push('/login')
+  void router.push('/login')
 }
 
-onMounted(async () => {
-  await fetchUserData()
+onMounted(() => {
   loaded.value = true
 })
 </script>
 
 <style scoped lang="scss">
+
+.avatar-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 50%;
+}
+
+.avatar-container:hover .avatar-overlay {
+  opacity: 1;
+}
 .q-item__label {
   font-weight: 600;
 }
