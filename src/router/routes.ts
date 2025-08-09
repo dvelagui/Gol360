@@ -10,7 +10,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/dashboard/DashboardPage.vue'),
         meta: { requiresAuth: true }
         },
-        { path: '',
+        { path: '/register',
         name: 'register',
         component: () => import('@/pages/auth/RegisterPage.vue'),
         meta: { requiresAuth: true }

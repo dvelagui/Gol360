@@ -56,8 +56,7 @@ async function handleRegister() {
       displayName: displayName.value,
       role: role.value
     })
-    // Redirige como prefieras
-    await router.push('/dashboard')
+    await router.push('/')
   } catch (err: any) {
     Notify.create({ type: 'negative', message: err.message || 'No pudimos crear la cuenta' })
   } finally {

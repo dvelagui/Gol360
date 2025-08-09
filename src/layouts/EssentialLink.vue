@@ -1,28 +1,34 @@
 <template>
-  <div class="column justify-center items-center q-pa-lg">
+ <div class="column justify-between  q-pa-lg">
+
+    <div class="text-center q-mb-xl">
+      <q-img
+        src="@/assets/logo.png"
+        fit="contain"
+        style="max-width: 140px"
+      />
+    </div>
+
     <q-list v-if="loaded" padding>
-      <q-item align="center" class="q-mb-md">
-        <q-item-section avatar>
-          <q-avatar color="primary" text-color="dark">
-            {{ initials }}
-          </q-avatar>
-        </q-item-section>
-        <q-item-section style="color: var(--q-dark);">
-          <q-item-label class="text-weight-medium">{{ displayName || 'Usuario' }}</q-item-label>
-          <q-item-label caption>{{ roleLabel }}</q-item-label>
-        </q-item-section>
-      </q-item>
+
+      <div class="column items-center q-mt-xl">
+        <q-avatar size="70px">
+          <img v-if="avatar" :src="avatar" alt="avatar" />
+          <span v-else class="text-h6">{{ initials }}</span>
+        </q-avatar>
+
+        <div class="text-h6 text-weight-bold q-mt-sm">
+          {{ displayName }}
+        </div>
+
+        <div class="text-caption text-grey-7">
+          {{ email }}
+        </div>
+      </div>
 
       <q-separator spaced />
 
-      <!-- Links por rol -->
-      <q-item
-        v-for="link in visibleLinks"
-        :key="link.id"
-        clickable
-        v-ripple
-        @click="go(link.url)"
-      >
+      <q-item v-for="link in visibleLinks" :key="link.id" clickable v-ripple @click="go(link.url)">
         <q-item-section avatar>
           <q-icon :name="link.icon" />
         </q-item-section>
@@ -31,17 +37,8 @@
         </q-item-section>
       </q-item>
     </q-list>
-
-    <div class="q-pa-md q-mt-auto">
-      <q-btn
-        outline
-        rounded
-        color="secondary"
-        icon="logout"
-        label="Cerrar sesión"
-        class="full-width"
-        @click="logOut"
-      />
+    <div class="q-pa-md q-mt-auto text-center">
+      <q-btn flat color="secondary" label="Cerrar Sesión" icon="logout" @click="logOut" />
     </div>
   </div>
 </template>
@@ -66,85 +63,69 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const loaded = ref(false)
-const role = ref<Role>('admin')
-const displayName = computed(() => userStore.user?.displayName || userStore.user?.email || '')
+const role = ref<Role>('player')
+const avatar = ref<string | null>(null)
+const email = computed(() => userStore.user?.email || '')
+const displayName = computed(() => userStore.user?.displayName || 'Usuario')
 const initials = computed(() => {
-  const name = displayName.value || ''
-  const parts = name.trim().split(' ')
-  const first = parts[0]?.[0] || ''
-  const last = parts[1]?.[0] || ''
-  return (first + last).toUpperCase() || 'U'
+  const name = displayName.value.trim()
+  const parts = name.split(' ')
+  return (parts[0]?.[0] || '') + (parts[1]?.[0] || '')
 })
 
 const rolePermissions: Record<Role, string[]> = {
-  admin:     ['home', 'dashboard', 'teams', 'matches', 'videos', 'analytics', 'calendar', 'profile'],
+  admin: ['home', 'dashboard', 'teams', 'matches', 'videos', 'analytics', 'calendar', 'profile'],
   organizer: ['home', 'dashboard', 'teams', 'matches', 'videos', 'calendar', 'profile'],
-  captain:   ['home', 'team', 'matches', 'videos', 'profile'],
-  player:    ['home', 'matches', 'videos', 'profile'],
+  captain: ['home', 'team', 'matches', 'videos', 'profile'],
+  player: ['home', 'matches', 'videos', 'profile'],
 }
 
 const allLinks: NavLink[] = [
-  { id: 'home',      icon: 'home',            title: 'Inicio',           url: '/' },
-  { id: 'dashboard', icon: 'dashboard',       title: 'Panel',            url: '/dashboard' },
-  { id: 'teams',     icon: 'groups',          title: 'Equipos',          url: '/teams' },
-  { id: 'team',      icon: 'group',           title: 'Mi Equipo',        url: '/team' },
-  { id: 'matches',   icon: 'sports_soccer',   title: 'Partidos',         url: '/matches' },
-  { id: 'videos',    icon: 'video_library',   title: 'Videos',           url: '/videos' },
-  { id: 'analytics', icon: 'analytics',       title: 'Analítica',        url: '/analytics' },
-  { id: 'calendar',  icon: 'calendar_month',  title: 'Calendario',       url: '/calendar' },
-  { id: 'profile',   icon: 'account_circle',  title: 'Perfil',           url: '/profile' },
+  { id: 'home', icon: 'home', title: 'Inicio', url: '/' },
+  { id: 'dashboard', icon: 'dashboard', title: 'Panel', url: '/dashboard' },
+  { id: 'teams', icon: 'groups', title: 'Equipos', url: '/teams' },
+  { id: 'team', icon: 'group', title: 'Mi Equipo', url: '/team' },
+  { id: 'matches', icon: 'sports_soccer', title: 'Partidos', url: '/matches' },
+  { id: 'videos', icon: 'video_library', title: 'Videos', url: '/videos' },
+  { id: 'analytics', icon: 'analytics', title: 'Analítica', url: '/analytics' },
+  { id: 'calendar', icon: 'calendar_month', title: 'Calendario', url: '/calendar' },
+  { id: 'profile', icon: 'account_circle', title: 'Perfil', url: '/profile' },
 ]
 
-const visibleLinks = computed<NavLink[]>(() => {
-  const allowed = rolePermissions[role.value] ?? []
-  return allLinks.filter(l => allowed.includes(l.id))
+const visibleLinks = computed(() => {
+  return allLinks.filter(l => rolePermissions[role.value]?.includes(l.id))
 })
 
-const roleLabel = computed(() => {
-  switch (role.value) {
-    case 'admin': return 'Administrador'
-    case 'organizer': return 'Organizador'
-    case 'captain': return 'Capitán'
-    default: return 'Jugador'
-  }
-})
-
-async function fetchUserRole () {
+async function fetchUserData() {
   const uid = userStore.user?.uid
   if (!uid) return
-  try {
-    const snap = await getDoc(doc(db, 'users', uid))
-    const r = (snap.data()?.role as Role) || 'player'
-    role.value = r
-  } catch {
-    role.value = 'player'
+  const snap = await getDoc(doc(db, 'users', uid))
+  if (snap.exists()) {
+    role.value = snap.data().role || 'player'
+    avatar.value = snap.data().avatar || null
   }
 }
 
-function go (path: string) {
+function go(path: string) {
   router.push(path)
 }
 
-async function logOut () {
-  try {
-    await userStore.logout()
-    router.push('/login')
-  } catch (e) {
-    console.error('Logout failed:', e)
-  }
+async function logOut() {
+  await userStore.logout()
+  router.push('/login')
 }
 
 onMounted(async () => {
-  await fetchUserRole()
+  await fetchUserData()
   loaded.value = true
 })
 </script>
 
 <style scoped lang="scss">
-.q-item__label, .q-btn {
+.q-item__label {
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
+
 .q-icon {
   font-size: 20px;
 }
