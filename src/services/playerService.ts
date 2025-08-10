@@ -34,7 +34,7 @@ export async function listPlayersByTeam(teamId: string): Promise<Player[]> {
 /** Ascender a capitán (mantengo el naming actual de tu dominio) */
 export async function promoteToCaptain(playerId: string): Promise<void> {
   await updateDoc(doc(colPlayers, playerId), {
-    role: 'captain',
+    role: 'team',
     updatedAt: serverTimestamp()
   } as any)
 }

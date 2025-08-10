@@ -70,7 +70,7 @@ export function installGuards(router: Router) {
         }
         // si no hay rol aún, envía a raíz (o a una pantalla de completar perfil si la tienes)
         if (isAuthed && !role && to.path !== '/') {
-          return { path: '/' }
+          return { path: '/login' }
         }
       }
     }
