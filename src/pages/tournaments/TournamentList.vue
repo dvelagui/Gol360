@@ -1,4 +1,3 @@
-<!-- src/pages/tournaments/TournamentList.vue -->
 <template>
   <q-page class="q-pa-lg">
     <div class="row q-col-gutter-md">
@@ -28,15 +27,20 @@ import TournamentCard from '@/components/tournaments/TournamentCard.vue'
 import TournamentForm from '@/components/tournaments/TournamentForm.vue'
 import { useTournamentStore } from '@/stores/tournaments'
 import { useUserStore } from '@/stores/user'
+import { useDatabaseStore } from '@/stores/database'
 import { canCreateTournament } from '@/utils/roles'
 import { useRouter } from 'vue-router'
+import type { Role } from '@/types/auth' // Adjust the path if AppRole is defined elsewhere
 
 const showForm = ref(false)
 const store = useTournamentStore()
 const userStore = useUserStore()
+const databaseStore = useDatabaseStore()
 const router = useRouter()
 
-const canCreate = computed(() => canCreateTournament((userStore.user as any)?.role))
+const canCreate = computed(() => canCreateTournament(databaseStore.userData?.role as Role))
+console.log(canCreate.value, userStore.user);
+
 
 onMounted(() => store.fetch()) // Admin ve todo; Organizer luego podemos filtrar por organizerId
 
