@@ -89,6 +89,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const kpis = ref([
   { icon: 'emoji_events', label: 'Torneos activos', value: 3 },
@@ -114,7 +115,11 @@ const columns = [
   { name:'field',label:'Cancha',field:'field' },
   { name:'actions', label:'', field:'actions' }
 ]
+const router = useRouter()
 
 function openCreateTournament(){ /* abrir diálogo/route de nuevo torneo */ }
-function editMatch(_id:string){ /* abrir editor */ }
+function editMatch(_id:string){
+  // Navegar a la página de edición del partido
+  void router.push(`/matches/${_id}/edit`)
+}
 </script>

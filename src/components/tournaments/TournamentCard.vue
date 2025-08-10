@@ -9,5 +9,5 @@
 
 <script setup lang="ts">
 import type { Tournament } from '@/types/auth'
-const props = defineProps<{ t: Tournament; organizerName?: string }>()
+const { t, organizerName } = defineProps<{ t: Tournament; organizerName?: string }>()
 </script>

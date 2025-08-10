@@ -75,7 +75,7 @@ async function createManager() {
 
 const emit = defineEmits<{ (e:'submit', payload: Partial<Tournament>): void }>()
 
-async function submit() {
+function submit() {
   saving.value = true
   emit('submit', form)
   saving.value = false

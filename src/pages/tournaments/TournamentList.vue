@@ -44,10 +44,21 @@ console.log(canCreate.value, userStore.user);
 
 onMounted(() => store.fetch()) // Admin ve todo; Organizer luego podemos filtrar por organizerId
 
-function goDetail(id: string) { router.push(`/tournaments/${id}`) }
+function goDetail(id: string) { void router.push(`/tournaments/${id}`) }
 
-async function create(payload: any) {
-  await store.add({ ...payload, createdBy: userStore.user?.uid || '' } as any)
+async function create(payload: Record<string, unknown>) {
+  // Ensure all required fields are present in the payload
+  const tournamentData = {
+    displayName: payload.displayName as string,
+    city: payload.city as string,
+    type: payload.type as string,
+    startDate: payload.startDate as string,
+    endDate: payload.endDate as string,
+    organizerId: payload.organizerId as string,
+    createdBy: userStore.user?.uid || '',
+    numTeams: payload.numTeams as number // Ensure numTeams is provided by the form
+  }
+  await store.add(tournamentData)
   showForm.value = false
 }
 </script>
