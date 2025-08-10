@@ -1,43 +1,25 @@
 import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
+  // Auth (público / guest)
   {
     path: '/',
-    component: () => import('@/layouts/MainLayout.vue'),
-    children: [
-      {
-        path: '',
-        name: 'dashboard',
-        component: () => import('@/pages/dashboard/DashboardPage.vue'),
-        meta: { requiresAuth: true },
-      },
-      {
-        path: '/register',
-        name: 'register',
-        component: () => import('@/pages/auth/RegisterPage.vue'),
-        meta: { requiresAuth: true },
-      },
-    ],
-  },
-
-  {
-    path: '/login',
     component: () => import('@/layouts/AuthLayout.vue'),
     children: [
       {
-        path: '',
+        path: 'login',
         name: 'login',
         component: () => import('@/pages/auth/LoginPage.vue'),
         meta: { requiresGuest: true },
       },
       {
-        path: '/auth/reset-password',
+        path: 'auth/reset-password',
         name: 'reset-password',
         component: () => import('@/pages/auth/ResetPassword.vue'),
         meta: { requiresGuest: true },
       },
       {
-        path: '/auth/reset-password/confirm',
+        path: 'auth/reset-password/confirm',
         name: 'reset-password-confirm',
         component: () => import('@/pages/auth/ResetPasswordConfirm.vue'),
         meta: { requiresGuest: true },
@@ -50,56 +32,82 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+
+  // Admin
   {
     path: '/admin',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
     children: [
       {
         path: '',
         name: 'admin-dashboard',
-        component: () => import('pages/dashboard/AdminDashboard.vue'),
+        component: () => import('@/pages/dashboard/AdminDashboard.vue'),
+        meta: { requiresAuth: true, requiresRole: 'admin' },
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: () => import('@/pages/auth/RegisterPage.vue'),
+        meta: { requiresAuth: true, requiresRole: 'admin' },
+      },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: () => import('@/pages/admin/AdminUsersPage.vue'),
+        meta: { requiresAuth: true, requiresRole: 'admin' },
+      },
+      {
+        path: 'tournaments',
+        name: 'admin-tournaments',
+        component: () => import('@/pages/admin/AdminTournamentsPage.vue'),
         meta: { requiresAuth: true, requiresRole: 'admin' },
       },
     ],
   },
+
+  // Manager
   {
     path: '/manager',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
     children: [
       {
         path: '',
         name: 'manager-dashboard',
-        component: () => import('pages/dashboard/ManagerDashboard.vue'),
+        component: () => import('@/pages/dashboard/ManagerDashboard.vue'),
         meta: { requiresAuth: true, requiresRole: 'manager' },
       },
     ],
   },
 
+  // Team
   {
     path: '/team',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
     children: [
       {
         path: '',
         name: 'team-dashboard',
-        component: () => import('pages/dashboard/TeamDashboard.vue'),
+        component: () => import('@/pages/dashboard/TeamDashboard.vue'),
         meta: { requiresAuth: true, requiresRole: 'team' },
       },
     ],
   },
 
+  // Player
   {
     path: '/player',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
     children: [
       {
         path: '',
         name: 'player-dashboard',
-        component: () => import('pages/dashboard/PlayerDashboard.vue'),
+        component: () => import('@/pages/dashboard/PlayerDashboard.vue'),
         meta: { requiresAuth: true, requiresRole: 'player' },
       },
     ],
   },
+
+  // Catch-all SIEMPRE al final y a nivel raíz
 ];
 
 export default routes;

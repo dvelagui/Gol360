@@ -56,7 +56,7 @@ async function handleLogin() {
   try {
     await userStore.login(email.value, password.value)
     console.log('Login successful, redirecting to dashboard...');
-    void router.push('/')
+    void router.replace('/')
   }
   catch (err) {
   $q.dialog({

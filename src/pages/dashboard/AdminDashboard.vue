@@ -116,5 +116,5 @@ const columns = [
 ]
 
 function openCreateTournament(){ /* abrir diálogo/route de nuevo torneo */ }
-function editMatch(id:string){ /* abrir editor */ }
+function editMatch(_id:string){ /* abrir editor */ }
 </script>
