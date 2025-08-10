@@ -22,7 +22,7 @@
     }
   ],
   "hosting": {
-    "public": "dist",
+    "public": "spa/dist",
     "ignore": [
       "firebase.json",
       "**/.*",
