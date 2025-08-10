@@ -84,9 +84,4 @@ void router.push('/');
   height: 100vh;
 }
 
-@media (max-width: 725px) {
-  .q-page>div.col-md-7:first-child {
-    display: none;
-  }
-}
 </style>
