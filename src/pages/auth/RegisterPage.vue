@@ -28,7 +28,7 @@ import { ref } from 'vue'
 import { Notify } from 'quasar'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import type { AppRole } from '@/types/auth'
+import type { Role } from '@/types/auth'
 
 const roles = [
   { label: 'Jugador', value: 'player' },
@@ -40,7 +40,7 @@ const roles = [
 const email = ref('')
 const password = ref('')
 const displayName = ref('')
-const role = ref<AppRole>('player')
+const role = ref<Role>('player')
 const loading = ref(false)
 const show = ref(false)
 

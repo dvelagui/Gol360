@@ -1,19 +1,19 @@
 import { db } from 'boot/firebase'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
-import type { AppRole } from '@/types/auth'
+import type { Role } from '@/types/auth'
 
 export async function upsertUserDocMinimal(params: {
-  uid: string
+  id: string
   displayName: string | null
   email: string | null
-  role: AppRole
+  role: Role
   avatar?: string | null
 }) {
-  const { uid, displayName, email, role, avatar = null } = params
-  const ref = doc(db, 'users', uid)
+  const { id, displayName, email, role, avatar = null } = params
+  const ref = doc(db, 'users', id)
 
   await setDoc(ref, {
-    uid,
+    id,
     displayName,
     email,
     role,

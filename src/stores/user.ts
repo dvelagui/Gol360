@@ -11,11 +11,11 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 import { upsertUserDocMinimal } from '@/services/firebase/firestore';
-import type { AppRole } from '@/types/auth';
+import type { Role } from '@/types/auth';
 import type { User } from 'firebase/auth';
 import { useDatabaseStore } from '@/stores/database';
 
-const ALLOWED_ROLES: AppRole[] = ['admin', 'manager', 'team', 'player'];
+const ALLOWED_ROLES: Role[] = ['admin', 'manager', 'team', 'player'];
 const DEFAULT_AVATAR = 'https://cdn.quasar.dev/img/avatar.png';
 interface UserState {
   user: User | null;
@@ -37,7 +37,7 @@ export const useUserStore = defineStore('user', {
       email: string;
       password: string;
       displayName: string;
-      role: AppRole;
+      role: Role;
     }) {
       const { email, password, displayName, role } = params;
 
@@ -50,7 +50,7 @@ export const useUserStore = defineStore('user', {
       await updateProfile(cred.user, { displayName });
 
       await upsertUserDocMinimal({
-        uid: cred.user.uid,
+        id: cred.user.uid,
         displayName,
         email,
         role,

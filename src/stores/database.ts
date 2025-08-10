@@ -11,14 +11,14 @@ import {
   type Unsubscribe
 } from 'firebase/firestore'
 
-export type AppRole = 'admin' | 'manager' | 'team' | 'player'
+export type Role = 'admin' | 'manager' | 'team' | 'player'
 
 export interface AppUserProfile {
-  uid: string
+  id: string
   email: string | null
   displayName: string | null
   photoURL: string | null
-  role: AppRole
+  role: Role
   createdAt?: unknown
   updatedAt?: unknown
   __docId__?: string
@@ -33,12 +33,12 @@ export const useDatabaseStore = defineStore('database', {
 
   actions: {
     /** Fetch una sola vez: busca users donde uid == uid (no asume docId) */
-    async fetchUserData(uid: string) {
+    async fetchUserData(id: string) {
       this.loadingUserData = true
       try {
         const q = query(
           collection(db, 'users'),
-          where('uid', '==', uid),
+          where('uid', '==', id),
           limit(1)
         )
         const snap = await getDocs(q)
@@ -59,12 +59,12 @@ export const useDatabaseStore = defineStore('database', {
         this.loadingUserData = false
       }
     },
-    startUserListener(uid: string) {
+    startUserListener(id: string) {
       this.stopUserListener()
 
       const q = query(
         collection(db, 'users'),
-        where('uid', '==', uid),
+        where('id', '==', id),
         limit(1)
       )
 
