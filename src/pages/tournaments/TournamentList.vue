@@ -39,8 +39,6 @@ const databaseStore = useDatabaseStore()
 const router = useRouter()
 
 const canCreate = computed(() => canCreateTournament(databaseStore.userData?.role as Role))
-console.log(canCreate.value, userStore.user);
-
 
 onMounted(() => store.fetch()) // Admin ve todo; Organizer luego podemos filtrar por organizerId
 
@@ -53,8 +51,7 @@ async function create(payload: Record<string, unknown>) {
     city: payload.city as string,
     type: payload.type as string,
     startDate: payload.startDate as string,
-    endDate: payload.endDate as string,
-    organizerId: payload.organizerId as string,
+    managerId: payload.managerId as string,
     createdBy: userStore.user?.uid || '',
     numTeams: payload.numTeams as number // Ensure numTeams is provided by the form
   }

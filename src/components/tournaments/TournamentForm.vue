@@ -11,7 +11,7 @@
     <q-input v-model="form.startDate" label="Fecha de inicio" type="date" :rules="[req]" />
 
     <q-select
-      v-model="form.organizerId"
+      v-model="form.managerId"
       :options="managerOptions"
       label="Manager"
       emit-value map-options
@@ -30,7 +30,7 @@
     <!-- Dialog simple para crear organizer -->
     <q-dialog v-model="showOrgDialog">
       <q-card class="q-pa-md q-gutter-sm" style="min-width:340px">
-        <div class="text-subtitle1">Nuevo Organizer</div>
+        <div class="text-subtitle1">Nuevo Organizador</div>
         <q-input v-model="org.name" label="Nombre" :rules="[req]" />
         <q-input v-model="org.cedula" label="Cédula" :rules="[req]" />
         <div class="row justify-end q-gutter-sm q-mt-sm">
@@ -53,7 +53,7 @@ const saving = ref(false)
 const showOrgDialog = ref(false)
 const managerOptions = ref<{label:string,value:string}[]>([])
 const form = reactive<Partial<Tournament>>({
-  displayName:'', city:'', type:'', startDate:'', numTeams:0, organizerId:''
+  displayName:'', city:'', type:'', startDate:'', numTeams:0, managerId:''
 })
 
 const org = reactive({ name:'', cedula:'' })
@@ -69,7 +69,7 @@ async function createManager() {
   if (!org.name || !org.cedula) return
   const ref = await addDoc(colManagers, { ...org })
   managerOptions.value.push({ label: org.name, value: ref.id })
-  form.organizerId = ref.id
+  form.managerId = ref.id
   showOrgDialog.value = false
 }
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  addDoc, doc, getDoc, getDocs, query, where, updateDoc, deleteDoc, serverTimestamp, type Query
+  addDoc, doc, getDoc, getDocs, query, where, updateDoc, deleteDoc, Timestamp, type Query
 } from 'firebase/firestore'
 import { colTournaments } from './firestore/collections'
 import type { Tournament } from '@/types/auth'
@@ -9,9 +9,10 @@ export async function createTournament(
   data: Omit<Tournament, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
   const ref = await addDoc(colTournaments, {
+
     ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   } as any)
   return ref.id
 }
@@ -33,7 +34,7 @@ export async function listTournamentsByManager(managerId?: string): Promise<Tour
 export async function updateTournament(id: string, data: Partial<Tournament>): Promise<void> {
   await updateDoc(doc(colTournaments, id), {
     ...data,
-    updatedAt: serverTimestamp()
+    updatedAt: Timestamp.now()
   } as any)
 }
 

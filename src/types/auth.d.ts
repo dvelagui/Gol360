@@ -11,13 +11,13 @@ export interface Tournament {
   type: string;           // liga, copa, etc.
   startDate: string;      // ISO
   numTeams: number;
-  organizerId: string;
+  managerId: string;
   season?: string;        // 2025-I
   category?: string;      // Sub-20, Libre
   description?: string;
   rulesUrl?: string;
   createdBy: string;      // id admin
-  createdAt: Timestamp;
+  createdAt?: Timestamp;
   photoURL?: string | null;
 }
 
