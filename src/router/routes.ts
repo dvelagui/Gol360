@@ -25,7 +25,7 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresGuest: true },
       },
       {
-        path: '/:catchAll(.*)*',
+        path: ':catchAll(.*)*',
         name: 'not-found',
         component: () => import('@/pages/auth/LoginPage.vue'),
         meta: { requiresGuest: true },
