@@ -1,4 +1,3 @@
-<!-- src/components/tournaments/TournamentCard.vue -->
 <template>
   <q-card class="q-pa-md">
     <div class="text-h6">{{ t.displayName }}</div>
