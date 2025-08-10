@@ -4,15 +4,17 @@ import {
 } from 'firebase/firestore'
 import { colTournaments } from './firestore/collections'
 import type { Tournament } from '@/types/auth'
+import { genTournamentId } from '@/utils/id'
 
 export async function createTournament(
   data: Omit<Tournament, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
+  data.tournamentId = genTournamentId(data.displayName, data.startDate)
   const ref = await addDoc(colTournaments, {
-
     ...data,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
+
   } as any)
   return ref.id
 }

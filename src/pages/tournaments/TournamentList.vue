@@ -7,8 +7,8 @@
       </div>
 
       <div class="col-12 row q-col-gutter-md">
-        <div v-for="t in store.items" :key="t.id" class="col-12 col-sm-6 col-md-4">
-          <TournamentCard :t="t" @open="goDetail" />
+        <div v-for="t in store.items" :key="t.tournamentId" class="col-12 col-sm-6 col-md-4">
+          <TournamentCard :t="t" @open="goDetail(t.tournamentId)" />
         </div>
       </div>
     </div>
@@ -42,11 +42,13 @@ const canCreate = computed(() => canCreateTournament(databaseStore.userData?.rol
 
 onMounted(() => store.fetch()) // Admin ve todo; Organizer luego podemos filtrar por organizerId
 
-function goDetail(id: string) { void router.push(`/tournaments/${id}`) }
+function goDetail(id: string) { console.log(id);
+  void router.push(`/tournaments/${id}`) }
 
 async function create(payload: Record<string, unknown>) {
   // Ensure all required fields are present in the payload
   const tournamentData = {
+    tournamentId: payload.id as string || '',
     displayName: payload.displayName as string,
     city: payload.city as string,
     type: payload.type as string,

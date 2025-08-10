@@ -6,6 +6,7 @@ export type Role = 'admin' | 'manager' | 'team' | 'player'
 
 export interface Tournament {
   id: string;
+  tournamentId: string;
   displayName: string;
   city: string;
   type: string;           // liga, copa, etc.

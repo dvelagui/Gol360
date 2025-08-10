@@ -20,7 +20,7 @@ export const useTournamentStore = defineStore('tournaments', {
       this.loading = true
       this.error = null
       try {
-        // Por ahora sigue llamando al servicio existente (organizer).
+        // Por ahora sigue llamando al servicio existente (manager).
         this.items = await listTournamentsByManager(ownerId)
       } catch (e: any) {
         this.error = e?.message ?? 'No se pudo cargar torneos'
@@ -34,9 +34,9 @@ export const useTournamentStore = defineStore('tournaments', {
       this.error = null
       try {
         const id = await createTournament(payload)
-        // refresca en contexto del mismo dueño (compat: organizerId en tu tipo actual)
+        // refresca en contexto del mismo dueño (compat: managerId en tu tipo actual)
         // si más adelante renombramos a managerId en el modelo, solo cambiarías esta línea.
-        await this.fetch((payload as any).organizerId)
+        await this.fetch((payload as any).managerId)
         return id
       } catch (e: any) {
         this.error = e?.message ?? 'No se pudo crear el torneo'
