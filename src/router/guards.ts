@@ -41,7 +41,7 @@ export function installGuards(router: Router) {
 
     // 2) Rutas privadas sin sesión -> login
     if (needsAuth && !isAuthed) {
-      if (to.path !== '/') {
+      if (to.path !== '/login') {
         return { path: '/login', query: { redirect: to.fullPath } }
       }
       return true
