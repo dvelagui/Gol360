@@ -10,7 +10,7 @@ function firstAlpha(s: string): string {
 function dayOfYear(d: Date): number {
   const start = new Date(d.getFullYear(), 0, 0)
   const diff = d.getTime() - start.getTime()
-  return Math.floor(diff / (1000 * 60 * 60 * 24)) // 1..366
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
 function toB36(n: number, len = 2): string {
@@ -19,9 +19,16 @@ function toB36(n: number, len = 2): string {
 
 export function genTournamentId(name: string, dateISO?: string): string {
   const now = dateISO ? new Date(dateISO) : new Date()
-  const N  = firstAlpha(name)                 // 1
-  const Y  = toB36(now.getFullYear() % 36, 1) // 1
-  const DD = toB36(dayOfYear(now), 2)         // 2
-  const RR = toB36(Math.floor(Math.random() * 36 * 36), 2) // 2
-  return `${N}${Y}${DD}${RR}`                 // total: 6
+  const N  = firstAlpha(name)
+  const Y  = toB36(now.getFullYear() % 36, 1)
+  const DD = toB36(dayOfYear(now), 2)
+  const RR = toB36(Math.floor(Math.random() * 36 * 36), 2)
+  return `${N}${Y}${DD}${RR}`
+}
+export function genMatchId(homeSlug: string, awaySlug: string, dateMs?: number){
+  const d = dateMs ? new Date(dateMs) : new Date()
+  const day = toB36(d.getFullYear()%36,1) + toB36(dayOfYear(d),2)
+  const ha = firstAlpha(homeSlug) + firstAlpha(awaySlug)
+  const r  = toB36(Math.floor(Math.random()*1296),2)
+  return `${ha}${day}${r}`
 }
