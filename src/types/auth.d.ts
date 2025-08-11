@@ -9,15 +9,15 @@ export interface Tournament {
   tournamentId: string;
   displayName: string;
   city: string;
-  type: string;           // liga, copa, etc.
-  startDate: string;      // ISO
+  type: string;
+  startDate: string;
   numTeams: number;
   managerId: string;
-  season?: string;        // 2025-I
-  category?: string;      // Sub-20, Libre
+  season?: string;
+  category?: string;
   description?: string;
   rulesUrl?: string;
-  createdBy: string;      // id admin
+  createdBy: string;
   createdAt?: Timestamp;
   photoURL?: string | null;
 }
