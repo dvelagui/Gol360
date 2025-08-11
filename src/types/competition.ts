@@ -7,6 +7,7 @@ export interface Match {
   round: number | string
   phase: MatchPhase
   date: number
+  dateISO: string
   field: string
   homeTeamId: string
   awayTeamId: string

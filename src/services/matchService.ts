@@ -40,6 +40,7 @@ export async function createMatch(payload: Omit<Match,'id'|'createdAt'|'createdB
     round: payload.round,
     phase: payload.phase,
     date: dateMs,
+    dateISO: payload.dateISO,
     field: payload.field,
     homeTeamId: payload.homeTeamId,
     awayTeamId: payload.awayTeamId,
