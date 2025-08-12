@@ -1,4 +1,4 @@
-<!-- src/pages/tournaments/TournamentDetail.vue -->
+
 <template>
   <q-page class="q-pa-lg">
     <!-- Header -->
@@ -158,7 +158,7 @@
     </q-dialog>
   </q-page>
 </template>
-
+<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -171,37 +171,14 @@ import { useMatchStore } from '@/stores/matches'
 import { useDatabaseStore } from '@/stores/database' // donde tienes userData.role
 import { listTeamsByTournament } from '@/services/teamService'
 
-import type { Match, MatchPhase, MatchStatus, Team } from '@/types/competition' // ajusta si Team está en otro archivo
-
-/** Tipos auxiliares */
-type AppRole = 'admin' | 'manager' | 'team' | 'player'
-
-type MatchFormModel =
-  | {
-      tournamentId: string
-      round: number | string
-      phase: MatchPhase
-      dateISO: string // yyyy-MM-ddTHH:mm
-      field?: string
-      referee?: string
-      homeTeamId: string
-      awayTeamId: string
-      notes?: string
-    }
-  | null
-
-type MatchFetchFilters = Partial<{
-  status: MatchStatus
-  phase: MatchPhase
-  round: string | number
-}>
+import type { Match, MatchPhase, MatchStatus } from '@/types/competition'
 
 /** route + base state */
 const route = useRoute()
 const router = useRouter()
 const tId = route.params.id as string
 
-const tab = ref<'schedule' | 'standings' | 'leaders'>('schedule')
+const tab = ref<'schedule'|'standings'|'leaders'>('schedule')
 
 /** stores */
 const mStore = useMatchStore()
@@ -210,72 +187,64 @@ const database = useDatabaseStore()
 /** UI state */
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
-const editingModel = ref<MatchFormModel>(null)
+const editingModel = ref<any>(null)
 
 /** teams in tournament (id, name) */
 const teams = ref<{ id: string; name: string }[]>([])
 
 /** filters */
 const statusFilter = ref<MatchStatus | null>(null)
-const phaseFilter = ref<MatchPhase | null>(null)
+const phaseFilter  = ref<MatchPhase  | null>(null)
 
 const statusOptions: MatchStatus[] = ['scheduled', 'in_progress', 'finished', 'canceled', 'walkover']
 const phaseOptions: MatchPhase[] = ['regular', 'playoff', 'semifinal', 'final']
 
 /** permissions by role */
-function isAppRole(v: unknown): v is AppRole {
-  return v === 'admin' || v === 'manager' || v === 'team' || v === 'player'
-}
-const role = computed<AppRole | undefined>(() =>
-  isAppRole(database.userData?.role) ? (database.userData!.role as AppRole) : undefined
-)
+const role = computed(() => database.userData?.role)
 const canCreateMatch = computed(() => role.value === 'admin' || role.value === 'manager')
-const canEditMatch = canCreateMatch // mismo criterio por ahora
+const canEditMatch   = canCreateMatch // mismo criterio por ahora
 
 /** helpers */
 function teamById(id: string) {
-  return teams.value.find((t) => t.id === id)
-}
-function getTeamNameSafe(t: Team): string {
-  const cand = (t as unknown as { name?: string; displayName?: string }).name
-    ?? (t as unknown as { name?: string; displayName?: string }).displayName
-  return cand ?? 'Sin nombre'
+  return teams.value.find(t => t.id === id)
 }
 
 /** lifecycle */
 onMounted(async () => {
-  await Promise.all([mStore.fetch(tId), loadTeams()])
+  await Promise.all([
+    mStore.fetch(tId),
+    loadTeams()
+  ])
 })
 
 watch([statusFilter, phaseFilter], async () => {
-  const filters: MatchFetchFilters = {}
-  if (statusFilter.value) filters.status = statusFilter.value
-  if (phaseFilter.value) filters.phase = phaseFilter.value
-  await mStore.fetch(tId, filters)
+  const filter: { status?: MatchStatus; phase?: MatchPhase } = {};
+  if (statusFilter.value !== null) filter.status = statusFilter.value;
+  if (phaseFilter.value !== null) filter.phase = phaseFilter.value;
+  await mStore.fetch(tId, filter);
 })
 
-async function loadTeams() {
+async function loadTeams () {
   try {
     const list = await listTeamsByTournament(tId)
-    // Normaliza a { id, name } sin asumir que Team tiene "name" en su tipo
-    teams.value = list.map((t) => ({ id: t.id, name: getTeamNameSafe(t as unknown as Team) }))
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Error cargando equipos'
-    Notify.create({ type: 'negative', message: msg })
+    // Normaliza a { id, name }
+    teams.value = list.map(t => ({ id: t.id, name: t.displayName }))
+  } catch (e:any) {
+    Notify.create({ type: 'negative', message: e?.message || 'Error cargando equipos' })
   }
 }
 
 /** CRUD dialog */
-function openCreate() {
+function openCreate () {
   editingId.value = null
   editingModel.value = null
   showForm.value = true
 }
 
-function openEdit(m: Match) {
+function openEdit (m: Match) {
   editingId.value = m.id
   // adaptamos a modelo de MatchForm (usa dateISO)
-  const dateISO = new Date(m.date).toISOString().slice(0, 16) // yyyy-MM-ddTHH:mm
+  const dateISO = new Date(m.date).toISOString().slice(0,16) // yyyy-MM-ddTHH:mm
   editingModel.value = {
     tournamentId: m.tournamentId,
     round: m.round,
@@ -290,13 +259,13 @@ function openEdit(m: Match) {
   showForm.value = true
 }
 
-function closeForm() {
+function closeForm () {
   showForm.value = false
   editingId.value = null
   editingModel.value = null
 }
 
-async function onSave(formPayload: NonNullable<MatchFormModel>) {
+async function onSave (formPayload: any) {
   try {
     if (editingId.value) {
       // update
@@ -304,12 +273,12 @@ async function onSave(formPayload: NonNullable<MatchFormModel>) {
         round: formPayload.round,
         phase: formPayload.phase,
         date: new Date(formPayload.dateISO).getTime(),
+        field: formPayload.field,
+        referee: formPayload.referee,
         homeTeamId: formPayload.homeTeamId,
-        awayTeamId: formPayload.awayTeamId
+        awayTeamId: formPayload.awayTeamId,
+        notes: formPayload.notes
       }
-      if (formPayload.field !== undefined) patch.field = formPayload.field
-      if (formPayload.referee !== undefined) patch.referee = formPayload.referee
-      if (formPayload.notes !== undefined) patch.notes = formPayload.notes
       await mStore.update(editingId.value, patch)
       Notify.create({ type: 'positive', message: 'Partido actualizado' })
     } else {
@@ -320,31 +289,29 @@ async function onSave(formPayload: NonNullable<MatchFormModel>) {
       }
       await mStore.create(payload)
       Notify.create({ type: 'positive', message: 'Partido creado' })
-      // refresca lista manteniendo filtros activos sin undefined
-      const filters: MatchFetchFilters = {}
-      if (statusFilter.value) filters.status = statusFilter.value
-      if (phaseFilter.value) filters.phase = phaseFilter.value
-      await mStore.fetch(tId, filters)
+      // refresca lista
+      const filter: { status?: MatchStatus; phase?: MatchPhase } = {};
+      if (statusFilter.value !== null) filter.status = statusFilter.value;
+      if (phaseFilter.value !== null) filter.phase = phaseFilter.value;
+      await mStore.fetch(tId, filter)
     }
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Error guardando partido'
-    Notify.create({ type: 'negative', message: msg })
+  } catch (e:any) {
+    Notify.create({ type: 'negative', message: e?.message || 'Error guardando partido' })
   } finally {
     closeForm()
   }
 }
 
-async function onRemove(id: string) {
+async function onRemove (id: string) {
   try {
     await mStore.remove(id)
     Notify.create({ type: 'positive', message: 'Partido eliminado' })
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'No se pudo eliminar'
-    Notify.create({ type: 'negative', message: msg })
+  } catch (e:any) {
+    Notify.create({ type: 'negative', message: e?.message || 'No se pudo eliminar' })
   }
 }
 
-function goBack() {
+function goBack () {
   router.back()
 }
 

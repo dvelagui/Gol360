@@ -23,6 +23,7 @@
     <slot name="actions" />
   </q-card>
 </template>
+
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Match } from '@/types/competition'
@@ -36,5 +37,4 @@ const home = computed(() => props.teamById(props.match.homeTeamId)?.name || '—
 const away = computed(() => props.teamById(props.match.awayTeamId)?.name || '—')
 const dt   = computed(() => new Date(props.match.date).toLocaleString())
 </script>
-
 

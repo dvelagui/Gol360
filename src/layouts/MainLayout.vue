@@ -54,7 +54,7 @@ async function handleLogout () {
 }
 </script>
 <style scoped>
-@media (min-width: 725px) {
+@media (min-width: 991px) {
   .menu {
     display: none;
   }

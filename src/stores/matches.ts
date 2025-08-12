@@ -17,11 +17,10 @@ export const useMatchStore = defineStore('matches', {
         this.loading = false
       }
     },
-    async create(form: Match) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async create(form: any) {
       const uid = useUserStore().user?.uid || ''
-      const { dateISO, ...rest } = form
-      if (!dateISO) throw new Error('dateISO is required')
-      const id = await createMatch({ ...rest, dateISO }, { uid })
+      const id = await createMatch(form, { uid })
       return id
     },
     async update(id: string, patch: Partial<Match>) {
