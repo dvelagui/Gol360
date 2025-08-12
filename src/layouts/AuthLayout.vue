@@ -1,7 +1,7 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
-      <q-page class="row no-wrap full-height">
+      <q-page class="row flex full-height">
         <div class="col-12 col-md-7 q-pa-none img-login">
           <q-img src="@/assets/img_login.png" class="full-height" style="object-fit: cover;" />
         </div>
@@ -17,7 +17,7 @@
 </script>
 <style scoped lang="scss">
 
-@media (max-width: 725px) {
+@media (max-width: 910px) {
 
 
   .img-login {

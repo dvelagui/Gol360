@@ -42,13 +42,35 @@ import { ref, computed } from 'vue'
 import type { MatchPhase } from '@/types/competition'
 
 const props = defineProps<{
-  modelValue?: any
+  modelValue?: {
+    tournamentId?: string
+    round?: string
+    phase?: MatchPhase
+    dateISO?: string
+    field?: string
+    referee?: string
+    homeTeamId?: string
+    awayTeamId?: string
+    notes?: string
+  }
   tournamentId: string
   teams: { id: string; name: string }[]
   editId?: string
 }>()
+type MatchFormPayload = {
+  tournamentId: string
+  round: string
+  phase: MatchPhase
+  dateISO: string
+  field: string
+  referee: string
+  homeTeamId: string
+  awayTeamId: string
+  notes: string
+}
+
 const emit = defineEmits<{
-  (e: 'save', payload: any): void
+  (e: 'save', payload: MatchFormPayload): void
   (e: 'cancel'): void
 }>()
 
