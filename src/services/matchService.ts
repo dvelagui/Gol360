@@ -9,6 +9,12 @@ import { genMatchId } from '@/utils/id'
 import { cleanUndefined } from '@/utils/sanitize'
 
 const col = collection(db, 'matches')
+const coll = (id: string) => doc(db, 'matches', id)
+
+export async function setMatchScore(id: string, score: { home: number; away: number }) {
+  await updateDoc(coll(id), { score })
+}
+
 
 export async function listMatchesByTournament(
   tournamentId: string,
@@ -65,4 +71,12 @@ export async function removeMatch(id: string) {
 
 export async function setMatchStatus(id: string, status: MatchStatus) {
   await updateMatch(id, { status })
+  await updateDoc(coll(id), { status })
+}
+
+/** Marca como finalizado y quién confirma */
+export async function confirmResult(id: string, by: 'manager' | 'admin', score?: { home: number; away: number }) {
+  const patch: any = { status: 'finished', confirmedBy: by }
+  if (score) patch.score = score
+  await updateDoc(coll(id), patch)
 }
