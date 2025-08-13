@@ -40,10 +40,14 @@ const router = useRouter()
 
 const canCreate = computed(() => canCreateTournament(databaseStore.userData?.role as AppRole))
 
-onMounted(() => store.fetch())
+onMounted(async () => {
+  await store.fetch();
 
-function goDetail(id: string) { console.log(id);
-  void router.push(`/tournaments/`) }
+})
+
+function goDetail(id: string) {
+  void router.push(`/tournaments/${id}`)
+}
 
 async function create(payload: Record<string, unknown>) {
   // Ensure all required fields are present in the payload
