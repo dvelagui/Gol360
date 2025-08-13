@@ -1,4 +1,4 @@
-import type { Timestamp } from 'firebase/firestore';
+import type { Timestamp, FieldValue } from 'firebase/firestore';
 
 export type Role = 'admin' | 'manager' | 'team' | 'player'
 
@@ -17,8 +17,7 @@ export interface Tournament {
   category?: string;
   description?: string;
   rulesUrl?: string;
-  createdBy: string;
-  createdAt?: Timestamp;
+  createdAt: Timestamp | FieldValue;
   photoURL?: string | null;
 }
 
@@ -32,7 +31,7 @@ export interface Team {
   crestUrl?: string;
   captainId?: string;
   createdBy: string;
-  createdAt: Timestamp;
+  createdAt: Timestamp | FieldValue;
   photoURL?: string | null;
 }
 
@@ -43,8 +42,10 @@ export interface Player {
   position?: string;
   jersey?: number;
   role: 'player' | 'team';
+  createdBy: string;
   createdAt: Timestamp;
   photoURL?: string | null;
+  active?: boolean
 }
 
 export interface Manager {
