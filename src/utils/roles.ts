@@ -23,6 +23,7 @@ export function roleHome(role?: string) {
 export const canCreateTournament = (role: AppRole) =>
   role === 'admin'
 
+
 export const canManageTournament = (role: AppRole, owner = false) =>
   role === 'admin' || (role === 'manager' && owner)
 
