@@ -66,11 +66,9 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import type { Match, MatchEvent } from '@/types/competition'
+import type { Match } from '@/types/competition'
 import { useEventStore } from '@/stores/events'
 import { computeScoreFromEvents } from '@/services/eventService'
-import { useUserStore } from '@/stores/user'
-import { Notify } from 'quasar'
 
 const props = defineProps<{
   match: Match

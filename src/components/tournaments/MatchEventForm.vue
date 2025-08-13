@@ -32,6 +32,7 @@
     </div>
   </q-form>
 </template>
+<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { EventType } from '@/types/competition'
