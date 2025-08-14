@@ -35,7 +35,7 @@ const props = defineProps<{
   canEdit: boolean
   canPropose: boolean
 }>()
-defineEmits<{
+const emit = defineEmits<{
   (e:'update:modelValue', v:boolean): void
   (e:'confirm', score:{home:number;away:number}): void
   (e:'addEvent'): void
@@ -48,6 +48,5 @@ const model = computed({
   get: () => props.modelValue,
   set: (v: boolean) => emit('update:modelValue', v)
 })
-const emit = defineEmits()
 
 </script>

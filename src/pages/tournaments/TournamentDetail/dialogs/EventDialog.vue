@@ -31,7 +31,8 @@ const props = defineProps<{
   teams: { id:string; name:string }[]
   canApprove: boolean
 }>()
-defineEmits<{
+
+const emit = defineEmits<{
   (e:'update:modelValue', v:boolean): void
   (e:'submit', payload: Omit<MatchEvent,'id'|'createdAt'|'status'> & { status?: 'proposed' | 'approved' }): void
 }>()
@@ -41,5 +42,5 @@ const model = computed({
   set: (v: boolean) => emit('update:modelValue', v)
 
 })
-const emit = defineEmits()
+
 </script>
