@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineStore } from 'pinia'
-import { listPlayersByTeam, createPlayer, promoteToCaptain } from '@/services/playerService'
 import type { Player } from '@/types/auth'
+import {
+  listPlayersByTeam,
+  createPlayer,
+  updatePlayer,
+  removePlayer,
+  setCaptain as setTeamCaptain, // cambio de capitán único por equipo
+  promoteToCaptain // compatibilidad con tu flujo previo (opcional)
+} from '@/services/playerService'
 
 type State = {
   items: Player[]
@@ -19,10 +26,12 @@ export const usePlayerStore = defineStore('players', {
   getters: {
     count: (s) => s.items.length,
     byId: (s) => (id: string) => s.items.find(p => p.id === id) || null,
-    byNumber: (s) => (n: number) => s.items.find(p => p.jersey === n) || null
+    byNumber: (s) => (n: number) => s.items.find(p => p.jersey === n) || null,
+    currentCaptain: (s) => s.items.find(p => p.role === 'team') || null
   },
 
   actions: {
+    /** Carga jugadores de un equipo */
     async fetch(teamId: string) {
       this.loading = true
       this.error = null
@@ -36,6 +45,7 @@ export const usePlayerStore = defineStore('players', {
       }
     },
 
+    /** Crea jugador y refresca la lista del equipo */
     async add(payload: Omit<Player, 'id' | 'createdAt'>) {
       this.error = null
       try {
@@ -48,11 +58,68 @@ export const usePlayerStore = defineStore('players', {
       }
     },
 
-    // Opcional: ascender a capitán y refrescar lista
+    /** Actualiza datos del jugador y sincroniza cache local */
+    async update(id: string, patch: Partial<Player>) {
+      this.error = null
+      try {
+        await updatePlayer(id, patch)
+        const idx = this.items.findIndex(p => p.id === id)
+        if (idx >= 0) {
+          const updatedPlayer = { ...this.items[idx], ...patch } as Required<Player>
+          this.items[idx] = updatedPlayer
+        }
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo actualizar el jugador'
+        throw e
+      }
+    },
+
+    /** Elimina un jugador y lo quita del estado */
+    async remove(id: string) {
+      this.error = null
+      try {
+        await removePlayer(id)
+        this.items = this.items.filter(p => p.id !== id)
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo eliminar el jugador'
+        throw e
+      }
+    },
+
+    /**
+     * Cambia el capitán del equipo (garantiza unicidad):
+     * - Degrada capitán actual -> role: 'player'
+     * - Promueve nuevo -> role: 'captain'
+     * - Actualiza team.captainId
+     */
+    async setCaptain(teamId: string, newCaptainId: string | null) {
+      this.error = null
+      try {
+        await setTeamCaptain(teamId, newCaptainId)
+        const prevId = this.items.find(p => p.role === 'team')?.id || null
+
+        this.items = this.items.map(p => {
+          if (prevId && p.id === prevId) return { ...p, role: 'player' }
+          if (newCaptainId && p.id === newCaptainId) return { ...p, role: 'team' }
+          return p
+        })
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo asignar el capitán'
+        throw e
+      }
+    },
+
+    /**
+     * (Compatibilidad) Promueve a capitán un jugador específico.
+     * Recomendación: usar setCaptain(teamId, playerId) para garantizar unicidad.
+     */
     async promote(playerId: string, teamId: string) {
       this.error = null
       try {
+        // Opción 1 (compat): usa tu servicio previo
         await promoteToCaptain(playerId)
+        // Asegura unicidad con la función nueva (degrada anteriores y fija team.captainId)
+        await setTeamCaptain(teamId, playerId)
         await this.fetch(teamId)
       } catch (e: any) {
         this.error = e?.message ?? 'No se pudo ascender a capitán'
