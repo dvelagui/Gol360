@@ -37,6 +37,7 @@ export interface Team {
 
 export interface Player {
   id: string;
+  tournamentId: string;
   teamId: string;
   displayName: string;
   position?: string;
