@@ -41,7 +41,7 @@
         <SchedulePanel
           ref="scheduleRef"
           :tournament-id="tId"
-          :role="role"
+          :role="role ?? 'team'"
           @edit="openMatchEdit"
           @results="openResults"
         />
