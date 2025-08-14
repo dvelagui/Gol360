@@ -13,7 +13,7 @@
           color="primary"
           icon="event"
           label="Nuevo partido"
-          @click="openCreate"
+          @click="openMatchCreate"
         />
         <q-btn flat icon="arrow_back" label="Volver" @click="goBack" />
       </div>
@@ -38,81 +38,13 @@
     <q-tab-panels v-model="tab" animated swipeable>
       <!-- PROGRAMACIÓN -->
       <q-tab-panel name="schedule" class="q-pa-none">
-        <div class="row items-center q-mb-sm">
-          <q-space />
-          <q-select
-            v-model="statusFilter"
-            :options="statusOptions"
-            dense
-            standout
-            label="Estado"
-            clearable
-            class="q-mr-sm"
-            style="min-width: 160px"
-          />
-          <q-select
-            v-model="phaseFilter"
-            :options="phaseOptions"
-            dense
-            standout
-            label="Fase"
-            clearable
-            style="min-width: 160px"
-          />
-        </div>
-
-        <div v-if="mStore.loading" class="q-my-xl">
-          <q-skeleton type="rect" class="q-mb-md" height="120px" />
-          <q-skeleton type="rect" class="q-mb-md" height="120px" />
-          <q-skeleton type="rect" class="q-mb-md" height="120px" />
-        </div>
-
-        <div
-          v-else
-          class="grid q-col-gutter-md"
-          style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));"
-        >
-          <MatchCard
-            v-for="m in filteredMatches"
-            :key="m.id"
-            :match="m"
-            :team-by-id="teamById"
-          >
-            <template #actions>
-              <div class="row q-gutter-sm q-mt-sm">
-                <q-btn
-                  dense
-                  flat
-                  icon="summarize"
-                  color="primary"
-                  label="Resultados"
-                  @click="openResults(m)"
-                />
-                <q-btn
-                  v-if="canEditMatch"
-                  dense
-                  flat
-                  icon="edit"
-                  color="primary"
-                  @click="openEdit(m)"
-                />
-                <q-btn
-                  v-if="canEditMatch"
-                  dense
-                  flat
-                  icon="delete"
-                  color="negative"
-                  @click="onRemove(m.id)"
-                />
-              </div>
-            </template>
-          </MatchCard>
-        </div>
-
-        <div v-if="!mStore.loading && !mStore.items.length" class="q-my-xl text-grey-6">
-          <div class="text-subtitle1 q-mb-xs">No hay partidos programados</div>
-          <div class="text-caption">Crea el primero con el botón “Nuevo partido”.</div>
-        </div>
+        <SchedulePanel
+          ref="scheduleRef"
+          :tournament-id="tId"
+          :role="role"
+          @edit="openMatchEdit"
+          @results="openResults"
+        />
       </q-tab-panel>
 
       <!-- TABLA - placeholder -->
@@ -143,99 +75,61 @@
     </q-tab-panels>
 
     <!-- DIALOG: CREAR/EDITAR PARTIDO -->
-    <q-dialog v-model="showForm" persistent>
-      <q-card style="min-width: 720px; max-width: 95vw;">
-        <q-card-section class="row items-center">
-          <div class="text-subtitle1">
-            {{ editingId ? 'Editar partido' : 'Nuevo partido' }}
-          </div>
-          <q-space />
-          <q-btn dense round flat icon="close" v-close-popup />
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-section>
-          <MatchForm
-            :tournament-id="tId"
-            :teams="teams"
-            :model-value="editingModel"
-            @save="onSave"
-            @cancel="closeForm"
-          />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <MatchFormDialog
+      v-model="showMatchForm"
+      :tournament-id="tId"
+      :teams="teams"
+      :model-value2="matchModel"
+      @saved="afterMatchSaved"
+    />
 
     <!-- DIALOG: RESULTADOS Y EVENTOS -->
-    <q-dialog v-model="showResults" persistent>
-      <q-card style="min-width: 760px; max-width: 95vw;">
-        <q-card-section class="row items-center">
-          <div class="text-subtitle1">Resultados y eventos</div>
-          <q-space />
-          <q-btn dense round flat icon="close" v-close-popup />
-        </q-card-section>
-        <q-separator />
-        <q-card-section v-if="resultsMatch">
-          <ResultsForm
-            :match="resultsMatch"
-            :teams="teams"
-            :can-edit="canEditMatch"
-            :can-propose="role === 'team'"
-            @confirm="onConfirm"
-            @addEvent="openAddEvent"
-            @approve="approveEv"
-            @reject="rejectEv"
-            @remove="removeEv"
-          />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <ResultsDialog
+      v-model="showResults"
+      :match="resultsMatch"
+      :teams="teams"
+      :can-edit="canEditMatch"
+      :can-propose="role === 'team'"
+      @confirm="onConfirm"
+      @addEvent="openEventDialog"
+      @approve="approveEv"
+      @reject="rejectEv"
+      @remove="removeEv"
+    />
 
     <!-- DIALOG: NUEVO EVENTO -->
-    <q-dialog v-model="showAddEvent">
-      <q-card style="min-width: 600px; max-width: 95vw;">
-        <q-card-section class="row items-center">
-          <div class="text-subtitle1">Nuevo evento</div>
-          <q-space />
-          <q-btn dense round flat icon="close" v-close-popup />
-        </q-card-section>
-        <q-separator />
-        <q-card-section v-if="resultsMatch">
-          <MatchEventForm
-            :match-id="resultsMatch.id"
-            :tournament-id="tId"
-            :teams="teams"
-            :can-approve="role === 'admin' || role === 'manager'"
-            @submit="submitEvent"
-          />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <EventDialog
+      v-model="showEvent"
+      :match="resultsMatch"
+      :tournament-id="tId"
+      :teams="teams"
+      :can-approve="role === 'admin' || role === 'manager'"
+      @submit="submitEvent"
+    />
   </q-page>
 </template>
-<!-- eslint-disable @typescript-eslint/no-explicit-any -->
+
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue'
+// Padre “ligero”: maneja solo tabs, carga de equipos para diálogos y coordinación.
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Notify } from 'quasar'
+import { defineAsyncComponent } from 'vue'
 
-import MatchForm from '@/components/tournaments/MatchForm.vue'
-import MatchCard from '@/components/tournaments/MatchCard.vue'
-import ResultsForm from '@/components/tournaments/ResultForm.vue'
-import MatchEventForm from '@/components/tournaments/MatchEventForm.vue'
-
-import { useMatchStore } from '@/stores/matches'
-import { useEventStore } from '@/stores/events'
 import { useDatabaseStore } from '@/stores/database'
 import { listTeamsByTournament } from '@/services/teamService'
+import { useEventStore } from '@/stores/events'
 import { confirmResult, setMatchScore } from '@/services/matchService'
 
-import type { Match, MatchEvent, MatchPhase, MatchStatus } from '@/types/competition'
+import type { Match, MatchEvent, MatchPhase } from '@/types/competition'
 
-/* Tipos locales */
+// Lazy components
+const SchedulePanel  = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
+const MatchFormDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/MatchFormDialog.vue'))
+const ResultsDialog   = defineAsyncComponent(() => import('./TournamentDetail/dialogs/ResultsDialog.vue'))
+const EventDialog     = defineAsyncComponent(() => import('./TournamentDetail/dialogs/EventDialog.vue'))
+
 type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
-
 interface TeamMin { id: string; name: string }
 interface MatchFormModel {
   tournamentId: string
@@ -255,48 +149,17 @@ const tId = route.params.id as string
 
 const tab = ref<'schedule'|'standings'|'leaders'>('schedule')
 
-const mStore = useMatchStore()
+// Stores usados por callbacks de diálogos
 const eStore = useEventStore()
 const database = useDatabaseStore()
 
-const showForm = ref(false)
-const editingId = ref<string | null>(null)
-const editingModel = ref<MatchFormModel | null>(null)
-
-const teams = ref<TeamMin[]>([])
-
-const statusFilter = ref<MatchStatus | null>(null)
-const phaseFilter  = ref<MatchPhase  | null>(null)
-
-const statusOptions: MatchStatus[] = ['scheduled','in_progress','finished','canceled','walkover']
-const phaseOptions: MatchPhase[] = ['regular','playoff','semifinal','final']
-
-/* Permisos */
+// permisos
 const role = computed<Role>(() => database.userData?.role)
 const canCreateMatch = computed<boolean>(() => role.value === 'admin' || role.value === 'manager')
 const canEditMatch   = canCreateMatch
 
-/* Helpers */
-function teamById(id: string): TeamMin | undefined {
-  return teams.value.find(t => t.id === id)
-}
-
-function toDateLocalInput(ms: number): string {
-  return new Date(ms).toISOString().slice(0, 16) // yyyy-MM-ddTHH:mm
-}
-
-/* Lifecycle */
-onMounted(async () => {
-  await Promise.all([ mStore.fetch(tId), loadTeams() ])
-})
-
-watch([statusFilter, phaseFilter], async () => {
-  const filter: { status?: MatchStatus; phase?: MatchPhase } = {};
-  if (statusFilter.value !== null) filter.status = statusFilter.value;
-  if (phaseFilter.value !== null) filter.phase = phaseFilter.value;
-  await mStore.fetch(tId, filter)
-})
-
+// equipos (para diálogos)
+const teams = ref<TeamMin[]>([])
 async function loadTeams (): Promise<void> {
   try {
     const list = await listTeamsByTournament(tId)
@@ -307,114 +170,66 @@ async function loadTeams (): Promise<void> {
   }
 }
 
-/* CRUD Partidos */
-function openCreate(): void {
-  editingId.value = null
-  editingModel.value = null
-  showForm.value = true
+// PANEL ref (para pedir refetch tras guardar/confirmar)
+const scheduleRef = ref<{ refetch: () => Promise<void> } | null>(null)
+
+// Diálogos y modelos
+const showMatchForm = ref(false)
+const matchModel    = ref<MatchFormModel | null>(null)
+
+const showResults   = ref(false)
+const resultsMatch  = ref<Match | null>(null)
+
+const showEvent     = ref(false)
+
+// Header actions
+function openMatchCreate() {
+  matchModel.value = null
+  showMatchForm.value = true
 }
-
-function openEdit(m: Match): void {
-  editingId.value = m.id
-
-  const model: MatchFormModel = {
+function openMatchEdit(m: Match) {
+  // NOTE: trasladamos conversión/normalización al diálogo; aquí solo pasamos el Match crudo.
+  matchModel.value = {
     tournamentId: m.tournamentId,
     round: String(m.round),
     phase: m.phase,
-    dateISO: toDateLocalInput(m.date),
+    dateISO: new Date(m.date).toISOString().slice(0, 16),
     homeTeamId: m.homeTeamId,
     awayTeamId: m.awayTeamId,
-    ...(m.field ?   { field: m.field }     : {}),
+    ...(m.field ?   { field: m.field } : {}),
     ...(m.referee ? { referee: m.referee } : {}),
-    ...(m.notes ?   { notes: m.notes }     : {}),
+    ...(m.notes ?   { notes: m.notes } : {})
   }
-
-  editingModel.value = model
-  showForm.value = true
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(matchModel.value as any).id = m.id // para que el diálogo sepa si es edición
+  showMatchForm.value = true
 }
-
-
-function closeForm(): void {
-  showForm.value = false
-  editingId.value = null
-  editingModel.value = null
-}
-
-async function onSave(model: MatchFormModel): Promise<void> {
-  try {
-    if (editingId.value) {
-      // ---- UPDATE (arma el patch sin undefined) ----
-      const patch: Partial<Match> = {
-        round: model.round,
-        phase: model.phase,
-        date: new Date(model.dateISO).getTime(),
-        homeTeamId: model.homeTeamId,
-        awayTeamId: model.awayTeamId,
-        ...(model.field    ? { field: model.field }       : {}),
-        ...(model.referee  ? { referee: model.referee }   : {}),
-        ...(model.notes    ? { notes: model.notes }       : {}),
-      }
-      await mStore.update(editingId.value, patch)
-      Notify.create({ type: 'positive', message: 'Partido actualizado' })
-    } else {
-      // ---- CREATE (igual que lo tenías) ----
-      const payload = {
-        tournamentId: tId,
-        round: model.round,
-        phase: model.phase,
-        dateISO: model.dateISO,
-        field: model.field,
-        referee: model.referee,
-        homeTeamId: model.homeTeamId,
-        awayTeamId: model.awayTeamId,
-        notes: model.notes
-      }
-      await mStore.create(payload as unknown as any)
-      Notify.create({ type: 'positive', message: 'Partido creado' })
-      const filter: { status?: MatchStatus; phase?: MatchPhase } = {};
-      if (statusFilter.value !== null) filter.status = statusFilter.value;
-      if (phaseFilter.value !== null) filter.phase = phaseFilter.value;
-      await mStore.fetch(tId, filter)
-    }
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Error guardando partido'
-    Notify.create({ type: 'negative', message: msg })
-  } finally {
-    closeForm()
-  }
-}
-
-
-async function onRemove(id: string): Promise<void> {
-  try {
-    await mStore.remove(id)
-    Notify.create({ type: 'positive', message: 'Partido eliminado' })
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'No se pudo eliminar'
-    Notify.create({ type: 'negative', message: msg })
-  }
-}
-
-/* Resultados y eventos (Paquete 2) */
-const showResults = ref(false)
-const resultsMatch = ref<Match | null>(null)
-const showAddEvent = ref(false)
-
-function openResults(m: Match): void {
+function openResults(m: Match) {
   resultsMatch.value = m
   showResults.value = true
 }
+function openEventDialog() {
+  showEvent.value = true
+}
 
+function goBack() {
+  router.back()
+}
+
+// Diálogo: post-guardado de partido
+async function afterMatchSaved() {
+  showMatchForm.value = false
+  await scheduleRef.value?.refetch()
+}
+
+// Confirmar marcador final (igual que en tu componente original)
 async function onConfirm(score: { home: number; away: number }): Promise<void> {
   if (!resultsMatch.value) return
   const by: 'admin' | 'manager' = role.value === 'admin' ? 'admin' : 'manager'
   try {
     await setMatchScore(resultsMatch.value.id, score)
     await confirmResult(resultsMatch.value.id, by, score)
-    const filter: { status?: MatchStatus; phase?: MatchPhase } = {};
-    if (statusFilter.value !== null) filter.status = statusFilter.value;
-    if (phaseFilter.value !== null) filter.phase = phaseFilter.value;
-    await mStore.fetch(tId, filter)
+    await scheduleRef.value?.refetch()
     Notify.create({ type: 'positive', message: 'Marcador confirmado' })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'No se pudo confirmar'
@@ -424,10 +239,7 @@ async function onConfirm(score: { home: number; away: number }): Promise<void> {
   }
 }
 
-function openAddEvent(): void {
-  showAddEvent.value = true
-}
-
+// Envío de evento (igual, con saneo de opcionales)
 async function submitEvent(
   payload: Omit<MatchEvent, 'id' | 'createdAt' | 'status'> & { status?: 'proposed' | 'approved' }
 ): Promise<void> {
@@ -436,28 +248,24 @@ async function submitEvent(
       matchId: payload.matchId,
       tournamentId: payload.tournamentId,
       teamId: payload.teamId,
-      // playerId puede ser null; lo incluimos siempre
       playerId: payload.playerId ?? null,
       type: payload.type,
       minute: typeof payload.minute === 'number' ? payload.minute : 0,
       createdBy: payload.createdBy
     }
-
-    // construir el objeto final SIN undefined en opcionales
-    const normalized: Omit<MatchEvent, 'id' | 'createdAt' | 'status'> & { status?: 'proposed' | 'approved' } = {
+    const normalized = {
       ...base,
       ...(payload.extraTime !== undefined ? { extraTime: payload.extraTime } : {}),
       ...(payload.meta !== undefined ? { meta: payload.meta } : {}),
       ...(payload.status ? { status: payload.status } : {})
     }
-
     await eStore.create(normalized)
     Notify.create({ type: 'positive', message: 'Evento agregado' })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'No se pudo agregar evento'
     Notify.create({ type: 'negative', message: msg })
   } finally {
-    showAddEvent.value = false
+    showEvent.value = false
   }
 }
 
@@ -474,15 +282,12 @@ async function removeEv(id: string): Promise<void> {
   await eStore.remove(id, resultsMatch.value.id)
 }
 
-/* Computed */
-const filteredMatches = computed<Match[]>(() => mStore.items)
-
-function goBack(): void {
-  router.back()
-}
+// bootstrap
+onMounted(async () => {
+  await loadTeams()
+})
 </script>
 
 <style scoped lang="scss">
-.grid { display: grid; }
 .rounded-borders { border-radius: 12px; }
 </style>
