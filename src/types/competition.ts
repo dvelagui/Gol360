@@ -1,5 +1,14 @@
 export type MatchStatus = 'scheduled' | 'in_progress' | 'finished' | 'canceled' | 'walkover'
 export type MatchPhase  = 'regular' | 'playoff' | 'semifinal' | 'final'
+
+export interface SelectOption<T> {
+  label: string
+  value: T
+}
+
+export type MatchStatusOption = SelectOption<MatchStatus>
+export type MatchPhaseOption = SelectOption<MatchPhase>
+
 export type EventType =
   | 'goal' | 'assist' | 'own_goal'
   | 'yellow' | 'red'
