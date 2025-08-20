@@ -11,11 +11,16 @@
         <q-input v-model.number="form.jersey" type="number" label="Dorsal (opcional)" dense filled />
       </div>
       <div class="col-12 col-sm-6">
-        <q-select
+      <q-select
           v-model="form.role"
-          :options="['player','captain']"
+          :options="roleOptions"
+          option-value="value"
+          option-label="label"
+          emit-value
+          map-options
           label="Rol en el equipo"
-          dense filled
+          dense
+          filled
         />
       </div>
     </div>
@@ -41,6 +46,11 @@ const emit = defineEmits<{
   (e: 'save', payload: Omit<Player,'id'|'createdAt'|'createdBy'>): void
   (e: 'cancel'): void
 }>()
+
+const roleOptions: Array<{ label: string; value: Player['role'] }> = [
+  { label: 'Jugador',  value: 'player' },
+  { label: 'Capitán',  value: 'team' }
+]
 
 const form = ref<Omit<Player,'id'|'createdAt'|'createdBy'>>({
   tournamentId: props.tournamentId,
