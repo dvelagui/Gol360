@@ -61,7 +61,7 @@
         <TeamsPanel
           ref="teamRef"
           :tournament-id="tId"
-          :role="role"
+          v-bind="role !== undefined ? { role } : {}"
           @create-team="openTeamCreate"
           @edit-team="openTeamEdit"
           @open-players="openPlayers"
