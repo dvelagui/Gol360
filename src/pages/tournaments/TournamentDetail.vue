@@ -29,8 +29,9 @@
       narrow-indicator
     >
       <q-tab name="schedule" label="Programación" icon="calendar_month" />
+      <q-tab name="teams"    label="Equipos"      icon="groups" />
       <q-tab name="standings" label="Tabla" icon="leaderboard" />
-      <q-tab name="leaders" label="Rankings" icon="emoji_events" />
+      <q-tab name="leaders"   label="Rankings" icon="emoji_events" />
     </q-tabs>
 
     <q-separator class="q-mb-md" />
@@ -41,9 +42,29 @@
         <SchedulePanel
           ref="scheduleRef"
           :tournament-id="tId"
-          :role="role ?? 'team'"
+          v-if="role"
+          :role="role"
           @edit="openMatchEdit"
           @results="openResults"
+        />
+        <SchedulePanel
+          ref="scheduleRef"
+          :tournament-id="tId"
+          v-else
+          @edit="openMatchEdit"
+          @results="openResults"
+        />
+      </q-tab-panel>
+
+      <!-- EQUIPOS -->
+      <q-tab-panel name="teams" class="q-pa-none">
+        <TeamsPanel
+          ref="teamRef"
+          :tournament-id="tId"
+          :role="role"
+          @create-team="openTeamCreate"
+          @edit-team="openTeamEdit"
+          @open-players="openPlayers"
         />
       </q-tab-panel>
 
@@ -106,15 +127,27 @@
       :can-approve="role === 'admin' || role === 'manager'"
       @submit="submitEvent"
     />
+
+    <!-- DIALOGS EQUIPOS/JUGADORES -->
+    <TeamFormDialog
+      v-model="showTeamForm"
+      :tournament-id="tId"
+      :model-value2="teamModel"
+      @saved="afterTeamSaved"
+    />
+    <PlayersDialog
+      v-model="showPlayers"
+      :tournament-id="tId"
+      :team="currentTeam"
+      :role="role"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
-// Padre “ligero”: maneja solo tabs, carga de equipos para diálogos y coordinación.
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Notify } from 'quasar'
-import { defineAsyncComponent } from 'vue'
 
 import { useDatabaseStore } from '@/stores/database'
 import { listTeamsByTournament } from '@/services/teamService'
@@ -122,12 +155,16 @@ import { useEventStore } from '@/stores/events'
 import { confirmResult, setMatchScore } from '@/services/matchService'
 
 import type { Match, MatchEvent, MatchPhase } from '@/types/competition'
+import type { Team } from '@/types/auth'
 
-// Lazy components
-const SchedulePanel  = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
+/* Lazy components */
+const SchedulePanel   = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
+const TeamsPanel      = defineAsyncComponent(() => import('./TournamentDetail/panels/TeamsPanel.vue'))
 const MatchFormDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/MatchFormDialog.vue'))
 const ResultsDialog   = defineAsyncComponent(() => import('./TournamentDetail/dialogs/ResultsDialog.vue'))
 const EventDialog     = defineAsyncComponent(() => import('./TournamentDetail/dialogs/EventDialog.vue'))
+const TeamFormDialog  = defineAsyncComponent(() => import('./TournamentDetail/dialogs/TeamFormDialog.vue'))
+const PlayersDialog   = defineAsyncComponent(() => import('./TournamentDetail/dialogs/PlayersDialog.vue'))
 
 type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
 interface TeamMin { id: string; name: string }
@@ -141,24 +178,23 @@ interface MatchFormModel {
   homeTeamId: string
   awayTeamId: string
   notes?: string
+  id?: string
 }
 
 const route = useRoute()
 const router = useRouter()
 const tId = route.params.id as string
 
-const tab = ref<'schedule'|'standings'|'leaders'>('schedule')
+const tab = ref<'schedule'|'teams'|'standings'|'leaders'>('schedule')
 
-// Stores usados por callbacks de diálogos
 const eStore = useEventStore()
 const database = useDatabaseStore()
 
-// permisos
 const role = computed<Role>(() => database.userData?.role)
 const canCreateMatch = computed<boolean>(() => role.value === 'admin' || role.value === 'manager')
 const canEditMatch   = canCreateMatch
 
-// equipos (para diálogos)
+/* Equipos mínimos para selects/diálogos de partidos */
 const teams = ref<TeamMin[]>([])
 async function loadTeams (): Promise<void> {
   try {
@@ -170,25 +206,29 @@ async function loadTeams (): Promise<void> {
   }
 }
 
-// PANEL ref (para pedir refetch tras guardar/confirmar)
+/* Refs a paneles para refrescar */
 const scheduleRef = ref<{ refetch: () => Promise<void> } | null>(null)
+const teamRef     = ref<{ refetch: () => Promise<void> } | null>(null)
 
-// Diálogos y modelos
+/* Diálogos Partidos */
 const showMatchForm = ref(false)
 const matchModel    = ref<MatchFormModel | null>(null)
-
 const showResults   = ref(false)
 const resultsMatch  = ref<Match | null>(null)
-
 const showEvent     = ref(false)
 
-// Header actions
+/* Diálogos Equipos/Jugadores */
+const showTeamForm  = ref(false)
+const teamModel     = ref<Partial<Team> | null>(null)
+const showPlayers   = ref(false)
+const currentTeam   = ref<Team | null>(null)
+
+/* Header actions (partidos) */
 function openMatchCreate() {
   matchModel.value = null
   showMatchForm.value = true
 }
 function openMatchEdit(m: Match) {
-  // NOTE: trasladamos conversión/normalización al diálogo; aquí solo pasamos el Match crudo.
   matchModel.value = {
     tournamentId: m.tournamentId,
     round: String(m.round),
@@ -198,31 +238,43 @@ function openMatchEdit(m: Match) {
     awayTeamId: m.awayTeamId,
     ...(m.field ?   { field: m.field } : {}),
     ...(m.referee ? { referee: m.referee } : {}),
-    ...(m.notes ?   { notes: m.notes } : {})
+    ...(m.notes ?   { notes: m.notes } : {}),
+    id: m.id
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(matchModel.value as any).id = m.id // para que el diálogo sepa si es edición
   showMatchForm.value = true
 }
 function openResults(m: Match) {
   resultsMatch.value = m
   showResults.value = true
 }
-function openEventDialog() {
-  showEvent.value = true
+function openEventDialog() { showEvent.value = true }
+
+/* Actions Equipos/Jugadores */
+function openTeamCreate() {
+  teamModel.value = null
+  showTeamForm.value = true
+}
+function openTeamEdit(t: Team) {
+  teamModel.value = { ...t }
+  showTeamForm.value = true
+}
+function openPlayers(t: Team) {
+  currentTeam.value = t
+  showPlayers.value = true
 }
 
-function goBack() {
-  router.back()
-}
-
-// Diálogo: post-guardado de partido
+/* Callbacks post‑save */
 async function afterMatchSaved() {
   showMatchForm.value = false
   await scheduleRef.value?.refetch()
 }
+async function afterTeamSaved() {
+  showTeamForm.value = false
+  await teamRef.value?.refetch()
+  await loadTeams() // mantener sincronizado el selector de partidos
+}
 
-// Confirmar marcador final (igual que en tu componente original)
+/* Confirmar marcador final */
 async function onConfirm(score: { home: number; away: number }): Promise<void> {
   if (!resultsMatch.value) return
   const by: 'admin' | 'manager' = role.value === 'admin' ? 'admin' : 'manager'
@@ -239,7 +291,7 @@ async function onConfirm(score: { home: number; away: number }): Promise<void> {
   }
 }
 
-// Envío de evento (igual, con saneo de opcionales)
+/* Envío de evento */
 async function submitEvent(
   payload: Omit<MatchEvent, 'id' | 'createdAt' | 'status'> & { status?: 'proposed' | 'approved' }
 ): Promise<void> {
@@ -282,7 +334,8 @@ async function removeEv(id: string): Promise<void> {
   await eStore.remove(id, resultsMatch.value.id)
 }
 
-// bootstrap
+function goBack() { router.back() }
+
 onMounted(async () => {
   await loadTeams()
 })
