@@ -92,7 +92,7 @@ export const usePlayerStore = defineStore('players', {
     /**
      * Cambia el capitán del equipo (garantiza unicidad):
      * - Degrada capitán actual -> role: 'player'
-     * - Promueve nuevo -> role: 'captain'
+     * - Promueve nuevo -> role: 'team'
      * - Actualiza team.captainId
      */
     async setCaptain(teamId: string, newCaptainId: string | null) {

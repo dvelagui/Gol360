@@ -27,6 +27,7 @@
                   {{ p.displayName }}
                   <q-badge v-if="p.role==='team'" color="warning" class="q-ml-sm">Capitán</q-badge>
                 </q-item-label>
+
                 <q-item-label caption>
                   {{ p.position || '—' }} · {{ p.jersey ? ('#'+p.jersey) : 's/n' }}
                 </q-item-label>

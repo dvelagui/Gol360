@@ -51,11 +51,11 @@ export async function listPlayersByTeam(teamId: string): Promise<Player[]> {
 
 /**
  * (Compatibilidad) Promueve a capitán UN jugador (no maneja el anterior ni el team)
- * Nota: Mantengo el nombre que ya usabas pero ajusto el rol a 'captain'
+ * Nota: Mantengo el nombre que ya usabas pero ajusto el rol a 'team'
  */
 export async function promoteToCaptain(playerId: string): Promise<void> {
   await updateDoc(doc(colPlayers, playerId), {
-    role: 'captain',
+    role: 'team',
     updatedAt: serverTimestamp()
   } as any)
 }
@@ -63,13 +63,13 @@ export async function promoteToCaptain(playerId: string): Promise<void> {
 /**
  * Cambia el capitán del equipo garantizando unicidad:
  * - Degrada al capitán actual (si existe) -> role: 'player'
- * - Promueve al nuevo (si newCaptainId no es null) -> role: 'captain'
+ * - Promueve al nuevo (si newCaptainId no es null) -> role: 'team'
  * - Actualiza el team.captainId con el nuevo (o null)
  */
 export async function setCaptain(teamId: string, newCaptainId: string | null): Promise<void> {
   // 1) Buscar capitán actual (si lo hay)
   const currentCapSnap = await getDocs(
-    query(colPlayers, where('teamId', '==', teamId), where('role', '==', 'captain'))
+    query(colPlayers, where('teamId', '==', teamId), where('role', '==', 'team'))
   )
 
   // 2) Degradar capitán actual a 'player'
@@ -85,7 +85,7 @@ export async function setCaptain(teamId: string, newCaptainId: string | null): P
   // 3) Promover nuevo capitán (si aplica)
   if (newCaptainId) {
     await updateDoc(doc(colPlayers, newCaptainId), {
-      role: 'captain',
+      role: 'team',
       updatedAt: serverTimestamp()
     } as any)
   }
