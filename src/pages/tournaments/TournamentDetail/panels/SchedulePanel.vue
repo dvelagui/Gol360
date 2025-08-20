@@ -40,15 +40,17 @@ import { useMatchStore } from '@/stores/matches'
 import { listTeamsByTournament } from '@/services/teamService'
 import type { MatchPhase, MatchStatus, MatchPhaseOption, MatchStatusOption } from '@/types/competition'
 import type { Team } from '@/types/auth'
+import type { Match } from '@/types/competition'
 import { Notify } from 'quasar'
 
 const props = defineProps<{
   tournamentId: string
   role?: 'admin' | 'manager' | 'team' | 'player'
 }>()
-const emit = defineEmits<{
-  (e: 'edit', m: any): void
-  (e: 'results', m: any): void
+
+defineEmits<{
+  (e: 'edit', m: Match): void
+  (e: 'results', m: Match): void
 }>()
 
 const store = useMatchStore()
@@ -84,7 +86,7 @@ async function fetchNow() {
     ...(status.value ? { status: status.value } : {}),
     ...(phase.value ? { phase: phase.value } : {})
   }
-  await store.fetch(props.tournamentId, filters as any)
+  await store.fetch(props.tournamentId, filters)
 }
 defineExpose({ refetch: fetchNow }) // ← el padre puede pedir un refresh
 
