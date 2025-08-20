@@ -32,7 +32,7 @@ export const usePlayerStore = defineStore('players', {
 
   actions: {
     /** Carga jugadores de un equipo */
-    async fetch(teamId: string) {
+    async fetchByTeam(teamId: string): Promise<void>  {
       this.loading = true
       this.error = null
       try {
@@ -43,6 +43,9 @@ export const usePlayerStore = defineStore('players', {
       } finally {
         this.loading = false
       }
+    },
+     async fetch(teamId: string): Promise<void> {
+      return this.fetchByTeam(teamId)
     },
 
     /** Crea jugador y refresca la lista del equipo */

@@ -43,8 +43,8 @@ export async function getPlayer(id: string): Promise<Player | null> {
  * Lista jugadores de un equipo (ordenados por nombre si existe el campo)
  */
 export async function listPlayersByTeam(teamId: string): Promise<Player[]> {
-  // Si no tienes índice por name, puedes quitar el orderBy
-  const q: Query = query(colPlayers, where('teamId', '==', teamId), orderBy('name', 'asc'))
+  // Si no tienes índice por displayName, puedes quitar el orderBy
+  const q: Query = query(colPlayers, where('teamId', '==', teamId), orderBy('displayName', 'asc'))
   const snaps = await getDocs(q)
   return snaps.docs.map(d => ({ id: d.id, ...d.data() } as Player))
 }

@@ -162,10 +162,10 @@ async function makeCaptain(playerId: string) {
 }
 
 watch(() => props.team?.id, async (id) => {
-  if (model.value && id) await store.fetch(id)
+  if (model.value && id) await store.fetchByTeam(id)
 })
 
 onMounted(async () => {
-  if (model.value && props.team?.id) await store.fetch(props.team.id)
+  if (model.value && props.team?.id) await store.fetchByTeam(props.team.id)
 })
 </script>
