@@ -24,7 +24,7 @@ import { computed } from 'vue'
 import MatchForm from '@/components/tournaments/MatchForm.vue'
 import { useMatchStore } from '@/stores/matches'
 import type { Match, MatchPhase } from '@/types/competition'
-import type { QSelectOption } from 'quasar' // opcional si lo usas en el form
+//import type { QSelectOption } from 'quasar' // opcional si lo usas en el form
 
 // Props & v-model
 const props = defineProps<{
@@ -87,10 +87,13 @@ async function onSave(modelForm: {
         homeTeamId: modelForm.homeTeamId,
         awayTeamId: modelForm.awayTeamId,
         notes: modelForm.notes
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
     }
     emit('saved')
   } catch (e) {
+    console.log(e);
+
     // El padre muestra feedback tras saved→refetch; aquí solo cerramos
   } finally {
     model.value = false
