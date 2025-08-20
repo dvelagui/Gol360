@@ -139,7 +139,7 @@
       v-model="showPlayers"
       :tournament-id="tId"
       :team="currentTeam"
-      :role="role"
+      v-bind="role !== undefined ? { role } : {}"
     />
   </q-page>
 </template>
