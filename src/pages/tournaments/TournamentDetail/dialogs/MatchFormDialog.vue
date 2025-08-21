@@ -75,6 +75,8 @@ async function onSave(modelForm: {
         ...(modelForm.referee ? { referee: modelForm.referee } : {}),
         ...(modelForm.notes ?   { notes: modelForm.notes }     : {})
       }
+      console.log('Actualizando partido:', patch);
+
       await store.update(formModel.value.id, patch)
     } else {
       await store.create({
@@ -89,6 +91,18 @@ async function onSave(modelForm: {
         notes: modelForm.notes
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
+      console.log('Creando partido:', {
+        tournamentId: props.tournamentId,
+        round: modelForm.round,
+        phase: modelForm.phase,
+        dateISO: modelForm.dateISO,
+        field: modelForm.field,
+        referee: modelForm.referee,
+        homeTeamId: modelForm.homeTeamId,
+        awayTeamId: modelForm.awayTeamId,
+        notes: modelForm.notes
+      })
+
     }
     emit('saved')
   } catch (e) {
