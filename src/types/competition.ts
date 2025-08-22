@@ -22,8 +22,8 @@ export interface Match {
   phase: MatchPhase
   date: number // timestamp ms
   field: string
-  homeTeamId: string
-  awayTeamId: string
+  homeTeamId: { id: string; name: string }
+  awayTeamId: { id: string; name: string }
   referee?: string
   status: MatchStatus
   score: { home: number; away: number }

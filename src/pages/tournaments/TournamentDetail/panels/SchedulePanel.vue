@@ -15,7 +15,7 @@
     </div>
 
     <div v-else class="grid q-col-gutter-md" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
-      <MatchCard v-for="m in store.items" :key="m.id" :match="m" :team-by-id="teamById">
+      <MatchCard v-for="m in store.items" :key="m.id" :match="m" :team-home="m.homeTeamId" :team-away="m.awayTeamId">
         <template #actions>
           <div class="row q-gutter-sm q-mt-sm">
             <q-btn dense flat icon="summarize" color="primary" label="Resultados" @click="$emit('results', m)" />
@@ -75,10 +75,6 @@ const canEdit = computed(() => props.role === 'admin' || props.role === 'manager
 
 // cache equipos mínimos para tarjetas
 const teams = ref<Array<Pick<Team, 'id' | 'displayName'>>>([])
-function teamById(id: string) {
-  const t = teams.value.find(t => t.id === id)
-  return t ? { id: t.id, name: t.displayName } : undefined
-}
 
 // fetch inicial
 async function fetchNow() {

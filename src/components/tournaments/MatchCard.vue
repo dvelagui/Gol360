@@ -30,11 +30,15 @@ import type { Match } from '@/types/competition'
 
 const props = defineProps<{
   match: Match
-  teamById: (id: string) => { id: string; name: string } | undefined
+  teamHome: { id: string; name: string }
+  teamAway: { id: string; name: string }
 }>()
 
-const home = computed(() => props.teamById(props.match.homeTeamId)?.name || '—')
-const away = computed(() => props.teamById(props.match.awayTeamId)?.name || '—')
+const home = computed(() => props.teamHome.name || '—')
+const away = computed(() => props.teamAway.name || '—')
 const dt   = computed(() => new Date(props.match.date).toLocaleString())
+
+
+
 </script>
 
