@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import type { Player } from '@/types/auth'
 import {
   listPlayersByTeam,
+  getPlayer,
   createPlayer,
   updatePlayer,
   removePlayer,
@@ -48,6 +49,10 @@ export const usePlayerStore = defineStore('players', {
     },
      async fetch(teamId: string): Promise<void> {
       return this.fetchByTeam(teamId)
+    },
+    async fetchById(id: string): Promise<Player | null> {
+      const playerById =  await getPlayer(id)
+      return playerById
     },
 
     /** Crea jugador y refresca la lista del equipo */

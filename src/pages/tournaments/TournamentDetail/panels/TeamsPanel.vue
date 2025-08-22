@@ -29,7 +29,7 @@
             <div class="text-caption text-grey-7">
               {{ t.city || '—' }} <span v-if="t.group">· Grupo {{ t.group }}</span>
             </div>
-            <div class="text-caption" v-if="t.captainId">Capitán: {{ t.captainId }}</div>
+            <div class="text-caption" v-if="t.captainId">Capitán: <span v-if="captainNames[t.captainId]">{{ captainNames[t.captainId] }}</span><span v-else>—</span></div>
           </div>
         </div>
 
@@ -54,6 +54,7 @@ import { onMounted, defineExpose, computed } from 'vue'
 import { useTeamStore } from '@/stores/teams'
 import { Notify } from 'quasar'
 import type { Team } from '@/types/auth' // Make sure this path and type name match your project
+import { usePlayerStore } from '@/stores/players'
 
 const props = defineProps<{
   tournamentId: string
@@ -73,6 +74,26 @@ async function fetchNow() { await store.fetch(props.tournamentId) }
 defineExpose({ refetch: fetchNow })
 
 onMounted(fetchNow)
+
+const playerStore = usePlayerStore()
+
+import { ref, watch } from 'vue'
+const captainNames = ref<Record<string, string>>({})
+
+watch(
+  () => store.items.map(t => t.captainId),
+  async (captainIds) => {
+    for (const id of captainIds) {
+      if (id && !captainNames.value[id]) {
+        const player = await playerStore.fetchById(id)
+        captainNames.value[id] = player ? player.displayName : '—'
+      }
+    }
+  },
+  { immediate: true }
+)
+
+
 
 async function onRemove(id: string) {
   try {
