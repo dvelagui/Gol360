@@ -49,7 +49,7 @@ export function computeScoreFromEvents(events: MatchEvent[], homeTeamId: string,
     if (e.type === 'gol' || e.type === 'penalti_marcado' || e.type === 'autogol') {
       // autogol suma al rival
       const creditTo = e.type === 'autogol'
-        ? (e.teamId === homeTeamId ? awayTeamId : homeTeamId)
+        ? (e.teamId.id === homeTeamId ? awayTeamId : homeTeamId)
         : e.teamId
       if (creditTo === homeTeamId) home++
       if (creditTo === awayTeamId) away++

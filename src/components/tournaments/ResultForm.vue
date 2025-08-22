@@ -42,7 +42,7 @@
       <q-timeline-entry
         v-for="ev in eStore.items"
         :key="ev.id"
-        :title="teamName(ev.teamId)"
+        :title="teamName(ev.teamId.id)"
         :subtitle="`Min ${ev.minute}${ev.extraTime ? '+'+ev.extraTime : ''}`"
         :icon="ev.type === 'gol' || ev.type==='penalti_marcado' || ev.type==='autogol' ? 'sports_soccer' :
                ev.type === 'amarilla' ? 'square' :
