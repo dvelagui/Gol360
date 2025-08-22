@@ -2,7 +2,7 @@
   <q-form @submit.prevent="submit" class="q-gutter-sm">
     <div class="row q-col-gutter-sm">
       <div class="col-12 col-sm-4">
-        <q-select v-model="form.teamId" :options="optionsTeam" option-value="id" option-label="name" label="Equipo" dense filled />
+        <q-select v-model="form.teamId" :options="optionsTeam" label="Equipo" dense filled />
       </div>
       <div class="col-12 col-sm-4">
         <q-select v-model="form.playerId" :options="players" option-value="id" option-label="name" label="Jugador (opcional)" dense filled clearable />
@@ -34,9 +34,11 @@
 </template>
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import type { EventType } from '@/types/competition'
 import { useUserStore } from '@/stores/user'
+
+import { usePlayerStore } from '@/stores/players'
 
 const props = defineProps<{
   matchId: string
@@ -53,28 +55,46 @@ const emit = defineEmits<{
   (e: 'submit', payload: any): void
 }>()
 
-const optionsTeam = computed(() => [
-  { label: props.teamHome.name, value: props.teamHome.id },
-  { label: props.teamAway.name, value: props.teamAway.id }
-])
+const optionsTeam = [
+  { label: props.teamHome.name, id: props.teamHome.id },
+  { label: props.teamAway.name, id: props.teamAway.id },
+]
 
 const typeOptions: EventType[] = [
   'gol', 'asistencia', 'autogol', 'amarilla', 'roja', 'penalti_marcado', 'penalti_fallado', 'sub_id', 'sub_out'
 ]
 
 const form = ref({
-  teamId: props.defaultTeamId || '',
+  teamId: { id: props.defaultTeamId || '', name: '' },
   playerId: '',
-  type: 'goal' as EventType,
+  type: 'gol' as EventType,
   minute: 0,
   extraTime: null as number | null,
   metaDescription: '',
-  status: 'proposed' as 'proposed'|'approved'
+  status: 'propuesto' as 'propuesto'|'aprobado'
 })
 
 const userStore = useUserStore()
 const canSetApproved = computed(() => !!props.canApprove)
-const players = computed(() => props.playersByTeam ? props.playersByTeam(form.value.teamId) : [])
+
+
+// Store de jugadores y lista reactiva para el select
+const playerStore = usePlayerStore()
+const players = ref<{ id: string; name: string }[]>([])
+
+// Cargar jugadores cuando cambia el equipo seleccionado
+watch(() => form.value.teamId, async (teamId) => {
+  if (teamId) {
+    console.log('formulario', teamId)
+
+    await playerStore.fetchByTeam(teamId.id)
+    players.value = playerStore.items.map(p => ({ id: p.id, name: p.displayName }))
+  } else {
+    players.value = []
+  }
+}, { immediate: true })
+
+
 
 function submit () {
   const payload = {
@@ -95,6 +115,11 @@ function submit () {
   form.value.extraTime = null
   form.value.metaDescription = ''
 }
+
+onMounted(() => {
+  console.log(props.playersByTeam);
+
+})
 </script>
 
 

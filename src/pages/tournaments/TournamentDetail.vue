@@ -300,7 +300,14 @@ async function submitEvent(
       matchId: payload.matchId,
       tournamentId: payload.tournamentId,
       teamId: payload.teamId,
-      playerId: payload.playerId ?? null,
+      ...(payload.playerId
+        ? {
+            playerId:
+              typeof payload.playerId === 'object'
+                ? payload.playerId
+                : { id: payload.playerId, name: '' }
+          }
+        : {}),
       type: payload.type,
       minute: typeof payload.minute === 'number' ? payload.minute : 0,
       createdBy: payload.createdBy

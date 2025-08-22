@@ -51,7 +51,7 @@
       >
         <div class="text-body2">
           <b>{{ ev.type }}</b>
-          <span v-if="ev.playerId"> — #{{ ev.playerId }}</span>
+          <span v-if="ev.playerId"> — {{ ev.playerId.name }}</span>
         </div>
         <div class="text-caption text-grey-7" v-if="ev.meta?.description">{{ ev.meta.description }}</div>
 
@@ -94,12 +94,6 @@ const awayName = computed(() => props.teamAway.name)
 const home = ref(props.match.score.home)
 const away = ref(props.match.score.away)
 
-onMounted(() => {
-  console.log(props.teams);
-  home.value = props.match.score.home
-  away.value = props.match.score.away
-  console.log(home.value, away.value);
-})
 onMounted(() => eStore.fetch(props.match.id))
 
 const approvedScore = computed(() => computeScoreFromEvents(eStore.items, props.teamHome.id, props.teamAway.id))

@@ -38,7 +38,7 @@ export interface MatchEvent {
   matchId: string
   tournamentId: string
   teamId: string
-  playerId?: string | null
+  playerId?: { id: string; name: string }
   type: EventType
   minute: number
   extraTime?: number | null
