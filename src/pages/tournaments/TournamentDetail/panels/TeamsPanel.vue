@@ -80,7 +80,7 @@ async function onRemove(id: string) {
     Notify.create({ type: 'positive', message: 'Equipo eliminado' })
     await fetchNow()
   } catch (e: unknown) {
-    Notify.create({ type: 'negative', message: `No se pudo eliminar el equipo: {${e}}` })
+    Notify.create({ type: 'negative', message: `No se pudo eliminar el equipo: {${String(e)}}` })
   }
 }
 </script>
