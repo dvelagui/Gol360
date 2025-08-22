@@ -75,6 +75,8 @@ const props = defineProps<{
   teams: { id: string; name: string }[]
   canEdit: boolean      // admin/manager
   canPropose: boolean   // captain
+  teamHome: { id: string; name: string }
+  teamAway: { id: string; name: string }
 }>()
 
 const emit = defineEmits<{
@@ -86,15 +88,21 @@ const emit = defineEmits<{
 }>()
 
 const eStore = useEventStore()
-const homeName = computed(() => props.teams.find(t => t.id === props.match.homeTeamId)?.name || 'Local')
-const awayName = computed(() => props.teams.find(t => t.id === props.match.awayTeamId)?.name || 'Visitante')
+const homeName = computed(() => props.teamHome.name)
+const awayName = computed(() => props.teamAway.name)
 
 const home = ref(props.match.score.home)
 const away = ref(props.match.score.away)
 
+onMounted(() => {
+  console.log(props.teams);
+  home.value = props.match.score.home
+  away.value = props.match.score.away
+  console.log(home.value, away.value);
+})
 onMounted(() => eStore.fetch(props.match.id))
 
-const approvedScore = computed(() => computeScoreFromEvents(eStore.items, props.match.homeTeamId, props.match.awayTeamId))
+const approvedScore = computed(() => computeScoreFromEvents(eStore.items, props.teamHome.id, props.teamAway.id))
 
 function confirmFinal () {
   if (!props.canEdit) return

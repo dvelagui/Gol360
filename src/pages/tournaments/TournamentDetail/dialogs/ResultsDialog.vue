@@ -10,6 +10,8 @@
         <ResultsForm
           :match="match"
           :teams="teams"
+          :team-home="match.homeTeamId"
+          :team-away="match.awayTeamId"
           :can-edit="canEdit"
           :can-propose="canPropose"
           @confirm="(s) => $emit('confirm', s)"
