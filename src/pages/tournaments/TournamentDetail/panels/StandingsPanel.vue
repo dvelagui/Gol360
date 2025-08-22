@@ -188,7 +188,7 @@ function computeStandings(matches: Match[]): Row[] {
 
   for (const m of matches) {
     // Ignora los no finalizados
-    if (m.status !== 'finished') continue
+    if (m.status !== 'terminado') continue
 
     const home = ensure(typeof m.homeTeamId === 'string' ? m.homeTeamId : m.homeTeamId.id)
     const away = ensure(typeof m.awayTeamId === 'string' ? m.awayTeamId : m.awayTeamId.id)
@@ -226,8 +226,8 @@ async function refetch() {
   loading.value = true
   try {
     // Carga solo partidos finalizados; si tu store no filtra por status, filtra aquí después
-    await store.fetch(props.tournamentId, { status: 'finished' })
-    const finals = store.items.filter(m => m.status === 'finished')
+    await store.fetch(props.tournamentId, { status: 'terminado' })
+    const finals = store.items.filter(m => m.status === 'terminado')
     rows.value = computeStandings(finals)
 
     // Cargar equipos para nombres/grupos/escudos

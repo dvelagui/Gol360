@@ -2,7 +2,7 @@
   <q-card bordered class="q-pa-md">
     <div class="row items-center justify-between">
       <div class="text-caption text-grey-7">{{ dt }}</div>
-      <q-badge :color="match.status === 'scheduled' ? 'info' : match.status === 'finished' ? 'positive' : 'warning'">
+      <q-badge :color="match.status === 'programado' ? 'info' : match.status === 'terminado' ? 'positive' : 'warning'">
         {{ match.status }}
       </q-badge>
     </div>

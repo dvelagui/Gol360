@@ -78,7 +78,7 @@ export async function createMatch(
     homeTeamId: payload.homeTeamId,
     awayTeamId: payload.awayTeamId,
     referee: payload.referee ?? '',
-    status: 'scheduled',
+    status: 'programado',
     score: { home: 0, away: 0 },
     confirmedBy: null,
     notes: payload.notes ?? '',
@@ -113,7 +113,7 @@ export async function confirmResult(
   by: 'manager' | 'admin',
   score?: { home: number; away: number }
 ): Promise<void> {
-  const patch: Partial<Match> = { status: 'finished', confirmedBy: by }
+  const patch: Partial<Match> = { status: 'terminado', confirmedBy: by }
   if (score) patch.score = score
   await updateMatch(id, patch)
 }

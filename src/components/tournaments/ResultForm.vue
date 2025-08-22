@@ -2,7 +2,7 @@
   <div class="q-gutter-md">
     <div class="row items-center justify-between">
       <div class="text-subtitle1">Resultado</div>
-      <q-badge v-if="props.match.status==='finished'" color="positive" label="Finalizado" />
+      <q-badge v-if="props.match.status === 'terminado'" color="positive" label="Finalizado" />
     </div>
 
     <div class="row items-center q-col-gutter-md">

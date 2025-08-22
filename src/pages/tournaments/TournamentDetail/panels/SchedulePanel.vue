@@ -57,16 +57,16 @@ const store = useMatchStore()
 const status = ref<MatchStatus | null>(null)
 const phase = ref<MatchPhase | null>(null)
 const statusOptions: MatchStatusOption[] = [
-  { label: 'Programado', value: 'scheduled' },
-  { label: 'En Progreso', value: 'in_progress' },
-  { label: 'Finalizado', value: 'finished' },
-  { label: 'Cancelado', value: 'canceled' },
+  { label: 'Programado', value: 'programado' },
+  { label: 'En Progreso', value: 'en progreso' },
+  { label: 'Finalizado', value: 'terminado' },
+  { label: 'Cancelado', value: 'cancelado' },
   { label: 'WO', value: 'walkover' }
 ]
 
 const phaseOptions: MatchPhaseOption[] = [
-  { label: 'Fase Grupal', value: 'regular' },
-  { label: 'Eliminatorias', value: 'playoff' },
+  { label: 'Fase Grupal', value: 'grupos' },
+  { label: 'Eliminatorias', value: 'eliminatoria' },
   { label: 'Semifinal', value: 'semifinal' },
   { label: 'Final', value: 'final' }
 ]

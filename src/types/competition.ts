@@ -1,5 +1,5 @@
-export type MatchStatus = 'scheduled' | 'in_progress' | 'finished' | 'canceled' | 'walkover'
-export type MatchPhase  = 'regular' | 'playoff' | 'semifinal' | 'final'
+export type MatchStatus = 'programado'|'en progreso'|'terminado'|'cancelado'|'walkover'
+export type MatchPhase  = 'grupos' | 'eliminatoria' | 'semifinal' | 'final'
 
 export interface SelectOption<T> {
   label: string
