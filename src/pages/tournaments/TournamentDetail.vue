@@ -8,30 +8,19 @@
       </div>
 
       <div class="row q-gutter-sm">
-        <q-btn
-          v-if="canCreateMatch"
-          color="primary"
-          icon="event"
-          label="Nuevo partido"
-          @click="openMatchCreate"
-        />
+        <q-btn v-if="canCreateMatch" color="primary" icon="event" label="Nuevo partido" @click="openMatchCreate" />
         <q-btn flat icon="arrow_back" label="Volver" @click="goBack" />
       </div>
     </div>
 
     <!-- Tabs -->
-    <q-tabs
-      v-model="tab"
-      class="bg-transparent text-primary"
-      active-color="primary"
-      indicator-color="primary"
-      align="left"
-      narrow-indicator
-    >
+    <q-tabs v-model="tab" class="bg-transparent text-primary" active-color="primary" indicator-color="primary"
+      align="left" narrow-indicator>
       <q-tab name="schedule" label="Programación" icon="calendar_month" />
-      <q-tab name="teams"    label="Equipos"      icon="groups" />
+      <q-tab name="teams" label="Equipos" icon="groups" />
+      <q-tab name="players" label="Jugadores" icon="sports_soccer" />
       <q-tab name="standings" label="Tabla" icon="leaderboard" />
-      <q-tab name="leaders"   label="Rankings" icon="emoji_events" />
+      <q-tab name="leaders" label="Rankings" icon="emoji_events" />
     </q-tabs>
 
     <q-separator class="q-mb-md" />
@@ -39,33 +28,21 @@
     <q-tab-panels v-model="tab" animated swipeable>
       <!-- PROGRAMACIÓN -->
       <q-tab-panel name="schedule" class="q-pa-none">
-        <SchedulePanel
-          ref="scheduleRef"
-          :tournament-id="tId"
-          v-if="role"
-          :role="role"
-          @edit="openMatchEdit"
-          @results="openResults"
-        />
-        <SchedulePanel
-          ref="scheduleRef"
-          :tournament-id="tId"
-          v-else
-          @edit="openMatchEdit"
-          @results="openResults"
-        />
+        <SchedulePanel ref="scheduleRef" :tournament-id="tId" v-if="role" :role="role" @edit="openMatchEdit"
+          @results="openResults" />
+        <SchedulePanel ref="scheduleRef" :tournament-id="tId" v-else @edit="openMatchEdit" @results="openResults" />
       </q-tab-panel>
 
       <!-- EQUIPOS -->
       <q-tab-panel name="teams" class="q-pa-none">
-        <TeamsPanel
-          ref="teamRef"
-          :tournament-id="tId"
-          v-bind="role !== undefined ? { role } : {}"
-          @create-team="openTeamCreate"
-          @edit-team="openTeamEdit"
-          @open-players="openPlayers"
-        />
+        <TeamsPanel ref="teamRef" :tournament-id="tId" v-bind="role !== undefined ? { role } : {}"
+          @create-team="openTeamCreate" @edit-team="openTeamEdit" @open-players="openPlayers" />
+      </q-tab-panel>
+
+      <!-- JUGADORES -->
+      <q-tab-panel name="players" class="q-pa-none">
+        <PlayersPanel :tournament-id="tId" v-bind="role !== undefined ? { role } : {}"
+          @open-profile="openPlayerProfile" />
       </q-tab-panel>
 
       <!-- TABLA - placeholder -->
@@ -96,51 +73,24 @@
     </q-tab-panels>
 
     <!-- DIALOG: CREAR/EDITAR PARTIDO -->
-    <MatchFormDialog
-      v-model="showMatchForm"
-      :tournament-id="tId"
-      :teams="teams"
-      :model-value2="matchModel"
-      @saved="afterMatchSaved"
-    />
+    <MatchFormDialog v-model="showMatchForm" :tournament-id="tId" :teams="teams" :model-value2="matchModel"
+      @saved="afterMatchSaved" />
 
     <!-- DIALOG: RESULTADOS Y EVENTOS -->
-    <ResultsDialog
-      v-model="showResults"
-      :match="resultsMatch"
-      :teams="teams"
-      :can-edit="canEditMatch"
-      :can-propose="role === 'team'"
-      @confirm="onConfirm"
-      @addEvent="openEventDialog"
-      @approve="approveEv"
-      @reject="rejectEv"
-      @remove="removeEv"
-    />
+    <ResultsDialog v-model="showResults" :match="resultsMatch" :teams="teams" :can-edit="canEditMatch"
+      :can-propose="role === 'team'" @confirm="onConfirm" @addEvent="openEventDialog" @approve="approveEv"
+      @reject="rejectEv" @remove="removeEv" />
 
     <!-- DIALOG: NUEVO EVENTO -->
-    <EventDialog
-      v-model="showEvent"
-      :match="resultsMatch"
-      :tournament-id="tId"
-      :teams="teams"
-      :can-approve="role === 'admin' || role === 'manager'"
-      @submit="submitEvent"
-    />
+    <EventDialog v-model="showEvent" :match="resultsMatch" :tournament-id="tId" :teams="teams"
+      :can-approve="role === 'admin' || role === 'manager'" @submit="submitEvent" />
 
     <!-- DIALOGS EQUIPOS/JUGADORES -->
-    <TeamFormDialog
-      v-model="showTeamForm"
-      :tournament-id="tId"
-      :model-value2="teamModel"
-      @saved="afterTeamSaved"
-    />
-    <PlayersDialog
-      v-model="showPlayers"
-      :tournament-id="tId"
-      :team="currentTeam"
-      v-bind="role !== undefined ? { role } : {}"
-    />
+    <TeamFormDialog v-model="showTeamForm" :tournament-id="tId" :model-value2="teamModel" @saved="afterTeamSaved" />
+    <PlayersDialog v-model="showPlayers" :tournament-id="tId" :team="currentTeam"
+      v-bind="role !== undefined ? { role } : {}" />
+    <PlayerProfileDialog v-model="showPlayerProfile" :player-id="selectedPlayerId"
+      v-bind="role !== undefined ? { role } : {}" />
   </q-page>
 </template>
 
@@ -158,13 +108,16 @@ import type { Match, MatchEvent, MatchPhase } from '@/types/competition'
 import type { Team } from '@/types/auth'
 
 /* Lazy components */
-const SchedulePanel   = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
-const TeamsPanel      = defineAsyncComponent(() => import('./TournamentDetail/panels/TeamsPanel.vue'))
+const SchedulePanel = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
+const TeamsPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/TeamsPanel.vue'))
+const PlayersPanel        = defineAsyncComponent(() => import('./TournamentDetail/panels/PlayersPanel.vue'))
 const MatchFormDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/MatchFormDialog.vue'))
-const ResultsDialog   = defineAsyncComponent(() => import('./TournamentDetail/dialogs/ResultsDialog.vue'))
-const EventDialog     = defineAsyncComponent(() => import('./TournamentDetail/dialogs/EventDialog.vue'))
-const TeamFormDialog  = defineAsyncComponent(() => import('./TournamentDetail/dialogs/TeamFormDialog.vue'))
-const PlayersDialog   = defineAsyncComponent(() => import('./TournamentDetail/dialogs/PlayersDialog.vue'))
+const ResultsDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/ResultsDialog.vue'))
+const EventDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/EventDialog.vue'))
+const TeamFormDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/TeamFormDialog.vue'))
+const PlayersDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/PlayersDialog.vue'))
+const PlayerProfileDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/PlayerProfileDialog.vue'))
+
 
 type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
 interface TeamMin { id: string; name: string }
@@ -185,18 +138,22 @@ const route = useRoute()
 const router = useRouter()
 const tId = route.params.id as string
 
-const tab = ref<'schedule'|'teams'|'standings'|'leaders'>('schedule')
+const tab = ref<'schedule' | 'teams' | 'standings' | 'leaders'>('schedule')
 
 const eStore = useEventStore()
 const database = useDatabaseStore()
 
 const role = computed<Role>(() => database.userData?.role)
 const canCreateMatch = computed<boolean>(() => role.value === 'admin' || role.value === 'manager')
-const canEditMatch   = canCreateMatch
+const canEditMatch = canCreateMatch
+
+const showPlayerProfile = ref(false)
+const selectedPlayerId  = ref<string | null>(null)
+
 
 /* Equipos mínimos para selects/diálogos de partidos */
 const teams = ref<TeamMin[]>([])
-async function loadTeams (): Promise<void> {
+async function loadTeams(): Promise<void> {
   try {
     const list = await listTeamsByTournament(tId)
     teams.value = list.map(t => ({ id: t.id, name: t.displayName }))
@@ -208,20 +165,20 @@ async function loadTeams (): Promise<void> {
 
 /* Refs a paneles para refrescar */
 const scheduleRef = ref<{ refetch: () => Promise<void> } | null>(null)
-const teamRef     = ref<{ refetch: () => Promise<void> } | null>(null)
+const teamRef = ref<{ refetch: () => Promise<void> } | null>(null)
 
 /* Diálogos Partidos */
 const showMatchForm = ref(false)
-const matchModel    = ref<MatchFormModel | null>(null)
-const showResults   = ref(false)
-const resultsMatch  = ref<Match | null>(null)
-const showEvent     = ref(false)
+const matchModel = ref<MatchFormModel | null>(null)
+const showResults = ref(false)
+const resultsMatch = ref<Match | null>(null)
+const showEvent = ref(false)
 
 /* Diálogos Equipos/Jugadores */
-const showTeamForm  = ref(false)
-const teamModel     = ref<Partial<Team> | null>(null)
-const showPlayers   = ref(false)
-const currentTeam   = ref<Team | null>(null)
+const showTeamForm = ref(false)
+const teamModel = ref<Partial<Team> | null>(null)
+const showPlayers = ref(false)
+const currentTeam = ref<Team | null>(null)
 
 /* Header actions (partidos) */
 function openMatchCreate() {
@@ -236,9 +193,9 @@ function openMatchEdit(m: Match) {
     dateISO: new Date(m.date).toISOString().slice(0, 16),
     homeTeamId: typeof m.homeTeamId === 'object' && m.homeTeamId !== null ? m.homeTeamId.id : m.homeTeamId,
     awayTeamId: typeof m.awayTeamId === 'object' && m.awayTeamId !== null ? m.awayTeamId.id : m.awayTeamId,
-    ...(m.field ?   { field: m.field } : {}),
+    ...(m.field ? { field: m.field } : {}),
     ...(m.referee ? { referee: m.referee } : {}),
-    ...(m.notes ?   { notes: m.notes } : {}),
+    ...(m.notes ? { notes: m.notes } : {}),
     id: m.id
   }
   showMatchForm.value = true
@@ -262,6 +219,11 @@ function openPlayers(t: Team) {
   currentTeam.value = t
   showPlayers.value = true
 }
+function openPlayerProfile(id: string) {
+  selectedPlayerId.value = id
+  showPlayerProfile.value = true
+}
+
 
 /* Callbacks post‑save */
 async function afterMatchSaved() {
@@ -302,11 +264,11 @@ async function submitEvent(
       teamId: payload.teamId,
       ...(payload.playerId
         ? {
-            playerId:
-              typeof payload.playerId === 'object'
-                ? payload.playerId
-                : { id: payload.playerId, name: '' }
-          }
+          playerId:
+            typeof payload.playerId === 'object'
+              ? payload.playerId
+              : { id: payload.playerId, name: '' }
+        }
         : {}),
       type: payload.type,
       minute: typeof payload.minute === 'number' ? payload.minute : 0,
@@ -349,5 +311,7 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.rounded-borders { border-radius: 12px; }
+.rounded-borders {
+  border-radius: 12px;
+}
 </style>

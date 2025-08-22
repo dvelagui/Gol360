@@ -34,8 +34,6 @@ export const usePlayerStore = defineStore('players', {
   actions: {
     /** Carga jugadores de un equipo */
     async fetchByTeam(teamId: string): Promise<void>  {
-      console.log('Store', teamId);
-
       this.loading = true
       this.error = null
       try {
