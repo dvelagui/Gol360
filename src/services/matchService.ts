@@ -59,7 +59,7 @@ export async function createMatch(
   ctx: { uid: string }
 ): Promise<string> {
   const dateMs = new Date(payload.dateISO).getTime()
-  const id = genMatchId(payload.homeTeamId, payload.awayTeamId, dateMs)
+  const id = genMatchId(payload.homeTeamId.id, payload.awayTeamId.id, dateMs)
   const ref = coll(id)
 
   const ex = await getDoc(ref)

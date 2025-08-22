@@ -44,9 +44,9 @@
         :key="ev.id"
         :title="teamName(ev.teamId)"
         :subtitle="`Min ${ev.minute}${ev.extraTime ? '+'+ev.extraTime : ''}`"
-        :icon="ev.type === 'goal' || ev.type==='penalty_scored' || ev.type==='own_goal' ? 'sports_soccer' :
-               ev.type === 'yellow' ? 'square' :
-               ev.type === 'red' ? 'stop' : 'info'"
+        :icon="ev.type === 'gol' || ev.type==='penalti_marcado' || ev.type==='autogol' ? 'sports_soccer' :
+               ev.type === 'amarilla' ? 'square' :
+               ev.type === 'roja' ? 'stop' : 'info'"
         :color="ev.status === 'approved' ? 'positive' : ev.status === 'rejected' ? 'negative' : 'warning'"
       >
         <div class="text-body2">

@@ -10,10 +10,10 @@ export type MatchStatusOption = SelectOption<MatchStatus>
 export type MatchPhaseOption = SelectOption<MatchPhase>
 
 export type EventType =
-  | 'goal' | 'assist' | 'own_goal'
-  | 'yellow' | 'red'
-  | 'penalty_scored' | 'penalty_missed'
-  | 'sub_in' | 'sub_out'
+  | 'gol' | 'asistencia' | 'autogol'
+  | 'amarilla' | 'roja'
+  | 'penalti_marcado' | 'penalti_fallado'
+  | 'sub_id' | 'sub_out'
 
 export interface Match {
   id: string

@@ -2,7 +2,7 @@
   <q-form @submit.prevent="submit" class="q-gutter-sm">
     <div class="row q-col-gutter-sm">
       <div class="col-12 col-sm-4">
-        <q-select v-model="form.teamId" :options="teams" option-value="id" option-label="name" label="Equipo" dense filled />
+        <q-select v-model="form.teamId" :options="optionsTeam" option-value="id" option-label="name" label="Equipo" dense filled />
       </div>
       <div class="col-12 col-sm-4">
         <q-select v-model="form.playerId" :options="players" option-value="id" option-label="name" label="Jugador (opcional)" dense filled clearable />
@@ -40,6 +40,8 @@ import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{
   matchId: string
+  teamHome: { id: string; name: string }
+  teamAway: { id: string; name: string }
   tournamentId: string
   teams: { id: string; name: string }[]
   playersByTeam?: (teamId: string) => { id: string; name: string }[] // opcional
@@ -51,8 +53,13 @@ const emit = defineEmits<{
   (e: 'submit', payload: any): void
 }>()
 
+const optionsTeam = computed(() => [
+  { label: props.teamHome.name, value: props.teamHome.id },
+  { label: props.teamAway.name, value: props.teamAway.id }
+])
+
 const typeOptions: EventType[] = [
-  'goal', 'assist', 'own_goal', 'yellow', 'red', 'penalty_scored', 'penalty_missed', 'sub_in', 'sub_out'
+  'gol', 'asistencia', 'autogol', 'amarilla', 'roja', 'penalti_marcado', 'penalti_fallado', 'sub_id', 'sub_out'
 ]
 
 const form = ref({

@@ -190,8 +190,8 @@ function computeStandings(matches: Match[]): Row[] {
     // Ignora los no finalizados
     if (m.status !== 'finished') continue
 
-    const home = ensure(m.homeTeamId)
-    const away = ensure(m.awayTeamId)
+    const home = ensure(typeof m.homeTeamId === 'string' ? m.homeTeamId : m.homeTeamId.id)
+    const away = ensure(typeof m.awayTeamId === 'string' ? m.awayTeamId : m.awayTeamId.id)
 
     const gfH = m.score?.home ?? 0
     const gfA = m.score?.away ?? 0

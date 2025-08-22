@@ -69,8 +69,8 @@ async function onSave(modelForm: {
         round: modelForm.round,
         phase: modelForm.phase,
         date: new Date(modelForm.dateISO).getTime(),
-        homeTeamId: modelForm.homeTeamId,
-        awayTeamId: modelForm.awayTeamId,
+        homeTeamId: props.teams.find(t => t.id === modelForm.homeTeamId) ?? { id: modelForm.homeTeamId, name: '' },
+        awayTeamId: props.teams.find(t => t.id === modelForm.awayTeamId) ?? { id: modelForm.awayTeamId, name: '' },
         ...(modelForm.field ?   { field: modelForm.field }     : {}),
         ...(modelForm.referee ? { referee: modelForm.referee } : {}),
         ...(modelForm.notes ?   { notes: modelForm.notes }     : {})

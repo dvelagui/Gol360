@@ -9,6 +9,8 @@
       <q-card-section v-if="match">
         <MatchEventForm
           :match-id="match.id"
+          :team-home="match.homeTeamId"
+          :team-away="match.awayTeamId"
           :tournament-id="tournamentId"
           :teams="teams"
           :can-approve="canApprove"

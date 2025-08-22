@@ -46,9 +46,9 @@ export async function removeEvent(id: string) {
 export function computeScoreFromEvents(events: MatchEvent[], homeTeamId: string, awayTeamId: string) {
   let home = 0, away = 0
   for (const e of events.filter(x => x.status === 'approved')) {
-    if (e.type === 'goal' || e.type === 'penalty_scored' || e.type === 'own_goal') {
-      // own_goal suma al rival
-      const creditTo = e.type === 'own_goal'
+    if (e.type === 'gol' || e.type === 'penalti_marcado' || e.type === 'autogol') {
+      // autogol suma al rival
+      const creditTo = e.type === 'autogol'
         ? (e.teamId === homeTeamId ? awayTeamId : homeTeamId)
         : e.teamId
       if (creditTo === homeTeamId) home++
