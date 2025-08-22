@@ -44,6 +44,6 @@ export interface MatchEvent {
   extraTime?: number | null
   meta?: { description?: string; videoUrl?: string }
   createdBy: string // uid
-  status: 'proposed' | 'approved' | 'rejected'
+  status: 'propuesto' | 'aprobado' | 'rechazado'
   createdAt: number
 }

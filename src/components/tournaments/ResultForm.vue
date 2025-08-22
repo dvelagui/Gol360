@@ -47,7 +47,7 @@
         :icon="ev.type === 'gol' || ev.type==='penalti_marcado' || ev.type==='autogol' ? 'sports_soccer' :
                ev.type === 'amarilla' ? 'square' :
                ev.type === 'roja' ? 'stop' : 'info'"
-        :color="ev.status === 'approved' ? 'positive' : ev.status === 'rejected' ? 'negative' : 'warning'"
+        :color="ev.status === 'aprobado' ? 'positive' : ev.status === 'rechazado' ? 'negative' : 'warning'"
       >
         <div class="text-body2">
           <b>{{ ev.type }}</b>
@@ -56,8 +56,8 @@
         <div class="text-caption text-grey-7" v-if="ev.meta?.description">{{ ev.meta.description }}</div>
 
         <div class="row q-gutter-xs q-mt-xs" v-if="canEdit">
-          <q-btn dense flat icon="task_alt" color="positive" @click="$emit('approve', ev.id)" v-if="ev.status!=='approved'" />
-          <q-btn dense flat icon="block" color="warning" @click="$emit('reject', ev.id)" v-if="ev.status!=='rejected'" />
+          <q-btn dense flat icon="task_alt" color="positive" @click="$emit('approve', ev.id)" v-if="ev.status!=='aprobado'" />
+          <q-btn dense flat icon="block" color="warning" @click="$emit('reject', ev.id)" v-if="ev.status!=='rechazado'" />
           <q-btn dense flat icon="delete" color="negative" @click="$emit('remove', ev.id)" />
         </div>
       </q-timeline-entry>

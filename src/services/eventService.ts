@@ -45,7 +45,7 @@ export async function removeEvent(id: string) {
 /** Recalcula marcador localmente a partir de eventos aprobados */
 export function computeScoreFromEvents(events: MatchEvent[], homeTeamId: string, awayTeamId: string) {
   let home = 0, away = 0
-  for (const e of events.filter(x => x.status === 'approved')) {
+  for (const e of events.filter(x => x.status === 'aprobado')) {
     if (e.type === 'gol' || e.type === 'penalti_marcado' || e.type === 'autogol') {
       // autogol suma al rival
       const creditTo = e.type === 'autogol'
