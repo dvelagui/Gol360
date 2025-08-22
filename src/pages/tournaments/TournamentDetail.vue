@@ -45,30 +45,14 @@
           @open-profile="openPlayerProfile" />
       </q-tab-panel>
 
-      <!-- TABLA - placeholder -->
+      <!-- TABLA -->
       <q-tab-panel name="standings" class="q-pa-none">
-        <div class="q-pa-md bg-grey-1 rounded-borders">
-          <div class="text-subtitle1 q-mb-sm">Tabla de posiciones</div>
-          <div class="text-caption q-mb-md">
-            Próximo: StandingsBoard (tarjetas) + toggle a StandingsTable.
-          </div>
-          <q-banner class="bg-grey-2 text-grey-8">
-            Módulo en construcción. Aquí mostraremos puntos, PJ, DG, GF, GC por equipo.
-          </q-banner>
-        </div>
+        <StandingsPanel :tournament-id="tId" />
       </q-tab-panel>
 
-      <!-- RANKINGS - placeholder -->
+      <!-- RANKINGS --->
       <q-tab-panel name="leaders" class="q-pa-none">
-        <div class="q-pa-md bg-grey-1 rounded-borders">
-          <div class="text-subtitle1 q-mb-sm">Rankings</div>
-          <div class="text-caption q-mb-md">
-            Próximo: carruseles de Goleadores, Valla menos vencida, Disciplina, etc.
-          </div>
-          <q-banner class="bg-grey-2 text-grey-8">
-            Módulo en construcción. Mostraremos top scorers y mejores defensas.
-          </q-banner>
-        </div>
+        <RankingsPanel :tournament-id="tId" />
       </q-tab-panel>
     </q-tab-panels>
 
@@ -110,7 +94,9 @@ import type { Team } from '@/types/auth'
 /* Lazy components */
 const SchedulePanel = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
 const TeamsPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/TeamsPanel.vue'))
-const PlayersPanel        = defineAsyncComponent(() => import('./TournamentDetail/panels/PlayersPanel.vue'))
+const PlayersPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/PlayersPanel.vue'))
+const StandingsPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/StandingsPanel.vue'))
+const RankingsPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/RankingsPanel.vue'))
 const MatchFormDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/MatchFormDialog.vue'))
 const ResultsDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/ResultsDialog.vue'))
 const EventDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/EventDialog.vue'))
@@ -148,7 +134,7 @@ const canCreateMatch = computed<boolean>(() => role.value === 'admin' || role.va
 const canEditMatch = canCreateMatch
 
 const showPlayerProfile = ref(false)
-const selectedPlayerId  = ref<string | null>(null)
+const selectedPlayerId = ref<string | null>(null)
 
 
 /* Equipos mínimos para selects/diálogos de partidos */
