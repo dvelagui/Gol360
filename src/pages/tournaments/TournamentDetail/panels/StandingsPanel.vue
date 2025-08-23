@@ -1,91 +1,99 @@
 <template>
-  <div class="q-pa-md">
+  <div class="q-pa-md bg-grey-1 rounded-borders">
     <div class="row items-center q-mb-sm">
       <div class="text-subtitle1">Tabla de posiciones</div>
       <q-space />
-      <q-btn dense flat icon="refresh" @click="refetch" :loading="loading" />
-      <q-btn dense flat :icon="compact ? 'view_list' : 'table_rows'" @click="compact = !compact" />
+      <q-btn-toggle
+        v-model="viewMode"
+        toggle-color="primary"
+        rounded
+        dense
+        unelevated
+        :options="[
+          {label:'Tabla', value:'table', icon: 'table_chart'},
+          {label:'Tarjetas', value:'cards', icon: 'view_module'}
+        ]"
+      />
     </div>
 
-    <q-card flat bordered class="q-pa-sm">
-      <q-markup-table v-if="rows.length" :dense="compact" flat>
-        <thead>
-          <tr>
-            <th class="text-left">Equipo</th>
-            <th class="text-right">PJ</th>
-            <th class="text-right">G</th>
-            <th class="text-right">E</th>
-            <th class="text-right">P</th>
-            <th class="text-right">GF</th>
-            <th class="text-right">GC</th>
-            <th class="text-right">DG</th>
-            <th class="text-right">Pts</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in rows" :key="r.teamId">
-            <td class="text-left">
-              <div class="row items-center no-wrap">
-                <q-avatar size="28px" class="q-mr-sm">
-                  <q-icon name="shield" />
-                </q-avatar>
-                <div class="ellipsis">{{ r.teamName }}</div>
-              </div>
-            </td>
-            <td class="text-right">{{ r.played }}</td>
-            <td class="text-right">{{ r.won }}</td>
-            <td class="text-right">{{ r.draw }}</td>
-            <td class="text-right">{{ r.lost }}</td>
-            <td class="text-right">{{ r.goalsFor }}</td>
-            <td class="text-right">{{ r.goalsAgainst }}</td>
-            <td class="text-right">{{ r.goalDiff }}</td>
-            <td class="text-right text-weight-medium">{{ r.points }}</td>
-          </tr>
-        </tbody>
-      </q-markup-table>
+    <q-banner
+      v-if="store.loading"
+      inline-actions
+      class="bg-grey-2 text-grey-8 q-mb-md"
+    >
+      Cargando posiciones…
+      <template #action>
+        <q-spinner-dots color="primary" size="1.2em" />
+      </template>
+    </q-banner>
 
-      <q-banner v-else class="bg-grey-2 text-grey-7">
-        Aún no hay partidos finalizados para calcular la tabla.
-      </q-banner>
-    </q-card>
+    <template v-else>
+      <StandingsTable
+        v-if="viewMode === 'table'"
+        :rows="rowsView"
+      />
+      <StandingsCards
+        v-else
+        :rows="rowsView"
+      />
+      <div v-if="!rowsView.length" class="text-grey-6 q-mt-md">
+        Aún no hay posiciones para este torneo.
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import type { Match } from '@/types/competition'
-import type { Team } from '@/types/auth'
-import { computeStandings, type StandingRow } from '@/utils/standings'
-import { useMatchStore } from '@/stores/matches'
+import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
+import { useStandingStore } from '@/stores/standings'
 import { listTeamsByTournament } from '@/services/teamService'
 
-const props = defineProps<{ tournamentId: string }>()
-
-const mStore = useMatchStore()
-const loading = ref(false)
-const compact = ref(true)
-const teams = ref<{ id: string; name: string }[]>([])
-
-async function loadTeams() {
-  const list: Team[] = await listTeamsByTournament(props.tournamentId)
-  teams.value = list.map(t => ({ id: t.id, name: t.displayName }))
-}
-
-async function refetch() {
-  loading.value = true
-  try {
-    await Promise.all([mStore.fetch(props.tournamentId), loadTeams()])
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(refetch)
-
-const rows = computed<StandingRow[]>(() =>
-  computeStandings(teams.value, mStore.items as Match[])
+// ⚠️ Usa el mismo casing que ya existe en tu proyecto (Standings con S mayúscula)
+const StandingsTable = defineAsyncComponent(() =>
+  import('@/components/tournaments/Standings/StandingsTable.vue')
+)
+const StandingsCards = defineAsyncComponent(() =>
+  import('@/components/tournaments/Standings/StandingsCards.vue')
 )
 
-// método que expone al padre
-defineExpose({ refetch })
+const props = defineProps<{ tournamentId: string }>()
+const store = useStandingStore()
+
+/** Toggle: 'table' | 'cards'  */
+const viewMode = ref<'table' | 'cards'>('cards')
+
+/** Diccionario de equipo para mostrar nombre/logo en filas */
+type TeamView = { id: string; name: string; crestUrl: string | null }
+const teamsMap = ref<Record<string, TeamView>>({})
+
+onMounted(async () => {
+  await Promise.all([store.fetch(props.tournamentId), loadTeams()])
+})
+
+async function loadTeams () {
+  const list = await listTeamsByTournament(props.tournamentId)
+  teamsMap.value = Object.fromEntries(
+    list.map(t => [t.id, { id: t.id, name: t.displayName, crestUrl: t.crestUrl ?? null }])
+  ) as Record<string, TeamView>
+}
+
+/** Enriquecemos filas con nombre/logo + posición (pos) */
+const rowsView = computed(() => {
+  return store.table.map((r, idx) => {
+    const tv = teamsMap.value[r.teamId]
+    return {
+      ...r,
+      teamName: tv?.name ?? 'Equipo',
+      crestUrl: tv?.crestUrl ?? null,
+      pos: idx + 1
+    }
+  })
+})
+
+// expone por si el padre quiere refrescar
+defineExpose({ refetch: () => store.fetch(props.tournamentId) })
 </script>
+
+<style scoped>
+.rounded-borders{ border-radius: 12px; }
+</style>
