@@ -36,9 +36,9 @@
       <q-select
         v-model="form.type"
         :options="championshipOptions"
-        label="Tipo de campeonato"
         option-label="label"
         option-value="value"
+        label="Tipo de campeonato"
         emit-value
         map-options
         :rules="[req]"
@@ -190,7 +190,7 @@ const uploading = ref(false)
 const form = reactive<Partial<Tournament>>({
   displayName: '',
   city: '',
-  type: { value: undefined },
+  type: '',
   season: '',
   category: '',
   rulesUrl: '',

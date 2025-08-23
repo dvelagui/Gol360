@@ -8,13 +8,13 @@
       </div>
 
       <div class="row q-gutter-sm">
-        <q-btn v-if="canCreateMatch" color="primary" icon="event" label="Nuevo partido" @click="openMatchCreate" />
+        <q-btn v-if="canCreateMatch" color="accent" text-color="secondary" icon="event" label="Nuevo partido" @click="openMatchCreate" />
         <q-btn flat icon="arrow_back" label="Volver" @click="goBack" />
       </div>
     </div>
 
     <!-- Tabs -->
-    <q-tabs v-model="tab" class="bg-transparent text-primary" active-color="primary" indicator-color="primary"
+    <q-tabs v-model="tab" class="bg-transparent text-secondary" active-color="primary" indicator-color="primary"
       align="left" narrow-indicator>
       <q-tab name="schedule" label="Programación" icon="calendar_month" />
       <q-tab name="teams" label="Equipos" icon="groups" />

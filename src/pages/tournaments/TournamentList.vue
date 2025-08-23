@@ -55,7 +55,7 @@ async function create(payload: Record<string, unknown>) {
     tournamentId: payload.id as string || '',
     displayName: payload.displayName as string,
     city: payload.city as string,
-    type: { value: payload.type as "league" | "league_playoff" | "playoff" | undefined },
+    type: payload.type as "" | "league" | "league_playoff" | "playoff",
     startDate: payload.startDate as string,
     managerId: payload.managerId as string,
     createdBy: userStore.user?.uid || '',
