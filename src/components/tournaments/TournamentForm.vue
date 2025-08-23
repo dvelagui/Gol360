@@ -17,57 +17,23 @@
     <q-form @submit.prevent="submit" class="q-gutter-md q-pa-md">
 
       <!-- Nombre, ciudad -->
-      <q-input
-        v-model="form.displayName"
-        label="Nombre del torneo"
-        :rules="[req]"
-        filled
-        dense
-      />
-      <q-input
-        v-model="form.city"
-        label="Ciudad"
-        :rules="[req]"
-        filled
-        dense
-      />
+      <q-input v-model="form.displayName" label="Nombre del torneo" :rules="[req]" filled dense />
+      <q-input v-model="form.city" label="Ciudad" :rules="[req]" filled dense />
 
       <!-- Tipo de campeonato (con valores normalizados) -->
-      <q-select
-        v-model="form.type"
-        :options="championshipOptions"
-        option-label="label"
-        option-value="value"
-        label="Tipo de campeonato"
-        emit-value
-        map-options
-        :rules="[req]"
-        filled
-        dense
-      />
+      <q-select v-model="form.type" :options="championshipOptions" option-label="label" option-value="value"
+        label="Tipo de campeonato" emit-value map-options :rules="[req]" filled dense />
 
       <!-- Category opcional -->
-      <q-input
-        v-model="form.category"
-        label="Categoría (opcional)"
-        filled
-        dense
-      />
+      <q-input v-model="form.category" label="Categoría (opcional)" filled dense />
 
       <!-- Reglamento (archivo) opcional -->
       <div>
         <div class="text-caption q-mb-xs">Reglamento (opcional)</div>
         <div class="row items-center q-col-gutter-sm">
           <div class="col-12 col-sm-6">
-            <q-file
-              v-model="reglamentoFile"
-              label="Subir documento (PDF, DOCX)"
-              accept=".pdf,.doc,.docx"
-              filled
-              dense
-              clearable
-              @update:model-value="onFileSelected"
-            >
+            <q-file v-model="reglamentoFile" label="Subir documento (PDF, DOCX)" accept=".pdf,.doc,.docx" filled dense
+              clearable @update:model-value="onFileSelected">
               <template #prepend>
                 <q-icon name="upload_file" />
               </template>
@@ -77,12 +43,7 @@
             <span>ó</span>
           </div>
           <div class="col-12 col-sm-5">
-            <q-input
-              v-model="form.rulesUrl"
-              label="URL del reglamento"
-              filled
-              dense
-            />
+            <q-input v-model="form.rulesUrl" label="URL del reglamento" filled dense />
           </div>
         </div>
 
@@ -98,69 +59,34 @@
       </div>
 
       <!-- Descripción breve opcional -->
-      <q-input
-        v-model="form.description"
-        label="Descripción breve (opcional)"
-        type="textarea"
-        autogrow
-        filled
-        dense
-      />
+      <q-input v-model="form.description" label="Descripción breve (opcional)" type="textarea" autogrow filled dense />
 
       <!-- Número de equipos -->
-      <q-input
-        v-model.number="form.numTeams"
-        type="number"
-        label="Número de equipos"
-        :rules="[positiveInt]"
-        filled
-        dense
-      />
+      <q-input v-model.number="form.numTeams" type="number" label="Número de equipos" :rules="[positiveInt]" filled
+        dense />
 
       <!-- Fecha de inicio (opcional; déjalo si lo necesitas en tu flujo) -->
-      <q-input
-        v-model="form.startDate"
-        label="Fecha de inicio (opcional)"
-        type="date"
-        filled
-        dense
-      />
+      <q-input v-model="form.startDate" label="Fecha de inicio (opcional)" type="date" filled dense />
 
       <!-- Manager -->
-      <q-select
-        v-model="form.managerId"
-        :options="managerOptions"
-        label="Manager (organizador)"
-        emit-value
-        map-options
-        :rules="[req]"
-        filled
-        dense
-      >
+      <q-select v-model="form.managerId" :options="managerOptions" label="Manager (organizador)" emit-value map-options
+        :rules="[req]" filled dense>
         <template #after>
-          <q-btn dense color="accent" text-color="secondary" class="q-ml-sm" label="Nuevo Manager" @click="openNewManager" />
+          <q-btn dense color="accent" text-color="secondary" class="q-ml-sm" label="Nuevo Manager"
+            @click="openNewManager" />
         </template>
       </q-select>
 
       <!-- Acciones -->
       <div class="row justify-end q-gutter-sm q-mt-sm">
         <q-btn flat label="Cancelar" v-close-popup />
-        <q-btn color="accent" text-color="secondary"  label="Guardar" type="submit" :loading="saving" />
+        <q-btn color="accent" text-color="secondary" label="Guardar" type="submit" :loading="saving" />
       </div>
     </q-form>
 
     <!-- Dialog: crear manager al vuelo -->
-    <q-dialog v-model="showOrgDialog" persistent>
-      <q-card class="q-pa-md q-gutter-sm" style="min-width:340px">
-        <div class="text-subtitle1">Nuevo Manager</div>
-        <q-input v-model="org.name" label="Nombre" :rules="[req]" filled dense />
-        <q-input v-model="org.cedula" label="Cédula" :rules="[req]" filled dense />
-        <div class="row justify-end q-gutter-sm q-mt-sm">
-          <q-btn flat label="Cerrar" v-close-popup />
-          <q-btn color="primary" label="Crear" @click="createManager" />
-        </div>
-      </q-card>
-    </q-dialog>
+    <ManagerFormDialog v-model="showOrgDialog" @created="onManagerCreated" />
+
   </q-card>
 </template>
 
@@ -168,10 +94,13 @@
 import { reactive, ref, onMounted } from 'vue'
 import { Notify } from 'quasar'
 import { req, positiveInt } from '@/utils/formValidators'
-import { addDoc, getDocs } from 'firebase/firestore'
+import { getDocs } from 'firebase/firestore'
 import { colManagers } from '@/services/firestore/collections'
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import type { Tournament } from '@/types/auth'
+import { defineAsyncComponent } from 'vue'
+const ManagerFormDialog = defineAsyncComponent(() => import('@/pages/tournaments/TournamentDetail/dialogs/ManagerFormDialog.vue'))
+
 
 /** Opciones normalizadas para el tipo de campeonato */
 const championshipOptions = [
@@ -182,7 +111,7 @@ const championshipOptions = [
 
 const saving = ref(false)
 const showOrgDialog = ref(false)
-const managerOptions = ref<{label:string,value:string}[]>([])
+const managerOptions = ref<{ label: string, value: string }[]>([])
 const reglamentoFile = ref<File | null>(null)
 const uploading = ref(false)
 
@@ -200,8 +129,6 @@ const form = reactive<Partial<Tournament>>({
   managerId: ''
 })
 
-/** Mini modelo para crear Manager */
-const org = reactive({ name:'', cedula:'' })
 
 onMounted(async () => {
   const snaps = await getDocs(colManagers)
@@ -210,8 +137,12 @@ onMounted(async () => {
 
 function openNewManager() { showOrgDialog.value = true }
 
+function onManagerCreated(opt: { id: string; label: string; value: string }) {
+  managerOptions.value.push({ label: opt.label, value: opt.value })
+  form.managerId = opt.value
+}
 /** Sube archivo a Storage y setea rulesUrl */
-async function onFileSelected (file: File | File[] | null) {
+async function onFileSelected(file: File | File[] | null) {
   if (!file) return
   const f = Array.isArray(file) ? file[0] : file
   if (!f) return
@@ -234,16 +165,9 @@ async function onFileSelected (file: File | File[] | null) {
   }
 }
 
-/** Crea manager al vuelo y lo deja seleccionado */
-async function createManager() {
-  if (!org.name || !org.cedula) return
-  const ref = await addDoc(colManagers, { ...org })
-  managerOptions.value.push({ label: org.name, value: ref.id })
-  form.managerId = ref.id
-  showOrgDialog.value = false
-}
 
-const emit = defineEmits<{ (e:'submit', payload: Partial<Tournament>): void }>()
+
+const emit = defineEmits<{ (e: 'submit', payload: Partial<Tournament>): void }>()
 
 function submit() {
   saving.value = true
@@ -253,5 +177,7 @@ function submit() {
 </script>
 
 <style scoped lang="scss">
-.rounded-2xl { border-radius: 16px; }
+.rounded-2xl {
+  border-radius: 16px;
+}
 </style>
