@@ -5,8 +5,8 @@
     <q-card-section class="bg-primary text-white q-py-md">
       <div class="row items-center">
         <div class="col">
-          <div class="text-subtitle1">Registrar Torneo</div>
-          <div class="text-caption q-mt-xs">Completa los datos principales</div>
+          <div class="text-subtitle1 text-weight-bold">Registrar Torneo</div>
+          <div class="text-caption q-mt-xs" color="white">Completa los datos principales</div>
         </div>
         <q-btn dense round flat icon="close" v-close-popup class="text-white" />
       </div>
