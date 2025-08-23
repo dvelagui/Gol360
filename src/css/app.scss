@@ -3,7 +3,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600&display=swap");
 
 * {
-    font-family: "Source Sans Pro", sans-serif;
+    font-family: "Verdana", sans-serif;
     font-style: normal;
-    letter-spacing: -.01em;
+    font-weight: 500 !important;
+    letter-spacing: .01em;
+}
+.q-btn__content {
+  text-transform: none !important;
+}
+
+.q-btn {
+  border-radius: 9999px !important; 
+  font-weight: 600 !important; 
+  text-transform: none !important; 
+  padding: 0% 20px !important;
+  font-size: medium !important;
 }

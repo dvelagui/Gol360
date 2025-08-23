@@ -9,7 +9,7 @@ export interface Tournament {
   tournamentId: string;
   displayName: string;
   city: string;
-  type: string;
+  type?: { value: 'league' | 'league_playoff' | 'playoff' | undefined };
   startDate: string;
   numTeams: number;
   managerId: string;

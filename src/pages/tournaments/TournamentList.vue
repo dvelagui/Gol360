@@ -3,7 +3,7 @@
     <div class="row q-col-gutter-md">
       <div class="col-12 flex justify-between items-center q-mb-md">
         <div class="text-h5">Torneos</div>
-        <q-btn color="primary" label="Nuevo torneo" v-if="canCreate" @click="showForm=true" />
+        <q-btn color="accent" text-color="secondary" label="Nuevo torneo" v-if="canCreate" @click="showForm=true" />
       </div>
 
       <div class="col-12 row q-col-gutter-md">
@@ -55,7 +55,7 @@ async function create(payload: Record<string, unknown>) {
     tournamentId: payload.id as string || '',
     displayName: payload.displayName as string,
     city: payload.city as string,
-    type: payload.type as string,
+    type: { value: payload.type as "league" | "league_playoff" | "playoff" | undefined },
     startDate: payload.startDate as string,
     managerId: payload.managerId as string,
     createdBy: userStore.user?.uid || '',
