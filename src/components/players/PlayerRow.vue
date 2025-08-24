@@ -67,6 +67,10 @@ const props = defineProps<{
   canEdit?: boolean
 }>()
 
+const useProps =  props.displayName
+
+console.log(useProps);
+
 const fallbackAvatar = 'https://cdn.quasar.dev/img/avatar.png'
 </script>
 

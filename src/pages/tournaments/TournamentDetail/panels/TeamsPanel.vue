@@ -235,10 +235,10 @@ function openGenerateDialog() {
 /* helpers */
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice()
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i]!, a[j]!] = [a[j]!, a[i]!]
-  }
+ /*  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i]!, a[j]!] = [a[j]!, a[i]!];
+  } */
   return a
 }
 
@@ -265,14 +265,13 @@ function buildRoundRobin(ids: string[]): Array<Array<[string, string]>> {
     }
     rounds.push(pairs)
     // rotación
-    const fixed = teams[0]
     const rest = teams.slice(1)
     const popped = rest.pop()
     if (popped !== undefined) {
       rest.unshift(popped)
     }
 
-    teams.splice(0, teams.length, fixed, ...rest.filter((x): x is string => typeof x === 'string'))
+    teams.splice(0, teams.length, ...rest.filter((x): x is string => typeof x === 'string'))
   }
   return rounds
 }
