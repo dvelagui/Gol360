@@ -35,7 +35,7 @@
 
       <!-- EQUIPOS -->
       <q-tab-panel name="teams" class="q-pa-none">
-        <TeamsPanel ref="teamRef" :tournament-id="tId" v-bind="role !== undefined ? { role } : {}"
+        <TeamsPanel ref="teamRef" :tournament-id="tId" :tournament-detail="tStore.item!" v-bind="role !== undefined ? { role } : {}"
           @create-team="openTeamCreate" @edit-team="openTeamEdit" @open-players="openPlayers" />
       </q-tab-panel>
 

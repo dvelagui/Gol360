@@ -53,11 +53,14 @@
 import { onMounted, defineExpose, computed } from 'vue'
 import { useTeamStore } from '@/stores/teams'
 import { Notify } from 'quasar'
-import type { Team } from '@/types/auth' // Make sure this path and type name match your project
+import type { Team } from '@/types/auth'
+import type { Tournament } from '@/types/auth'
+
 import { usePlayerStore } from '@/stores/players'
 
 const props = defineProps<{
-  tournamentId: string
+  tournamentId: string,
+  tournamentDetail: Tournament,
   role?: 'admin' | 'manager' | 'team' | 'player'
 }>()
 
