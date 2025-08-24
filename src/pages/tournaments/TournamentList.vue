@@ -168,8 +168,18 @@ const filtered = computed(() => {
     }))
 })
 
+const detailRouteName = computed(() => {
+  const r = database.userData?.role
+  return {
+    admin:   'tournament-detail-admin',
+    manager: 'tournament-detail-manager',
+    team:    'tournament-detail-team',
+    player:  'tournament-detail-player'
+  }[r ?? 'admin']
+})
+
 function goDetail(id: string) {
-  void router.push(`/tournaments/${id}`)
+  void router.push({ name: detailRouteName.value, params: { id } })
 }
 
 async function create(payload: Record<string, unknown>) {
