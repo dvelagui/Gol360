@@ -126,7 +126,8 @@ const form = reactive<Partial<Tournament>>({
   description: '',
   numTeams: 0,
   startDate: '',
-  managerId: ''
+  managerId: '',
+  managerName: ''
 })
 
 
@@ -140,6 +141,7 @@ function openNewManager() { showOrgDialog.value = true }
 function onManagerCreated(opt: { id: string; label: string; value: string }) {
   managerOptions.value.push({ label: opt.label, value: opt.value })
   form.managerId = opt.value
+  form.managerName = opt.label
 }
 /** Sube archivo a Storage y setea rulesUrl */
 async function onFileSelected(file: File | File[] | null) {

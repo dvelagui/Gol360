@@ -1,21 +1,101 @@
 <template>
-  <q-card class="q-pa-md">
-    <div class="text-h6">{{ t.displayName }}</div>
-    <div class="text-caption">{{ t.city }} • {{ t.type }}</div>
-    <div class="text-caption">Organizador: {{ getManagerName(t.managerId) }}</div>
-    <q-btn flat color="primary" label="Ver" @click="$emit('open', t.id)" />
+  <q-card class="tour-card cursor-pointer column justify-between" flat bordered>
+    <div class="q-pa-md column items-center">
+      <q-avatar size="72px" class="q-mb-sm" color="primary" text-color="white">
+        <q-icon name="shield" size="md" />
+      </q-avatar>
+
+      <div class="text-h6 text-center q-mb-xs">{{ t.displayName }}</div>
+
+      <div class="row items-center q-gutter-xs q-mb-sm">
+        <q-badge :color="statusColor" text-color="white" align="middle" class="q-px-sm">
+          {{ statusLabel }}
+        </q-badge>
+      </div>
+
+      <div class="text-body2 text-center text-grey-8">
+        <div v-if="t.startDate">Inicio: {{ formattedDate }}</div>
+        <div v-if="t.numTeams">{{ t.numTeams }} equipos</div>
+      </div>
+    </div>
+
+    <q-separator />
+
+    <div class="q-pa-md">
+      <div class="row items-center q-gutter-sm">
+        <q-icon name="location_on" size="18px" class="text-primary" />
+        <div class="text-body2">{{ t.city || '—' }}</div>
+      </div>
+      <div class="row items-center q-gutter-sm q-mt-xs">
+        <q-icon name="badge" size="18px" class="text-primary" />
+        <div class="text-body2">Organizador: {{ t.managerName || '—' }}</div>
+      </div>
+
+      <q-btn
+        class="q-mt-md full-width"
+        color="warning"
+        text-color="dark"
+        label="Ver estadísticas"
+        unelevated
+      />
+    </div>
   </q-card>
 </template>
 
 <script setup lang="ts">
-import type { Tournament } from '@/types/auth'
+import { computed } from 'vue'
 
-//hacer una funcion para traer el nombre del manager, teniendo su manager Id
-function getManagerName(managerId: string): Promise<string | null> {
-  const manager = { displayName: "Organizador", id: managerId }
-  return Promise.resolve(manager.displayName)
+type Status = 'scheduled' | 'in_progress' | 'finished'
+type TType = '' | 'league' | 'league_playoff' | 'playoff'
+
+interface TournamentCardData {
+  tournamentId: string
+  displayName: string
+  city?: string
+  startDate?: string   // ISO (yyyy-mm-dd)
+  numTeams?: number
+  managerId?: string
+  managerName?: string // si lo tienes
+  type?: TType
+  status?: Status
 }
 
+const props = defineProps<{ t: TournamentCardData }>()
 
-const { t } = defineProps<{ t: Tournament }>()
+const formattedDate = computed(() => {
+  if (!props.t.startDate) return ''
+  // deja el formato simple; puedes adaptarlo a Intl.DateTimeFormat si prefieres
+  try {
+    const d = new Date(props.t.startDate)
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })
+  } catch { return props.t.startDate }
+})
+
+const statusLabel = computed(() => {
+  switch (props.t.status) {
+    case 'in_progress': return 'En curso'
+    case 'finished':    return 'Finalizado'
+    default:            return 'Programado'
+  }
+})
+const statusColor = computed(() => {
+  switch (props.t.status) {
+    case 'in_progress': return 'orange-7'
+    case 'finished':    return 'green-7'
+    default:            return 'grey-6'
+  }
+})
 </script>
+
+<style scoped lang="scss">
+.tour-card {
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.tour-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.10);
+}
+</style>

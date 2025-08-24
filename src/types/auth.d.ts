@@ -13,6 +13,7 @@ export interface Tournament {
   startDate: string;
   numTeams: number;
   managerId: string;
+  managerName: string;
   season?: string;
   category?: string;
   description?: string;
