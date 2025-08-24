@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="row items-center justify-between q-mb-md">
       <div>
-        <div class="text-h5">{{ tName }}</div>
+        <div class="text-h6">{{ tName }}</div>
         <div class="text-caption text-grey-7">ID: {{ tId }}</div>
       </div>
 
