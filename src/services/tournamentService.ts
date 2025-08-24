@@ -24,6 +24,15 @@ export async function getTournament(id: string): Promise<Tournament | null> {
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as unknown as Tournament) : null
 }
 
+//funcion para traer doc con tournamentId
+export async function getTournamentById(tournamentId: string): Promise<Tournament[]> {
+  const q: Query = tournamentId
+    ? query(colTournaments, where('tournamentId', '==', tournamentId))
+    : (colTournaments as any)
+  const snaps = await getDocs(q)
+  return snaps.docs.map(d => ({ id: d.id, ...d.data() } as unknown as Tournament))
+}
+
 // Versión alineada a Gol360 (managerId). Úsala cuando cambies el modelo.
 export async function listTournamentsByManager(managerId?: string): Promise<Tournament[]> {
   const q: Query = managerId

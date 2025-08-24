@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="row items-center justify-between q-mb-md">
       <div>
-        <div class="text-h5">Torneo</div>
+        <div class="text-h5">{{ tName }}</div>
         <div class="text-caption text-grey-7">ID: {{ tId }}</div>
       </div>
 
@@ -82,8 +82,8 @@
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Notify } from 'quasar'
-
 import { useDatabaseStore } from '@/stores/database'
+import { useTournamentStore } from '@/stores/tournaments'
 import { listTeamsByTournament } from '@/services/teamService'
 import { useEventStore } from '@/stores/events'
 import { confirmResult, setMatchScore } from '@/services/matchService'
@@ -120,14 +120,18 @@ interface MatchFormModel {
   id?: string
 }
 
+const tStore = useTournamentStore()
+const eStore = useEventStore()
+const database = useDatabaseStore()
 const route = useRoute()
 const router = useRouter()
+
 const tId = route.params.id as string
+const tName = computed(() => tStore.item?.displayName || '')
 
 const tab = ref<'schedule' | 'teams' | 'standings' | 'leaders'>('schedule')
 
-const eStore = useEventStore()
-const database = useDatabaseStore()
+
 
 const role = computed<Role>(() => database.userData?.role)
 const canCreateMatch = computed<boolean>(() => role.value === 'admin' || role.value === 'manager')
@@ -147,6 +151,12 @@ async function loadTeams(): Promise<void> {
     const msg = e instanceof Error ? e.message : 'Error cargando equipos'
     Notify.create({ type: 'negative', message: msg })
   }
+}
+
+//funcion para traer doc con tournamentId usando fetchById de store
+async function fetchTournament(tournamentId?: string) {
+  if (!tournamentId) return
+  await tStore.fetchById(tournamentId)
 }
 
 /* Refs a paneles para refrescar */
@@ -293,6 +303,7 @@ function goBack() { router.back() }
 
 onMounted(async () => {
   await loadTeams()
+  await fetchTournament(tId)
 })
 </script>
 
