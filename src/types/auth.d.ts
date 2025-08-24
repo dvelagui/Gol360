@@ -20,6 +20,7 @@ export interface Tournament {
   rulesUrl?: string;
   createdAt: Timestamp | FieldValue;
   photoURL?: string | null;
+  status: string;
 }
 
 export interface Team {

@@ -1,13 +1,14 @@
 <template>
   <q-card class="tour-card cursor-pointer column justify-between" flat bordered>
     <div class="q-pa-md column items-center">
-      <q-avatar size="72px" class="q-mb-sm" color="primary" text-color="white">
-        <q-icon name="shield" size="md" />
+      <q-avatar size="60px" class="q-mb-sm" color="primary" text-color="white">
+        <img v-if="avatar" :src="avatar" alt="avatar" />
+        <q-icon v-else name="shield" size="md" />
       </q-avatar>
 
-      <div class="text-h6 text-center q-mb-xs">{{ t.displayName }}</div>
+      <div class="text-subtitle1 text-center q-mb-xs">{{ t.displayName }}</div>
 
-      <div class="row items-center q-gutter-xs q-mb-sm">
+      <div class="row items-center q-gutter-sm q-mb-sm">
         <q-badge :color="statusColor" text-color="white" align="middle" class="q-px-sm">
           {{ statusLabel }}
         </q-badge>
@@ -28,14 +29,14 @@
       </div>
       <div class="row items-center q-gutter-sm q-mt-xs">
         <q-icon name="badge" size="18px" class="text-primary" />
-        <div class="text-body2">Organizador: {{ t.managerName || '—' }}</div>
+        <div class="text-body2"><strong>Organizador:</strong> <br> <span class="text-body2">{{ t.managerName || '—' }}</span></div>
       </div>
 
       <q-btn
         class="q-mt-md full-width"
-        color="warning"
-        text-color="dark"
-        label="Ver estadísticas"
+        color="accent"
+        text-color="primary"
+        label="Ver torneo"
         unelevated
       />
     </div>
@@ -58,9 +59,13 @@ interface TournamentCardData {
   managerName?: string // si lo tienes
   type?: TType
   status?: Status
+  photoURL?: string | null
 }
 
 const props = defineProps<{ t: TournamentCardData }>()
+
+const avatar = computed(() => props.t.photoURL || '')
+
 
 const formattedDate = computed(() => {
   if (!props.t.startDate) return ''

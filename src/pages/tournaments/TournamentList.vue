@@ -150,17 +150,22 @@ watch(role, fetchByRole)
 
 const filtered = computed(() => {
   const text = search.value.trim().toLowerCase()
-  return store.items.filter(t => {
-    const matchesText =
-      !text ||
-      t.displayName?.toLowerCase().includes(text) ||
-      t.city?.toLowerCase().includes(text)
+  return store.items
+    .filter(t => {
+      const matchesText =
+        !text ||
+        t.displayName?.toLowerCase().includes(text) ||
+        t.city?.toLowerCase().includes(text)
 
-    const matchesStatus = !statusFilter.value || t.status === statusFilter.value
-    const matchesType   = !typeFilter.value   || t.type === typeFilter.value
+      const matchesStatus = !statusFilter.value || t.status === statusFilter.value
+      const matchesType   = !typeFilter.value   || t.type === typeFilter.value
 
-    return matchesText && matchesStatus && matchesType
-  })
+      return matchesText && matchesStatus && matchesType
+    })
+    .map(t => ({
+      ...t,
+      status: t.status as Status
+    }))
 })
 
 function goDetail(id: string) {
@@ -176,6 +181,7 @@ async function create(payload: Record<string, unknown>) {
     type: payload.type as TType,
     startDate: payload.startDate as string,
     managerId: payload.managerId as string,
+    managerName: payload.managerName as string || '',
     createdBy: userStore.user?.uid || '',
     numTeams: payload.numTeams as number,
     // status lo manejas manual por ahora; no lo seteo aquí
@@ -183,7 +189,8 @@ async function create(payload: Record<string, unknown>) {
     category: (payload.category as string) ?? '',
     rulesUrl: (payload.rulesUrl as string) ?? '',
     description: (payload.description as string) ?? '',
-    status: 'scheduled'
+    status: 'scheduled',
+    photoURL: ''
   }
   await store.add(tournamentData)
   showForm.value = false
