@@ -3,7 +3,7 @@
     <q-header elevated class="bg-white text-secondary">
       <q-toolbar>
         <q-btn class="menu" dense flat round icon="menu" @click="toggleLeftDrawer" v-if="isLoggedIn" />
-        <q-toolbar-title class="text-weight-bold">Tu partido, como en la TV</q-toolbar-title>
+        <q-toolbar-title class="text-weight-bold text-center text-bold">Tu partido, como en la TV</q-toolbar-title>
         <div v-if="isLoggedIn" class="row items-center q-gutter-sm">
           <q-btn dense flat round icon="info" label="Info" @click="handleLogout" />
         </div>
