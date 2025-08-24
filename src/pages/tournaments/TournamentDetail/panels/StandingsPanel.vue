@@ -60,7 +60,7 @@ const props = defineProps<{ tournamentId: string }>()
 const store = useStandingStore()
 
 /** Toggle: 'table' | 'cards'  */
-const viewMode = ref<'table' | 'cards'>('cards')
+const viewMode = ref<'table' | 'cards'>('table')
 
 /** Diccionario de equipo para mostrar nombre/logo en filas */
 type TeamView = { id: string; name: string; crestUrl: string | null }
