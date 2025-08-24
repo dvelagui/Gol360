@@ -132,7 +132,7 @@ const form = reactive<Partial<Tournament>>({
 
 onMounted(async () => {
   const snaps = await getDocs(colManagers)
-  managerOptions.value = snaps.docs.map(d => ({ label: d.data().name, value: d.id }))
+  managerOptions.value = snaps.docs.map(d => ({ label: d.data().displayName, value: d.id }))
 })
 
 function openNewManager() { showOrgDialog.value = true }
