@@ -59,7 +59,8 @@ async function create(payload: Record<string, unknown>) {
     startDate: payload.startDate as string,
     managerId: payload.managerId as string,
     createdBy: userStore.user?.uid || '',
-    numTeams: payload.numTeams as number // Ensure numTeams is provided by the form
+    numTeams: payload.numTeams as number,
+    status: 'scheduled'
   }
   await store.add(tournamentData)
   showForm.value = false
