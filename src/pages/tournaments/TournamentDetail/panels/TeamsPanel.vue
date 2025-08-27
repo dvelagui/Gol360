@@ -2,7 +2,6 @@
   <div class="q-pa-none">
     <!-- Encabezado -->
     <div class="row items-center q-mb-sm">
-      <div class="text-subtitle1">Equipos</div>
       <q-space />
       <!-- Botón “Nuevo” eliminado; lo reemplaza la card fantasma -->
     </div>
@@ -15,7 +14,7 @@
     </div>
 
     <!-- grid -->
-    <div v-else class="flex flex-wrap q-gutter-md">
+    <div v-else class="flex flex-wrap q-gutter-md list-teams" >
       <!-- Card fantasma: Agregar equipo / Generar calendario -->
       <q-card v-if="canManage && remainingTeams > 0" class="tcard cursor-pointer column justify-between" flat bordered
         @click="$emit('create-team')">
@@ -370,6 +369,11 @@ async function generateCalendar() {
 </script>
 
 <style scoped lang="scss">
+
+.list-teams {
+  justify-content: space-between;
+}
+
 .grid {
   display: grid;
 }
@@ -392,5 +396,11 @@ async function generateCalendar() {
   box-shadow: none;
   transition: background-color .12s ease, color .12s ease;
   font-size: 10px;
+}
+
+@media screen and (max-width: 720px) {
+  .list-teams {
+    justify-content: center;
+  }
 }
 </style>
