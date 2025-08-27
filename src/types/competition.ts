@@ -9,6 +9,11 @@ export interface SelectOption<T> {
 export type MatchStatusOption = SelectOption<MatchStatus>
 export type MatchPhaseOption = SelectOption<MatchPhase>
 
+export interface Score {
+  home: number; away: number;
+  penalties?: { home: number; away: number };
+}
+
 export type EventType =
   | 'gol' | 'asistencia' | 'autogol'
   | 'amarilla' | 'roja'
@@ -21,14 +26,15 @@ export interface Match {
   round: number | string
   phase: MatchPhase
   date: number // timestamp ms
-  field: string
+  field?: string
   homeTeamId: { id: string; name: string }
   awayTeamId: { id: string; name: string }
   referee?: string
   status: MatchStatus
-  score: { home: number; away: number }
+  score: Score
   confirmedBy: 'manager' | 'admin' | null
   notes?: string
+  group?: string;
   createdBy: string
   createdAt: number
 }
