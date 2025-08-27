@@ -45,15 +45,18 @@ export function genTournamentId(name: string, dateISO?: string): string {
   return `${N}${Y}${DD}${RR}`
 }
 
-/** ID corto para partidos: [InicialLocal][InicialVisita][AñoBase36][DíaBase36][RandBase36]
- *  homeSlug/awaySlug pueden ser nombres o slugs; tomamos la primera letra alfabética.
- */
-export function genMatchId(homeSlug: string, awaySlug: string, dateMs?: number): string {
-  const d = dateMs ? new Date(dateMs) : new Date()
-  const day = toB36(d.getFullYear() % 36, 1) + toB36(dayOfYear(d), 2) // 3 chars
-  const ha  = firstAlpha(homeSlug) + firstAlpha(awaySlug)             // 2 chars
-  const r   = toB36(Math.floor(Math.random() * 36 * 36), 2)           // 2 chars
-  return `${ha}${day}${r}`                                            // total 7 chars
+/** ID compacto de PARTIDO (sin torneo) p.e. "OO96GCV" */
+export function genMatchShortId(home: string, away: string, t?: number): string {
+  const d = t ? new Date(t) : new Date();
+  const day = toB36(d.getFullYear() % 36, 1) + toB36(dayOfYear(d), 2);
+  const ha  = firstAlpha(home) + firstAlpha(away);
+  const r   = toB36(Math.floor(Math.random() * 36 * 36), 2);
+  return `${ha}${day}${r}`;
+}
+
+/** Por compatibilidad (si lo usabas en otros lados) */
+export function genMatchId(home: string, away: string, t?: number): string {
+  return genMatchShortId(home, away, t);
 }
 
 export { removeDiacritics, firstAlpha, dayOfYear, toB36 }
