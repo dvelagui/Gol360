@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/boot/firebase'
 import {
   collection,
@@ -10,17 +11,18 @@ import {
   updateDoc,
   deleteDoc,
   getDoc,
+  writeBatch,
   type DocumentData,
   type FirestoreDataConverter
 } from 'firebase/firestore'
 import type { Match, MatchStatus, MatchPhase } from '@/types/competition'
 import { genMatchId } from '@/utils/id'
+import { genMatchShortId } from '@/utils/id'
 import { cleanUndefined } from '@/utils/sanitize'
 
 /** Converter: tipa la colección como Match y elimina undefineds al escribir */
 const matchConverter: FirestoreDataConverter<Match> = {
   toFirestore(m: Match): DocumentData {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return cleanUndefined(m as any) as DocumentData
   },
   fromFirestore(snap, options): Match {
@@ -51,6 +53,21 @@ export async function listMatchesByTournament(
   const q = query(col, ...clauses, orderBy('date', 'asc'))
   const snap = await getDocs(q) // QuerySnapshot<Match>
   return snap.docs.map(d => d.data())
+}
+
+/** ¿Hay partidos ya creados para el torneo? */
+export async function hasMatches(tournamentId: string): Promise<boolean> {
+  const q = query(col, where('tournamentId','==',tournamentId))
+  const s = await getDocs(q)
+  return !s.empty
+}
+
+/** ¿Todos los partidos del torneo están finalizados? */
+export async function areAllFinished(tournamentId: string): Promise<boolean> {
+  const q = query(col, where('tournamentId','==',tournamentId))
+  const s = await getDocs(q)
+  if (s.empty) return false
+  return s.docs.every(d => (d.data() as any).status === 'finished')
 }
 
 /** Crea partido (recibe dateISO, guarda date:number) */
@@ -116,4 +133,32 @@ export async function confirmResult(
   const patch: Partial<Match> = { status: 'terminado', confirmedBy: by }
   if (score) patch.score = score
   await updateMatch(id, patch)
+}
+
+/** Bulk create: para generación de calendario */
+export async function bulkCreateMatches(matches: Omit<Match,'id'|'createdAt'|'createdBy'|'status'|'score'|'confirmedBy'>[], ctx: { uid: string }) {
+  const batch = writeBatch(db)
+  const now = Date.now()
+
+  for (const m of matches) {
+    const short = genMatchShortId(
+      typeof m.homeTeamId === 'string' ? m.homeTeamId : m.homeTeamId.id,
+      typeof m.awayTeamId === 'string' ? m.awayTeamId : m.awayTeamId.id,
+      m.date
+    )
+    const id = `${short}-${m.tournamentId}`
+    const ref = coll(id)
+
+    const data: Match = {
+      id,
+      ...m,
+      status: 'programado',
+      score: { home: 0, away: 0 },
+      confirmedBy: null,
+      createdAt: now,
+      createdBy: ctx.uid
+    }
+    batch.set(ref, cleanUndefined(data as any))
+  }
+  await batch.commit()
 }
