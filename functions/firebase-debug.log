@@ -1,0 +1,60 @@
+[debug] [2025-08-28T16:37:24.023Z] ----------------------------------------------------------------------
+[debug] [2025-08-28T16:37:24.025Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\dvelagui\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js functions:secrets:set CLIENT_SECRET
+[debug] [2025-08-28T16:37:24.026Z] CLI Version:   14.15.0
+[debug] [2025-08-28T16:37:24.026Z] Platform:      win32
+[debug] [2025-08-28T16:37:24.026Z] Node Version:  v20.19.4
+[debug] [2025-08-28T16:37:24.026Z] Time:          Thu Aug 28 2025 11:37:24 GMT-0500 (hora estándar de Colombia)
+[debug] [2025-08-28T16:37:24.026Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-08-28T16:37:24.253Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-08-28T16:37:24.253Z] > authorizing via signed-in user (danyvelagui@gmail.com)
+[debug] [2025-08-28T16:37:24.254Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-08-28T16:37:24.254Z] > authorizing via signed-in user (danyvelagui@gmail.com)
+[debug] [2025-08-28T16:37:24.255Z] [iam] checking project gol360-app for permissions ["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]
+[debug] [2025-08-28T16:37:24.256Z] Checked if tokens are valid: false, expires at: 1756399589510
+[debug] [2025-08-28T16:37:24.256Z] Checked if tokens are valid: false, expires at: 1756399589510
+[debug] [2025-08-28T16:37:24.256Z] > refreshing access token with scopes: []
+[debug] [2025-08-28T16:37:24.258Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-08-28T16:37:24.258Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-08-28T16:37:25.357Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-08-28T16:37:25.357Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-08-28T16:37:25.365Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app:testIamPermissions [none]
+[debug] [2025-08-28T16:37:25.365Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app:testIamPermissions x-goog-quota-user=projects/gol360-app
+[debug] [2025-08-28T16:37:25.366Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]}
+[debug] [2025-08-28T16:37:26.020Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app:testIamPermissions 200
+[debug] [2025-08-28T16:37:26.020Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]}
+[debug] [2025-08-28T16:37:26.021Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:26.021Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:26.021Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/gol360-app/services/cloudresourcemanager.googleapis.com [none]
+[debug] [2025-08-28T16:37:26.021Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/gol360-app/services/cloudresourcemanager.googleapis.com x-goog-quota-user=projects/gol360-app
+[debug] [2025-08-28T16:37:27.406Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/gol360-app/services/cloudresourcemanager.googleapis.com 200
+[debug] [2025-08-28T16:37:27.406Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/gol360-app/services/cloudresourcemanager.googleapis.com [omitted]
+[debug] [2025-08-28T16:37:27.410Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:27.410Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:27.410Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app [none]
+[debug] [2025-08-28T16:37:27.548Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app 200
+[debug] [2025-08-28T16:37:27.549Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/gol360-app {"projectNumber":"983758059664","projectId":"gol360-app","lifecycleState":"ACTIVE","name":"Gol360-App","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-08-08T01:06:41.366186Z"}
+[debug] [2025-08-28T16:37:27.549Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:27.549Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:27.549Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/gol360-app/secrets/CLIENT_SECRET [none]
+[debug] [2025-08-28T16:37:28.422Z] <<< [apiv2][status] GET https://secretmanager.googleapis.com/v1/projects/gol360-app/secrets/CLIENT_SECRET 404
+[debug] [2025-08-28T16:37:28.422Z] <<< [apiv2][body] GET https://secretmanager.googleapis.com/v1/projects/gol360-app/secrets/CLIENT_SECRET {"error":{"code":404,"message":"Secret [projects/983758059664/secrets/CLIENT_SECRET] not found.","status":"NOT_FOUND"}}
+[debug] [2025-08-28T16:37:28.423Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:28.423Z] Checked if tokens are valid: true, expires at: 1756402644357
+[debug] [2025-08-28T16:37:28.423Z] >>> [apiv2][query] POST https://secretmanager.googleapis.com/v1/projects/gol360-app/secrets secretId=CLIENT_SECRET
+[debug] [2025-08-28T16:37:28.423Z] >>> [apiv2][body] POST https://secretmanager.googleapis.com/v1/projects/gol360-app/secrets {"name":"CLIENT_SECRET","replication":{"automatic":{}},"labels":{"firebase-managed":"functions"}}
+[debug] [2025-08-28T16:37:28.833Z] <<< [apiv2][status] POST https://secretmanager.googleapis.com/v1/projects/gol360-app/secrets 200
+[debug] [2025-08-28T16:37:28.833Z] <<< [apiv2][body] POST https://secretmanager.googleapis.com/v1/projects/gol360-app/secrets {"name":"projects/983758059664/secrets/CLIENT_SECRET","replication":{"automatic":{}},"createTime":"2025-08-28T16:37:30.950614Z","labels":{"firebase-managed":"functions"},"etag":"\"163d6f8587bfda\""}
+[debug] [2025-08-28T17:16:58.563Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (C:\Users\dvelagui\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\@inquirer\core\dist\commonjs\lib\create-prompt.js:101:37)
+    at Interface.emit (node:events:524:28)
+    at Interface.emit (node:domain:489:12)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1125:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:264:20)
+    at ReadStream.emit (node:events:536:35)
+    at ReadStream.emit (node:domain:489:12)
+    at emitKeys (node:internal/readline/utils:371:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+[error] 
+[error] Error: An unexpected error has occurred.
