@@ -88,7 +88,7 @@ const canGenerate = computed<boolean>(() => !!props.teams.length)
 const statusLabel = computed(() => canGenerate.value ? 'Listo' : 'Incompleto')
 
 /** Utiles de armado */
-function roundRobinPairs(ids: string[], strategy: 'random'|'first_last'|'topN'): [string,string][][] {
+function roundRobinPairs(ids: string[], strategy: 'random'|'first_last'|'topN'): [string, string][][] {
   // produce array de jornadas -> lista de [local, visitante]
   const arr = ids.slice()
   if (strategy === 'random') {
@@ -120,7 +120,6 @@ function roundRobinPairs(ids: string[], strategy: 'random'|'first_last'|'topN'):
       }
     }
     jornadas.push(jornada)
-    // rotación (fijo el primero)
     const fixed = rotate[0] ?? ''
     const tail = rotate.splice(1).filter((x): x is string => typeof x === 'string')
     const last = tail.pop()
@@ -129,7 +128,7 @@ function roundRobinPairs(ids: string[], strategy: 'random'|'first_last'|'topN'):
     }
     rotate.splice(0, rotate.length, fixed, ...tail)
   }
-  return jornadas as [string,string][][]
+  return jornadas
 }
 
 function scheduleFromTomorrow(count: number): number[] {
