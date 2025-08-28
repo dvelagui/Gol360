@@ -1,11 +1,13 @@
 import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
 import express from "express";
 
 const TOKEN_URL = "https://auth.veo.co/oidc/token";
 const VEO_API   = "https://api.veo.co";
 
-const CLIENT_ID = process.env.VEO_CLIENT_ID!;
-const REDIRECT_URI = process.env.VEO_REDIRECT_URI!;
+const cfg = functions.config().veo || {};
+const CLIENT_ID = cfg.client_id as string;
+const CLIENT_SECRET = (cfg.client_secret as string) || undefined;
 
 async function getAccessToken(): Promise<string> {
   const doc = await admin.firestore().collection("integrations").doc("veo").get();
@@ -17,7 +19,7 @@ async function getAccessToken(): Promise<string> {
     refresh_token: refresh,
     client_id: CLIENT_ID,
   });
-  if (REDIRECT_URI) body.set("client_secret", REDIRECT_URI);
+  if (CLIENT_SECRET) body.set("client_secret", CLIENT_SECRET);
 
   const r = await fetch(TOKEN_URL, {
     method: "POST",
