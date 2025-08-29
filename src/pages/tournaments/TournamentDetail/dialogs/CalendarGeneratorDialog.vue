@@ -1,4 +1,3 @@
-<!-- src/pages/tournaments/TournamentDetail/dialogs/CalendarGeneratorDialog.vue -->
 <template>
   <q-dialog v-model="model">
     <q-card style="min-width: 520px; max-width: 92vw">
@@ -13,7 +12,6 @@
       <q-separator />
 
       <q-card-section>
-        <!-- MODO FASE 1 -->
         <div v-if="mode === 'phase1'">
           <div class="row q-col-gutter-md">
             <div class="col-12">
@@ -57,7 +55,6 @@
           </div>
         </div>
 
-        <!-- MODO ELIMINATORIA -->
         <div v-else>
           <div class="q-mb-md text-body2">
             Configura la fase eliminatoria en base a la tabla de posiciones actual.

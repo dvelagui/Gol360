@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { listTeamsByTournament } from '@/services/teamService'
 import { listMatchesByTournament } from '@/services/matchService'
-import { computeStandings, applyDisciplineFromEvents, type StandingRow } from '@/utils/standings'
+import { computeStandings, type StandingRow } from '@/utils/standings'
 import type { MatchStatus } from '@/types/competition'
 
 type State = {
@@ -48,10 +48,6 @@ export const useStandingStore = defineStore('standings', {
      * Opcional: aplica disciplina (amarillas/rojas) si ya tienes eventos en memoria.
      * Pasa un arreglo de eventos mínimos { teamId, type: 'yellow'|'red', ... }.
      */
-    applyDiscipline(events: Parameters<typeof applyDisciplineFromEvents>[1]): void {
-      if (!this.table.length) return
-      this.table = applyDisciplineFromEvents(this.table, events)
-      this.lastUpdated = Date.now()
-    }
+    // applyDiscipline method removed because applyDisciplineFromEvents does not exist
   }
 })

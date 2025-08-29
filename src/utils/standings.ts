@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/utils/standings.ts
 import type { Match } from '@/types/competition'
 
 /** Fila de la tabla de posiciones */
