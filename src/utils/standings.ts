@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// src/utils/standings.ts
 import type { Match } from '@/types/competition'
 
+/** Fila de la tabla de posiciones */
 export type StandingRow = {
   teamId: string
   teamName: string
+  group?: string
   played: number
   won: number
   draw: number
@@ -15,60 +19,82 @@ export type StandingRow = {
   red: number
 }
 
+/** Considera ambos estados “finished” (en inglés) y “terminado” (en español) */
+function isFinished(m: Match): boolean {
+  const s = String(m.status || '').toLowerCase()
+  return s === 'finished' || s === 'terminado'
+}
+
+/** Extrae teamId (acepta string o { id, name }) */
+export function getTeamId(t: unknown): string {
+  if (typeof t === 'string') return t
+  if (t && typeof t === 'object' && 'id' in t) return (t as any).id as string
+  return ''
+}
+
+/** Extrae teamName si estuviera en el match (cuando guardamos { id, name }) */
+export function getTeamNameFromMatch(t: unknown): string | undefined {
+  if (t && typeof t === 'object' && 'name' in (t as any)) {
+    return (t as any).name as string
+  }
+  return undefined
+}
+
+/** Etiqueta de la ronda en eliminatoria */
+export function knockoutRoundLabel(numPairs: number): string {
+  // 16: Dieciseisavos, 8: Octavos, 4: Cuartos, 2: Semifinal, 1: Final
+  if (numPairs >= 16) return 'Dieciseisavos'
+  if (numPairs === 8) return 'Octavos'
+  if (numPairs === 4) return 'Cuartos'
+  if (numPairs === 2) return 'Semifinal'
+  return 'Final'
+}
+
 /**
- * Construye la tabla de posiciones desde la lista de partidos FINALIZADOS.
- * Tolera 'finished' (oficial) y 'terminado' (legado).
+ * Tabla general (sin grupos). Usa lista de equipos (id/name) para nombrar correctamente.
+ * También sirve de base para sacar “seeds”.
  */
 export function computeStandings(
   teams: { id: string; name: string }[],
   matches: Match[]
 ): StandingRow[] {
   const map = new Map<string, StandingRow>()
-
   for (const t of teams) {
     map.set(t.id, {
       teamId: t.id,
       teamName: t.name,
-      played: 0,
-      won: 0,
-      draw: 0,
-      lost: 0,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      goalDiff: 0,
-      points: 0,
-      yellow: 0,
-      red: 0
+      played: 0, won: 0, draw: 0, lost: 0,
+      goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0,
+      yellow: 0, red: 0
     })
   }
 
   for (const m of matches) {
-    // Soporta ambos valores por si hay datos viejos
-    if (m.status !== 'terminado') continue
+    if (!isFinished(m)) continue
 
-    const homeId = typeof m.homeTeamId === 'object' ? m.homeTeamId.id : m.homeTeamId
-    const awayId = typeof m.awayTeamId === 'object' ? m.awayTeamId.id : m.awayTeamId
-    const h = map.get(homeId)
-    const a = map.get(awayId)
-    if (!h || !a) continue
+    const homeId = getTeamId(m.homeTeamId as string | { id: string; name?: string })
+    const awayId = getTeamId(m.awayTeamId as string | { id: string; name?: string })
+    const home = map.get(homeId)
+    const away = map.get(awayId)
+    if (!home || !away) continue
 
     const sh = m.score?.home ?? 0
     const sa = m.score?.away ?? 0
 
-    h.played++; a.played++
-    h.goalsFor += sh; h.goalsAgainst += sa
-    a.goalsFor += sa; a.goalsAgainst += sh
+    home.played++; away.played++
+    home.goalsFor += sh; home.goalsAgainst += sa
+    away.goalsFor += sa; away.goalsAgainst += sh
 
-    if (sh > sa) { h.won++; a.lost++; h.points += 3 }
-    else if (sh < sa) { a.won++; h.lost++; a.points += 3 }
-    else { h.draw++; a.draw++; h.points++; a.points++ }
+    if (sh > sa) { home.won++; away.lost++; home.points += 3 }
+    else if (sh < sa) { away.won++; home.lost++; away.points += 3 }
+    else { home.draw++; away.draw++; home.points++; away.points++ }
 
-    h.goalDiff = h.goalsFor - h.goalsAgainst
-    a.goalDiff = a.goalsFor - a.goalsAgainst
+    home.goalDiff = home.goalsFor - home.goalsAgainst
+    away.goalDiff = away.goalsFor - away.goalsAgainst
   }
 
+  // Orden: puntos, DG, GF, nombre
   return Array.from(map.values()).sort((x, y) => {
-    // Orden: puntos, DG, GF, nombre
     if (y.points !== x.points) return y.points - x.points
     if (y.goalDiff !== x.goalDiff) return y.goalDiff - x.goalDiff
     if (y.goalsFor !== x.goalsFor) return y.goalsFor - x.goalsFor
@@ -76,83 +102,142 @@ export function computeStandings(
   })
 }
 
-export type ScorerRow = {
-  playerId: string
-  playerName: string
-  teamId: string
-  goals: number
-}
-
-/** Tipo mínimo de evento que necesitamos para rankings/disciplinas */
-export type EventLite = {
-  matchId: string
-  tournamentId: string
-  teamId: string
-  playerId: string | null
-  playerName?: string
-  type:
-    | 'goal'
-    | 'penalty_scored'
-    | 'own_goal'
-    | 'assist'
-    | 'yellow'
-    | 'red'
-    | 'penalty_missed'
-    | 'sub_in'
-    | 'sub_out'
-  minute?: number
-}
-
 /**
- * Inyecta tarjetas (amarillas/rojas) por equipo en la tabla ya calculada.
- * No muta el array original; devuelve una copia con los contadores aplicados.
+ * Tabla por grupos.
+ * Toma las coincidencias de m.group (si existen) para clasificar.
+ * Si no hay `group` en los partidos, devuelve un único grupo "A" con la tabla general.
  */
-export function applyDisciplineFromEvents(
-  rows: StandingRow[],
-  events: EventLite[]
-): StandingRow[] {
-  // Acumula tarjetas por teamId
-  const cards = new Map<string, { yellow: number; red: number }>()
-  for (const ev of events) {
-    if (ev.type !== 'yellow' && ev.type !== 'red') continue
-    const c = cards.get(ev.teamId) ?? { yellow: 0, red: 0 }
-    if (ev.type === 'yellow') c.yellow += 1
-    if (ev.type === 'red') c.red += 1
-    cards.set(ev.teamId, c)
-  }
-
-  // Aplica a las filas
-  return rows.map(r => {
-    const c = cards.get(r.teamId)
-    return c ? { ...r, yellow: c.yellow, red: c.red } : r
-  })
-}
-
-/**
- * Ranking de goleadores a partir de eventos.
- * Cuenta 'goal' y 'penalty_scored'. Ignora 'own_goal' y requiere playerId.
- */
-export function computeTopScorers(
-  events: EventLite[],
-  limit = 10
-): ScorerRow[] {
-  const goals = new Map<string, ScorerRow>()
-
-  for (const ev of events) {
-    if (ev.type !== 'goal' && ev.type !== 'penalty_scored') continue
-    if (!ev.playerId) continue
-
-    const current = goals.get(ev.playerId) ?? {
-      playerId: ev.playerId,
-      playerName: ev.playerName ?? 'Jugador',
-      teamId: ev.teamId,
-      goals: 0
+export function computeStandingsByGroup(
+  teams: { id: string; name: string }[],
+  matches: Match[]
+): Record<string, StandingRow[]> {
+  // Detectar grupos usados en los partidos finalizados
+  const finished = matches.filter(isFinished)
+  const groupsUsed = new Set<string>()
+  for (const m of finished) {
+    if (typeof (m as any).group === 'string' && (m as any).group.trim()) {
+      groupsUsed.add((m as any).group.trim())
     }
-    current.goals += 1
-    goals.set(ev.playerId, current)
   }
 
-  return Array.from(goals.values())
-    .sort((a, b) => b.goals - a.goals || a.playerName.localeCompare(b.playerName))
-    .slice(0, limit)
+  // Si no hay grupos en los partidos, devolvemos A = tabla general
+  if (groupsUsed.size === 0) {
+    return { A: computeStandings(teams, matches) }
+  }
+
+  // Mapeamos por grupo
+  const byGroup: Record<string, StandingRow[]> = {}
+  for (const g of groupsUsed) {
+    // equipos que aparecen en ese grupo (por si se guardan con {id,name})
+    const teamIdsInGroup = new Set<string>()
+    for (const m of finished) {
+      if ((m as any).group !== g) continue
+      teamIdsInGroup.add(getTeamId(m.homeTeamId as any))
+      teamIdsInGroup.add(getTeamId(m.awayTeamId as any))
+    }
+    const teamsInGroup = teams.filter(t => teamIdsInGroup.has(t.id))
+    const rows = computeStandings(teamsInGroup, finished.filter(m => (m as any).group === g))
+    // añade etiqueta group en cada fila
+    byGroup[g] = rows.map(r => ({ ...r, group: g }))
+  }
+  return byGroup
+}
+
+/** Helper para “seeding” general: top N de la tabla */
+export function topNFromTable(table: StandingRow[], n: number): StandingRow[] {
+  return table.slice(0, Math.max(0, n))
+}
+
+/** Helper para “seeding” por grupos: top N de cada grupo */
+export function topNEachGroup(
+  grouped: Record<string, StandingRow[]>,
+  n: number
+): Record<string, StandingRow[]> {
+  const out: Record<string, StandingRow[]> = {}
+  for (const g of Object.keys(grouped).sort()) {
+    out[g] = grouped[g]!.slice(0, Math.max(0, n))
+  }
+  return out
+}
+
+/** Cruce A1–B2, B1–A2, etc. (dos grupos) o aleatorio mezclado */
+export function buildCrossPairsFromGroups(
+  groupedTop: Record<string, StandingRow[]>,
+  mode: 'seeded' | 'random' = 'seeded'
+): Array<[StandingRow, StandingRow]> {
+  const groups = Object.keys(groupedTop).sort()
+  if (groups.length < 2) {
+    // con 1 grupo, no hay “cruce por grupos”
+    const all = groups.length === 1 ? groupedTop[groups[0]!] : []
+    return buildPairsFromList(all ?? [], mode)
+  }
+  if (groups.length > 2) {
+    // con >2 grupos, una opción simple es intercalar por índice (1º de cada grupo, luego 2º…) y emparejar
+    const flat: StandingRow[] = []
+    const maxLen = Math.max(...groups.map(g => groupedTop[g]!.length))
+    for (let i = 0; i < maxLen; i++) {
+      for (const g of groups) {
+        const r = groupedTop[g]![i]
+        if (r) flat.push(r)
+      }
+    }
+    return buildPairsFromList(flat, mode)
+  }
+
+  // Exactamente 2 grupos
+  const A = groupedTop[groups[0]!] || []
+  const B = groupedTop[groups[1]!] || []
+  const pairs: Array<[StandingRow, StandingRow]> = []
+
+  if (mode === 'random') {
+    // Mezcla y empareja simple
+    const bag = [...A, ...B]
+    shuffleInPlace(bag)
+    for (let i = 0; i < bag.length; i += 2) {
+      if (bag[i + 1]) pairs.push([bag[i]!, bag[i + 1]!])
+    }
+    return pairs
+  }
+
+  // seeded: A1–B2, B1–A2, A3–B4, B3–A4, ...
+  const len = Math.max(A.length, B.length)
+  for (let i = 0; i < len; i++) {
+    const a1 = A[i]
+    const b1 = B[i]
+    const a2 = A[i + 1]
+    const b2 = B[i + 1]
+    if (a1 && b2) pairs.push([a1, b2])
+    if (b1 && a2) pairs.push([b1, a2])
+    i++ // consumimos de a 2 por grupo
+  }
+  return pairs
+}
+
+/** Empareja una lista: seeded = 1º vs último, 2º vs penúltimo; random = shuffle y toma de a pares */
+export function buildPairsFromList(
+  list: StandingRow[],
+  mode: 'seeded' | 'random' = 'seeded'
+): Array<[StandingRow, StandingRow]> {
+  const arr = [...list]
+  if (mode === 'random') {
+    shuffleInPlace(arr)
+    const out: Array<[StandingRow, StandingRow]> = []
+    for (let i = 0; i + 1 < arr.length; i += 2) out.push([arr[i]!, arr[i + 1]!])
+    return out
+  }
+  // seeded: extremos
+  const out: Array<[StandingRow, StandingRow]> = []
+  let l = 0, r = arr.length - 1
+  while (l < r) {
+    out.push([arr[l]!, arr[r]!])
+    l++; r--
+  }
+  return out
+}
+
+function shuffleInPlace<T>(a: T[]): void {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j]!, a[i]!]
+  }
 }

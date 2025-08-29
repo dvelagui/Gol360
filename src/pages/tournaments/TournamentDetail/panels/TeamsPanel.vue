@@ -1,23 +1,17 @@
-<!-- src/pages/tournaments/TournamentDetail/panels/TeamsPanel.vue -->
 <template>
   <div class="q-pa-none">
-    <!-- Encabezado -->
     <div class="row items-center q-mb-sm">
       <div class="text-subtitle1">Equipos</div>
       <q-space />
-      <!-- Botón quitado: usamos card fantasma -->
     </div>
 
-    <!-- Skeleton -->
     <div v-if="store.loading" class="q-my-xl">
       <q-skeleton type="rect" class="q-mb-md" height="120px" />
       <q-skeleton type="rect" class="q-mb-md" height="120px" />
       <q-skeleton type="rect" class="q-mb-md" height="120px" />
     </div>
 
-    <!-- Grid con tarjetas -->
     <div v-else class="flex flex-wrap q-gutter-md list-teams">
-      <!-- Card: Agregar equipo (solo si se puede gestionar, faltan equipos y no mostramos la de calendario) -->
       <q-card
         v-if="canManage && remainingTeams > 0"
         class="tcard cursor-pointer column justify-between"
@@ -34,22 +28,40 @@
             Faltan <b>{{ remainingTeams }}</b> para completar {{ props.tournamentDetail.numTeams }}.
           </div>
           <div class="text-caption text-grey-7 q-mt-lg">
-            Una vez complete los equipos podrá generar <strong>calendario de partidos</strong>.
+            Una vez complete los equipos podrá generar el <strong>calendario de partidos</strong>.
           </div>
         </div>
       </q-card>
 
-      <!-- Card: Generar calendario (aparece si está completo el cupo) -->
-      <CalendarGeneratorCard
+      <q-card
         v-else-if="canManage && isFull"
-        class="tcard"
-        :tournament-id="props.tournamentId"
-        :teams="store.items"
-        :phase-hint="existingMatches ? 'eliminatorias' : 'fase 1'"
-        @generated="onGenerated"
-      />
+        class="tcard cursor-pointer column justify-between"
+        flat
+        bordered
+      >
+        <div class="tcard__body flex column items-center justify-center q-pa-md">
+          <q-avatar size="72px" class="bg-primary text-white">
+            <q-icon name="calendar_month" size="40px" />
+          </q-avatar>
+          <div class="text-h6 q-mt-md">Calendario</div>
+          <div class="text-caption text-grey-7 q-mt-xs">
+            {{ store.items.length }} equipos listos
+          </div>
+          <div class="q-mt-md full-width q-px-md">
+            <q-btn
+              color="primary"
+              label="Configurar y generar"
+              class="full-width"
+              @click="openGenerateDialog"
+              :disable="genDisabled"
+            />
+          </div>
+          <div class="text-caption text-grey-7 q-mt-xs" v-if="genDisabled">
+            (Deshabilitado: ya existen partidos no terminados)
+          </div>
+        </div>
+      </q-card>
 
-      <!-- Cards de equipos -->
       <q-card
         v-for="t in store.items"
         :key="t.id"
@@ -59,15 +71,17 @@
       >
         <div class="row items-center justify-between">
           <p
+            class="text-body2 q-pa-sm"
             v-if="canManage"
-            class="text-body2 q-pa-sm text-primary q-mb-none"
+            flat
+            color="primary"
             @click="$emit('edit-team', t)"
           >
             Editar
           </p>
           <q-btn
-            v-if="canManage"
             class="btn-badget"
+            v-if="canManage"
             dense
             flat
             round
@@ -79,22 +93,10 @@
 
         <div class="q-px-lg q-pb-md column">
           <div class="text-center">
-            <q-avatar
-              v-if="t.crestUrl"
-              size="60px"
-              class="q-mb-sm"
-              color="primary"
-              text-color="white"
-            >
+            <q-avatar v-if="t.crestUrl" size="60px" class="q-mb-sm" color="primary" text-color="white">
               <img :src="t.crestUrl" />
             </q-avatar>
-            <q-avatar
-              v-else
-              size="60px"
-              class="q-mb-sm"
-              color="primary"
-              text-color="white"
-            >
+            <q-avatar v-else size="60px" class="q-mb-sm" color="primary" text-color="white">
               <q-icon name="shield" />
             </q-avatar>
           </div>
@@ -131,19 +133,27 @@
       <div class="text-subtitle2">Aún no hay equipos</div>
       <div class="text-caption">Agrega el primero con la tarjeta “Agregar equipo”.</div>
     </div>
+
+    <CalendarGeneratorDialog
+      v-model="showGen"
+      :tournament-id="props.tournamentId"
+      :teams="store.items"
+      :existing-matches="existingMatches"
+      @generated="onGenerated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, defineExpose, computed, ref, watch, defineAsyncComponent } from 'vue'
+import { Notify } from 'quasar'
 import { useTeamStore } from '@/stores/teams'
 import { usePlayerStore } from '@/stores/players'
-import { Notify } from 'quasar'
 import type { Team, Tournament } from '@/types/auth'
 import { hasMatches } from '@/services/matchService'
 
-const CalendarGeneratorCard = defineAsyncComponent(
-  () => import('@/components/tournaments/CalendarGeneratorCard.vue')
+const CalendarGeneratorDialog = defineAsyncComponent(
+  () => import('../dialogs/CalendarGeneratorDialog.vue')
 )
 
 const props = defineProps<{
@@ -158,22 +168,40 @@ defineEmits<{
   (e: 'open-players', team: Team): void
 }>()
 
-/* Permisos */
-const canManage = computed(() => props.role === 'admin' || props.role === 'manager')
-
-/* Store equipos */
 const store = useTeamStore()
-const existingMatches = ref<boolean>(false)
+const canManage = computed(() => props.role === 'admin' || props.role === 'manager')
+const isFull = computed(() => store.items.length >= (props.tournamentDetail.numTeams || 0))
+const remainingTeams = computed(() =>
+  Math.max((props.tournamentDetail?.numTeams ?? 0) - store.items.length, 0)
+)
+
+const existingMatches = ref(false)
+const genDisabled = ref(false)
+
+
+
 async function fetchNow() {
   await store.fetch(props.tournamentId)
+  // existen partidos en el torneo?
   existingMatches.value = await hasMatches(props.tournamentId)
+  // deshabilitar si hay partidos no terminados
+  genDisabled.value = await hasUnfinished(props.tournamentId)
 }
 defineExpose({ refetch: fetchNow })
 onMounted(fetchNow)
 
-/* Mostrar nombre del capitán */
+/** Comprueba si hay partidos con status != 'terminado' */
+async function hasUnfinished(tournamentId: string): Promise<boolean> {
+  // pequeña utilidad basada en tu matchService (si ya tienes algo similar, reúsalo)
+  const { listMatchesByTournament } = await import('@/services/matchService')
+  const all = await listMatchesByTournament(tournamentId)
+  return all.some(m => m.status !== 'terminado')
+}
+
+/* Capitanes (muestra nombre) */
 const playerStore = usePlayerStore()
 const captainNames = ref<Record<string, string>>({})
+
 watch(
   () => store.items.map(t => t.captainId),
   async (ids) => {
@@ -187,12 +215,6 @@ watch(
   { immediate: true }
 )
 
-/* Cupos y visibilidad de cards fantasma */
-const isFull = computed(() => store.items.length >= (props.tournamentDetail.numTeams || 0))
-const remainingTeams = computed(() =>
-  Math.max((props.tournamentDetail?.numTeams ?? 0) - store.items.length, 0)
-)
-
 /* Eliminar equipo */
 async function onRemove(id: string) {
   try {
@@ -204,18 +226,24 @@ async function onRemove(id: string) {
   }
 }
 
-/* Feedback cuando CalendarGeneratorCard termina */
+/* Dialog */
+const showGen = ref(false)
+function openGenerateDialog() {
+  if (genDisabled.value) return
+  showGen.value = true
+}
 async function onGenerated() {
   Notify.create({ type: 'positive', message: 'Calendario generado' })
+  showGen.value = false
   await fetchNow()
 }
 </script>
 
 <style scoped lang="scss">
-.list-teams {
-  justify-content: start;
-}
+.list-teams { justify-content: space-between; }
+.grid { display: grid; }
 
+/* Card estilo “Gol360” */
 .tcard {
   max-width: 250px;
   min-width: 250px;
@@ -233,6 +261,7 @@ async function onGenerated() {
   transition: background-color .12s ease, color .12s ease;
   font-size: 10px;
 }
+
 @media screen and (max-width: 720px) {
   .list-teams { justify-content: center; }
 }
