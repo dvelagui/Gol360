@@ -3,15 +3,8 @@
 
     <!-- Selector de equipo -->
     <div class="row items-center q-gutter-sm q-mb-md">
-      <q-select
-        v-model="selectedTeamId"
-        :options="teamOptions"
-        option-value="id"
-        option-label="name"
-        dense filled
-        label="Equipo"
-        style="min-width: 260px"
-      />
+      <q-select v-model="selectedTeamId" :options="teamOptions" option-value="id" option-label="name" dense filled
+        label="Equipo" style="min-width: 260px" />
       <q-space />
       <q-badge v-if="team" outline color="primary">
         {{ players.length }} jugador(es)
@@ -19,22 +12,29 @@
     </div>
 
     <!-- Encabezado visual del equipo -->
-    <div v-if="team" class="header-card q-mb-md">
+    <div v-if="team" class="header-card q-mb-xs row">
       <div class="header-overlay">
-        <div class="row items-center q-gutter-sm">
-          <q-avatar size="56px" class="bg-white">
-            <img v-if="team.crestUrl" :src="team.crestUrl" alt="crest" />
-            <q-icon v-else name="emoji_events" />
-          </q-avatar>
-          <div>
-            <div class="text-h6 text-white">{{ team.displayName }}</div>
-            <div class="text-caption text-white text-weight-regular">
-              {{ team.city }} <span v-if="team.group"> · {{ team.group }}</span>
+        <div class="row justify-between full-width">
+          <div class="row items-center q-gutter-sm">
+            <q-avatar size="56px" class="bg-white">
+              <img v-if="team.crestUrl" :src="team.crestUrl" alt="crest" />
+              <q-icon v-else name="emoji_events" />
+            </q-avatar>
+            <div>
+              <div class="text-h6 text-white">{{ team.displayName }}</div>
+              <div class="text-caption text-white text-weight-regular">
+                {{ team.city }} <span v-if="team.group"> · {{ team.group }}</span>
+              </div>
             </div>
+          </div>
+          <div class="q-pa-xs">
+            <q-btn class="q-my-xs" outline color="white" text-color="white" label="Editar Jugadores"
+              unelevated :disable="!team" @click="team && $emit('add-players', team)" />
           </div>
         </div>
       </div>
     </div>
+
 
     <!-- Tabla tipo “scoreboard” -->
     <q-markup-table flat bordered class="rounded-borders">
@@ -95,10 +95,12 @@ type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
 const props = defineProps<{
   tournamentId: string
   role?: Role
+  teamSelected: Team | null
 }>()
 
 const emit = defineEmits<{
   (e: 'open-profile', playerId: string): void
+  (e: 'add-players', team: Team): void
 }>()
 
 const teamStore = useTeamStore()
@@ -133,21 +135,19 @@ watch(selectedTeamId, async (value) => {
 onMounted(async () => {
   // cargar equipos del torneo
   await teamStore.fetch(props.tournamentId)
-  // seleccionar primero disponible
-  if (!selectedTeamId.value && teamStore.items.length) {
-    if (teamStore.items[0]) {
-      selectedTeamId.value = { id: teamStore.items[0].id, name: teamStore.items[0].displayName }
-    }
-  }
-  // cargar jugadores del primero
-  if (selectedTeamId.value && selectedTeamId.value.id) {
-    await playerStore.fetchByTeam(selectedTeamId.value.id)
-  }
+
+  selectedTeamId.value = props.teamSelected
+    ? { id: props.teamSelected.id, name: props.teamSelected.displayName }
+    : { id: '', name: '' }
+
 })
 </script>
 
 <style scoped lang="scss">
-.rounded-borders { border-radius: 12px; }
+.rounded-borders {
+  border-radius: 12px;
+}
+
 .header-card {
   position: relative;
   height: 140px;
@@ -155,11 +155,17 @@ onMounted(async () => {
   background: linear-gradient(135deg, #064F34, #138A59);
   overflow: hidden;
 }
+
 .header-overlay {
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   padding: 16px;
-  display: flex; align-items: flex-end;
-  background: radial-gradient(ellipse at 80% 20%, rgba(255,255,255,.12), transparent 40%);
+  display: flex;
+  align-items: flex-end;
+  background: radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, .12), transparent 40%);
 }
-.row-click { cursor: pointer; }
+
+.row-click {
+  cursor: pointer;
+}
 </style>

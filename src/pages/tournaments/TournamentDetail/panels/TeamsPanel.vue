@@ -178,8 +178,6 @@ const remainingTeams = computed(() =>
 const existingMatches = ref(false)
 const genDisabled = ref(false)
 
-
-
 async function fetchNow() {
   await store.fetch(props.tournamentId)
   // existen partidos en el torneo?

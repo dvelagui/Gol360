@@ -42,7 +42,7 @@
       <!-- JUGADORES -->
       <q-tab-panel name="players" class="q-pa-none">
         <PlayersPanel :tournament-id="tId" v-bind="role !== undefined ? { role } : {}"
-          @open-profile="openPlayerProfile" />
+          @open-profile="openPlayerProfile" @add-players="addPlayers" :team-selected="currentTeam" />
       </q-tab-panel>
 
       <!-- TABLA -->
@@ -127,10 +127,11 @@ const route = useRoute()
 const router = useRouter()
 
 const tId = route.params.id as string
+const tabName = route.query.tab as string
 const tName = computed(() => tStore.item?.displayName || '')
+const tab = ref<'schedule' | 'teams' | 'players' | 'standings' | 'leaders'>('schedule')
 
-const tab = ref<'schedule' | 'teams' | 'standings' | 'leaders'>('schedule')
-
+console.log(route,tabName)
 
 
 const role = computed<Role>(() => database.userData?.role)
@@ -213,11 +214,19 @@ function openTeamEdit(t: Team) {
 }
 function openPlayers(t: Team) {
   currentTeam.value = t
+  tab.value = 'players'
+}
+
+function addPlayers(t: Team) {
+  currentTeam.value = t
+  console.log(t);
   showPlayers.value = true
 }
 function openPlayerProfile(id: string) {
   selectedPlayerId.value = id
   showPlayerProfile.value = true
+  console.log(id);
+
 }
 
 

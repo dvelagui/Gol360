@@ -142,7 +142,6 @@ function onManagerCreated(opt: { id: string; label: string; value: string }) {
   managerOptions.value.push({ label: opt.label, value: opt.value })
   form.managerId = opt.value
   form.managerName = opt.label
-  console.log(form.managerId, form.managerName);
 
 }
 /** Sube archivo a Storage y setea rulesUrl */
