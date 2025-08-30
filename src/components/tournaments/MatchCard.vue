@@ -2,7 +2,7 @@
   <div class="row items-center no-wrap q-px-sm q-py-xs text-body2">
     <div class="col-5 row items-center justify-end q-pr-sm">
       <div class="row  ellipsis">
-        <div>
+        <div class="q-mt-xs">
           {{ homeName.toUpperCase() }}
         </div>
         <div class="q-px-sm" >
@@ -34,7 +34,7 @@
             <q-icon name="shield" />
           </q-avatar>
         </div>
-        <div>
+        <div class="q-mt-xs">
           {{ awayName.toUpperCase() }}
         </div>
       </div>

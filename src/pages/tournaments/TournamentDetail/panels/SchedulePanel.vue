@@ -1,9 +1,5 @@
 <template>
   <div class="q-pa-none">
-    <div class="row items-center q-mb-sm">
-      <div class="text-subtitle1">Programación</div>
-      <q-space />
-    </div>
 
     <div v-if="mStore.loading" class="q-my-xl">
       <q-skeleton type="rect" class="q-mb-md" height="100px" />
@@ -16,12 +12,8 @@
       <div class="text-caption">Cuando crees el calendario o agregues partidos, aparecerán aquí.</div>
     </div>
 
-    <div v-else class="q-gutter-md container-match">
-      <div
-        v-for="roundKey in groupedRoundsKeys"
-        :key="roundKey"
-        class="rounded-borders bg-white q-pa-md shadow-1"
-      >
+    <div v-else class="container-match q-gutter-y-md">
+      <div v-for="roundKey in groupedRoundsKeys" :key="roundKey" class="rounded-borders bg-white q-pa-md shadow-2">
         <div class="text-h6 q-mb-xs text-center text-primary font-weight-bold">{{ roundTitle(roundKey) }}</div>
 
         <div v-for="(m, idx) in groupedRounds[roundKey]" :key="m.id" class="match-row">
@@ -34,33 +26,15 @@
             </div>
 
             <div class="row items-center q-gutter-xs">
-              <q-btn
-                v-if="canEdit"
-                dense round flat color="dark" icon="edit"
-                :title="'Editar partido'"
-                @click="$emit('edit', m)"
-                size="20"
-              />
-              <q-btn
-                dense round flat color="primary" icon="event"
-                :title="'Resultados / eventos'"
-                @click="$emit('results', m)"
-              />
+              <q-btn v-if="canEdit" dense round flat color="dark" icon="edit" :title="'Editar partido'"
+                @click="$emit('edit', m)" size="20" />
+              <q-btn dense round flat color="primary" icon="event" :title="'Resultados / eventos'"
+                @click="$emit('results', m)" />
             </div>
           </div>
-          <MatchCard
-            :match="m"
-            :team-by-id="teamById"
-            class="q-mb-sm"
-            @edit="$emit('edit', m)"
-            @results="$emit('results', m)"
-          />
-          <q-separator
-            v-if="idx < (groupedRounds[roundKey]?.length ?? 0) - 1"
-            spaced
-            inset
-            color="grey-4"
-          />
+          <MatchCard :match="m" :team-by-id="teamById" class="q-mb-sm" @edit="$emit('edit', m)"
+            @results="$emit('results', m)" />
+          <q-separator v-if="idx < (groupedRounds[roundKey]?.length ?? 0) - 1" spaced inset color="grey-4" />
         </div>
       </div>
     </div>
@@ -93,7 +67,7 @@ const mStore = useMatchStore()
 type TeamMin = { id: string; name: string; crestUrl?: string }
 const teams = ref<TeamMin[]>([])
 
-function teamById (id: string): TeamMin | undefined {
+function teamById(id: string): TeamMin | undefined {
   return teams.value.find(t => t.id === id)
 }
 
@@ -108,7 +82,7 @@ onMounted(async () => {
   }
 })
 
-async function loadTeams (): Promise<void> {
+async function loadTeams(): Promise<void> {
   const list = await listTeamsByTournament(props.tournamentId)
   // normalizamos a TeamMin
   teams.value = list.map((t: { id: string; displayName: string; crestUrl?: string }) => {
@@ -136,7 +110,7 @@ const groupedRounds = computed<Record<string, Match[]>>(() => {
 
 const groupedRoundsKeys = computed(() => Object.keys(groupedRounds.value))
 
-function roundTitle (key: string): string {
+function roundTitle(key: string): string {
   // si viene "Fecha X" lo dejamos; si es número, usamos “X° FECHA”
   const n = Number(key)
   if (!Number.isNaN(n)) return `${n}° FECHA`
@@ -145,11 +119,11 @@ function roundTitle (key: string): string {
 }
 
 /* helpers UI */
-function pad2 (n: number): string { return n < 10 ? `0${n}` : String(n) }
+function pad2(n: number): string { return n < 10 ? `0${n}` : String(n) }
 const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 
-function formatDateTime (ms?: number): string {
+function formatDateTime(ms?: number): string {
   if (!ms) return '—'
   const d = new Date(ms)
   const dd = pad2(d.getDate())
@@ -164,18 +138,28 @@ function formatDateTime (ms?: number): string {
 </script>
 
 <style scoped>
-.q-btn .q-icon, .q-btn .q-spinner {
-    font-size: 20px;
-    padding: 0;
+.q-btn .q-icon,
+.q-btn .q-spinner {
+  font-size: 20px;
+  padding: 0;
 }
+
 .container-match {
   width: 100%;
   max-width: 700px;
   margin: 0 auto;
 }
+
 .font-weight-bold {
   font-weight: 900 !important;
 }
-.rounded-borders { border-radius: 12px; }
-.match-row { padding: 4px 0; }
+
+.rounded-borders {
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.match-row {
+  padding: 4px 0;
+}
 </style>
