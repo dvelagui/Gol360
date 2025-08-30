@@ -6,10 +6,10 @@
           {{ homeName.toUpperCase() }}
         </div>
         <div class="q-px-sm" >
-          <q-avatar v-if="homeCrest" size="25px" color="primary" text-color="white">
+          <q-avatar v-if="homeCrest" size="25px" color="accent" text-color="white">
             <img :src="homeCrest" />
           </q-avatar>
-          <q-avatar v-else size="25px" color="primary" text-color="white">
+          <q-avatar v-else size="25px" text-color="accent">
             <q-icon name="shield" />
           </q-avatar>
         </div>
@@ -27,10 +27,10 @@
     <div class="col-5 row items-center q-pl-sm">
       <div class="row ellipsis">
         <div class="q-px-sm" >
-          <q-avatar v-if="awayCrest" size="25px" color="primary" text-color="white">
+          <q-avatar v-if="awayCrest" size="25px"  text-color="white">
             <img :src="awayCrest" />
           </q-avatar>
-          <q-avatar v-else size="25px" color="primary" text-color="white">
+          <q-avatar v-else size="25px"  text-color="accent">
             <q-icon name="shield" />
           </q-avatar>
         </div>
