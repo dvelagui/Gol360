@@ -29,7 +29,7 @@ export interface Team {
   displayName: string;
   city: string;
   group?: string;
-  colors?: { primary?: string; secondary?: string };
+  colors?: string;
   crestUrl?: string;
   captainId?: string;
   createdBy: string;

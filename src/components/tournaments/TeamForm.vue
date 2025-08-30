@@ -1,68 +1,152 @@
 <template>
-  <q-form @submit.prevent="onSave" class="q-gutter-md">
+  <q-form @submit.prevent="onSubmit" class="q-gutter-md">
     <div class="row q-col-gutter-md">
-      <div class="col-12 col-sm-6">
-        <q-input v-model="form.displayName" label="Nombre del equipo" dense filled />
+      <div class="col-12 col-md-6">
+        <q-input
+          v-model="form.displayName"
+          label="Nombre del equipo"
+          :rules="[req]"
+          dense filled
+        />
       </div>
-      <div class="col-12 col-sm-6">
-        <q-input v-model="form.city" label="Ciudad" dense filled />
+      <div class="col-12 col-md-6">
+        <q-input
+          v-model="form.city"
+          label="Ciudad"
+          :rules="[req]"
+          dense filled
+        />
       </div>
-      <div class="col-12 col-sm-6">
-        <q-input v-model="form.group" label="Grupo (opcional)" dense filled />
+
+      <div class="col-12 col-md-6">
+        <q-input
+          v-model="form.colors"
+          label="Color primario de grupo (opcional)"
+          :rules="[req]"
+          dense filled
+        />
       </div>
-      <div class="col-12 col-sm-6">
-        <q-input v-model="colorsString" label="Colores (opcional, ej: azul, blanco)" dense filled />
-      </div>
+
       <div class="col-12">
-        <q-input v-model="form.crestUrl" label="URL del escudo (opcional)" dense filled />
+        <div class="row items-center q-gutter-md">
+          <div>
+            <q-avatar size="72px" color="grey-2">
+              <q-img :src="previewURL" ratio="1" />
+            </q-avatar>
+          </div>
+          <div class="col">
+            <q-file
+              v-model="localFile"
+              accept="image/*"
+              label="Escudo / logo"
+              dense filled
+              clearable
+              @update:model-value="onFileChange"
+            >
+              <template #prepend><q-icon name="image"/></template>
+            </q-file>
+            <div class="text-caption text-grey-7 q-mt-xs">
+              PNG/JPG recomendado. Si no cargas una imagen, usaremos un avatar por defecto.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="row justify-end q-gutter-sm">
       <q-btn flat label="Cancelar" color="grey-7" @click="$emit('cancel')" />
-      <q-btn :disable="!canSave" label="Guardar" color="primary" type="submit" />
+      <q-btn :loading="submitting" color="primary" label="Guardar" type="submit" />
     </div>
   </q-form>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { uploadImage } from '@/services/uploadService'
+import { Notify } from 'quasar'
 import type { Team } from '@/types/auth'
+
+// Avatar por defecto (teams)
+const DEFAULT_TEAM_AVATAR =
+  'https://firebasestorage.googleapis.com/v0/b/gol360-app.firebasestorage.app/o/avatar%2Fteam.png?alt=media&token=b3aa0ba4-ee43-4b2c-b34d-7ddb86c77aa8'
 
 const props = defineProps<{
   tournamentId: string
-  modelValue?: Partial<Team>
+  modelValue?: Partial<Team>  // para edición
 }>()
 
 const emit = defineEmits<{
-  (e: 'save', payload: Omit<Team,'id'|'createdAt'|'createdBy'>): void
+  (e: 'save', payload: Omit<Team,'id'|'createdAt'|'createdBy'> & { __storagePath__?: string }): void
   (e: 'cancel'): void
 }>()
+
+// reglas simples
+const req = (v: string) => (!!v && v.toString().trim().length > 0) || 'Requerido'
+
+const submitting = ref(false)
+const localFile = ref<File | null>(null)
+const storedPath = ref<string | undefined>(undefined)
 
 const form = ref<Omit<Team,'id'|'createdAt'|'createdBy'>>({
   tournamentId: props.tournamentId,
   displayName: props.modelValue?.displayName ?? '',
-  city: props.modelValue?.city ?? "",
-  group: props.modelValue?.group ?? "",
-  colors: props.modelValue?.colors ?? { primary: "", secondary: "" },
-  crestUrl: props.modelValue?.crestUrl ?? "",
-  captainId: props.modelValue?.captainId ?? ""
+  city: props.modelValue?.city ?? '',
+  group: props.modelValue?.group ?? '',
+  colors: props.modelValue?.colors ?? '',
+  // nuevo nombre de campo:
+  photoURL: (props.modelValue as Partial<Team>)?.photoURL
+    ?? (props.modelValue as Partial<Team>)?.crestUrl
+    ?? DEFAULT_TEAM_AVATAR,
+  captainId: props.modelValue?.captainId ?? ''
 })
 
-// Computed property to handle colors as a string for the input
-const colorsString = computed({
-  get() {
-    const colors = form.value.colors || { primary: "", secondary: "" }
-    // Join primary and secondary with comma if both exist
-    return [colors.primary, colors.secondary].filter(Boolean).join(', ')
-  },
-  set(val: string) {
-    const [primary = "", secondary = ""] = val.split(',').map(s => s.trim())
-    form.value.colors = { primary, secondary }
+// si viene desde BD un path guardado (si ya lo manejas), consérvalo
+watch(() => (props.modelValue as Partial<Team> & { __storagePath__?: string })?.__storagePath__, (p) => { storedPath.value = p }, { immediate: true })
+
+const previewURL = computed(() => {
+  return localFile.value ? URL.createObjectURL(localFile.value) : (form.value.photoURL || DEFAULT_TEAM_AVATAR)
+})
+
+function onFileChange (f: File | null) {
+  // solo para refrescar preview; la subida se hace onSubmit
+  if (!f) return
+}
+
+/** Sube imagen (si hay) y emite el payload listo.
+ *  Para _compat_ dejamos también `crestUrl` en el objeto que emitimos.
+ */
+async function onSubmit () {
+  try {
+    submitting.value = true
+
+    let photoURL = form.value.photoURL || DEFAULT_TEAM_AVATAR
+    let path: string | undefined = storedPath.value
+
+    if (localFile.value) {
+      const up = await uploadImage(
+        localFile.value,
+        storedPath.value
+          ? { folder: 'teams', replacePath: storedPath.value }
+          : { folder: 'teams' }
+      )
+      photoURL = up.url
+      path = up.path
+    }
+
+    const payload = {
+      ...form.value,
+      tournamentId: props.tournamentId,
+      photoURL,
+      // compat con vistas/servicios antiguos:
+      crestUrl: photoURL,
+      ...(path ? { __storagePath__: path } : {})
+    }
+
+    emit('save', payload)
+  } catch {
+    Notify.create({ type: 'negative', message: 'No se pudo guardar el equipo' })
+  } finally {
+    submitting.value = false
   }
-})
-
-const canSave = computed(() => form.value.tournamentId && form.value.displayName.trim().length > 0)
-
-function onSave() { if (canSave.value) emit('save', { ...form.value }) }
+}
 </script>
