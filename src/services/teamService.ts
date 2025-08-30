@@ -31,7 +31,7 @@ export async function createTeam(
     displayName: payload.displayName,           // ✅ displayName
     city: payload.city ?? '',
     group: payload.group ?? '',
-    colors: payload.colors ?? {},               // si usas objeto { home, away }
+    colors: payload.colors ?? '',
     crestUrl: payload.crestUrl ?? '',
     captainId: payload.captainId ?? '',
     createdBy: ctx.uid,
