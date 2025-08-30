@@ -93,11 +93,8 @@
 
         <div class="q-px-lg q-pb-md column">
           <div class="text-center">
-            <q-avatar v-if="t.crestUrl" size="60px" class="q-mb-sm" color="primary" text-color="white">
+            <q-avatar v-if="t.crestUrl" size="60px" class="q-mb-sm"  text-color="white">
               <img :src="t.crestUrl" />
-            </q-avatar>
-            <q-avatar v-else size="60px" class="q-mb-sm" color="primary" text-color="white">
-              <q-icon name="shield" />
             </q-avatar>
           </div>
 
