@@ -1,7 +1,6 @@
 <template>
   <div class="q-pa-md">
 
-    <!-- Selector de equipo -->
     <div class="row items-center q-gutter-sm q-mb-md">
       <q-select v-model="selectedTeamId" :options="teamOptions" option-value="id" option-label="name" dense filled
         label="Equipo" style="min-width: 260px" />
@@ -11,11 +10,10 @@
       </q-badge>
     </div>
 
-    <!-- Encabezado visual del equipo -->
     <div v-if="team" class="header-card q-mb-xs row">
       <div class="header-overlay">
-        <div class="row justify-between full-width">
-          <div class="row items-center q-gutter-sm">
+        <div class="row justify-between items-end full-width">
+          <div class="col-6 col-md-10 row items-center q-gutter-sm">
             <q-avatar size="56px" class="bg-white">
               <img v-if="team.crestUrl" :src="team.crestUrl" alt="crest" />
               <q-icon v-else name="emoji_events" />
@@ -27,16 +25,14 @@
               </div>
             </div>
           </div>
-          <div class="q-pa-xs">
-            <q-btn class="q-my-xs" outline color="white" text-color="white" label="Editar Jugadores"
+          <div class="col-6 col-md-2 q-pa-xs text-right">
+            <q-btn class="q-my-xs text-caption" outline color="white" text-color="white" label="Editar Jugadores"
               unelevated :disable="!team" @click="team && $emit('add-players', team)" />
           </div>
         </div>
       </div>
     </div>
 
-
-    <!-- Tabla tipo “scoreboard” -->
     <q-markup-table flat bordered class="rounded-borders">
       <thead>
         <tr>
@@ -66,7 +62,6 @@
               </div>
             </div>
           </td>
-          <!-- Métricas (placeholder funcional) -->
           <td class="text-center">{{ p.stats.goals }}</td>
           <td class="text-center">{{ p.stats.matches }}</td>
           <td class="text-center"><q-icon name="circle" size="10px" class="text-amber" /> {{ p.stats.yellow }}</td>
