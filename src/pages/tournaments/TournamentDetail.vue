@@ -1,6 +1,5 @@
 <template>
   <q-page class="q-pa-lg">
-    <!-- Header -->
     <div class="row items-center justify-between q-mb-md">
       <div>
         <div class="text-h5">{{ tName }}</div>
@@ -12,8 +11,6 @@
         <q-btn flat icon="arrow_back" label="Volver" @click="goBack" />
       </div>
     </div>
-
-    <!-- Tabs -->
     <q-tabs v-model="tab" class="bg-transparent text-secondary" active-color="primary" indicator-color="primary"
       align="left" narrow-indicator>
       <q-tab name="schedule" label="Programación" icon="calendar_month" />
@@ -26,50 +23,39 @@
     <q-separator class="q-mb-md" />
 
     <q-tab-panels v-model="tab" animated swipeable>
-      <!-- PROGRAMACIÓN -->
       <q-tab-panel name="schedule" class="q-pa-none">
         <SchedulePanel ref="scheduleRef" :tournament-id="tId" v-if="role" :role="role" @edit="openMatchEdit"
           @results="openResults" />
         <SchedulePanel ref="scheduleRef" :tournament-id="tId" v-else @edit="openMatchEdit" @results="openResults" />
       </q-tab-panel>
-
-      <!-- EQUIPOS -->
       <q-tab-panel name="teams" class="q-pa-none">
         <TeamsPanel ref="teamRef" :tournament-id="tId" :tournament-detail="tStore.item!" v-bind="role !== undefined ? { role } : {}"
           @create-team="openTeamCreate" @edit-team="openTeamEdit" @open-players="openPlayers" />
       </q-tab-panel>
-
-      <!-- JUGADORES -->
       <q-tab-panel name="players" class="q-pa-none">
         <PlayersPanel :tournament-id="tId" v-bind="role !== undefined ? { role } : {}"
           @open-profile="openPlayerProfile" @add-players="addPlayers" :team-selected="currentTeam" />
       </q-tab-panel>
 
-      <!-- TABLA -->
       <q-tab-panel name="standings" class="q-pa-none">
         <StandingsPanel :tournament-id="tId" />
       </q-tab-panel>
 
-      <!-- RANKINGS --->
       <q-tab-panel name="leaders" class="q-pa-none">
         <RankingsPanel :tournament-id="tId" />
       </q-tab-panel>
     </q-tab-panels>
 
-    <!-- DIALOG: CREAR/EDITAR PARTIDO -->
     <MatchFormDialog v-model="showMatchForm" :tournament-id="tId" :teams="teams" :model-value2="matchModel"
       @saved="afterMatchSaved" />
 
-    <!-- DIALOG: RESULTADOS Y EVENTOS -->
     <ResultsDialog v-model="showResults" :match="resultsMatch" :teams="teams" :can-edit="canEditMatch"
       :can-propose="role === 'team'" @confirm="onConfirm" @addEvent="openEventDialog" @approve="approveEv"
       @reject="rejectEv" @remove="removeEv" />
 
-    <!-- DIALOG: NUEVO EVENTO -->
     <EventDialog v-model="showEvent" :match="resultsMatch" :tournament-id="tId" :teams="teams"
       :can-approve="role === 'admin' || role === 'manager'" @submit="submitEvent" />
 
-    <!-- DIALOGS EQUIPOS/JUGADORES -->
     <TeamFormDialog v-model="showTeamForm" :tournament-id="tId" :model-value2="teamModel" @saved="afterTeamSaved" />
     <PlayersDialog v-model="showPlayers" :tournament-id="tId" :team="currentTeam"
       v-bind="role !== undefined ? { role } : {}" />

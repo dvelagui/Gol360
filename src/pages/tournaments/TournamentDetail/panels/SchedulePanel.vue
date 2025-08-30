@@ -1,47 +1,80 @@
 <template>
   <div class="q-pa-none">
     <div class="row items-center q-mb-sm">
+      <div class="text-subtitle1">Programación</div>
       <q-space />
-      <q-select v-model="status" :options="statusOptions" dense standout label="Estado" clearable class="q-mr-sm"
-        style="min-width: 160px" />
-      <q-select v-model="phase" :options="phaseOptions" dense standout label="Fase" clearable
-        style="min-width: 160px" />
     </div>
 
-    <div v-if="store.loading" class="q-my-xl">
-      <q-skeleton type="rect" class="q-mb-md" height="120px" />
-      <q-skeleton type="rect" class="q-mb-md" height="120px" />
-      <q-skeleton type="rect" class="q-mb-md" height="120px" />
+    <div v-if="mStore.loading" class="q-my-xl">
+      <q-skeleton type="rect" class="q-mb-md" height="100px" />
+      <q-skeleton type="rect" class="q-mb-md" height="100px" />
+      <q-skeleton type="rect" class="q-mb-md" height="100px" />
     </div>
 
-    <div v-else class="grid q-col-gutter-md" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
-      <MatchCard v-for="m in store.items" :key="m.id" :match="m" :team-home="m.homeTeamId" :team-away="m.awayTeamId">
-        <template #actions>
-          <div class="row q-gutter-sm q-mt-sm">
-            <q-btn dense flat icon="summarize" color="primary" label="Resultados" @click="$emit('results', m)" />
-            <q-btn v-if="canEdit" dense flat icon="edit" color="primary" @click="$emit('edit', m)" />
-            <q-btn v-if="canEdit" dense flat icon="delete" color="negative" @click="onRemove(m.id)" />
+    <div v-else-if="!groupedRoundsKeys.length" class="q-my-xl text-grey-6">
+      <div class="text-subtitle2">No hay partidos programados</div>
+      <div class="text-caption">Cuando crees el calendario o agregues partidos, aparecerán aquí.</div>
+    </div>
+
+    <div v-else class="q-gutter-md container-match">
+      <div
+        v-for="roundKey in groupedRoundsKeys"
+        :key="roundKey"
+        class="rounded-borders bg-white q-pa-md shadow-1"
+      >
+        <div class="text-h6 q-mb-xs text-center text-primary font-weight-bold">{{ roundTitle(roundKey) }}</div>
+
+        <div v-for="(m, idx) in groupedRounds[roundKey]" :key="m.id" class="match-row">
+          <div class="row items-center justify-between q-pb-xs q-pt-xs">
+            <div class="text-caption text-grey-7">
+              {{ formatDateTime(m.date) }}
+              <span class="text-grey-8">
+                <span v-if="m.group"> · Grupo {{ m.group }}</span>
+              </span>
+            </div>
+
+            <div class="row items-center q-gutter-xs">
+              <q-btn
+                v-if="canEdit"
+                dense round flat color="dark" icon="edit"
+                :title="'Editar partido'"
+                @click="$emit('edit', m)"
+                size="20"
+              />
+              <q-btn
+                dense round flat color="primary" icon="event"
+                :title="'Resultados / eventos'"
+                @click="$emit('results', m)"
+              />
+            </div>
           </div>
-        </template>
-      </MatchCard>
-    </div>
-
-    <div v-if="!store.loading && !store.items.length" class="q-my-xl text-grey-6">
-      <div class="text-subtitle1 q-mb-xs">No hay partidos programados</div>
-      <div class="text-caption">Usa “Nuevo partido” en el header.</div>
+          <MatchCard
+            :match="m"
+            :team-by-id="teamById"
+            class="q-mb-sm"
+            @edit="$emit('edit', m)"
+            @results="$emit('results', m)"
+          />
+          <q-separator
+            v-if="idx < (groupedRounds[roundKey]?.length ?? 0) - 1"
+            spaced
+            inset
+            color="grey-4"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, computed, defineExpose } from 'vue'
-import MatchCard from '@/components/tournaments/MatchCard.vue'
+import { onMounted, ref, computed, defineAsyncComponent } from 'vue'
+import { Notify } from 'quasar'
 import { useMatchStore } from '@/stores/matches'
 import { listTeamsByTournament } from '@/services/teamService'
-import type { MatchPhase, MatchStatus, MatchPhaseOption, MatchStatusOption } from '@/types/competition'
-import type { Team } from '@/types/auth'
 import type { Match } from '@/types/competition'
-import { Notify } from 'quasar'
+
+const MatchCard = defineAsyncComponent(() => import('@/components/tournaments/MatchCard.vue'))
 
 const props = defineProps<{
   tournamentId: string
@@ -53,67 +86,96 @@ defineEmits<{
   (e: 'results', m: Match): void
 }>()
 
-const store = useMatchStore()
-const status = ref<MatchStatus | null>(null)
-const phase = ref<MatchPhase | null>(null)
-const statusOptions: MatchStatusOption[] = [
-  { label: 'Programado', value: 'programado' },
-  { label: 'En Progreso', value: 'en progreso' },
-  { label: 'Finalizado', value: 'terminado' },
-  { label: 'Cancelado', value: 'cancelado' },
-  { label: 'WO', value: 'walkover' }
-]
-
-const phaseOptions: MatchPhaseOption[] = [
-  { label: 'Fase Grupal', value: 'grupos' },
-  { label: 'Eliminatorias', value: 'eliminatoria' },
-  { label: 'Semifinal', value: 'semifinal' },
-  { label: 'Final', value: 'final' }
-]
-
 const canEdit = computed(() => props.role === 'admin' || props.role === 'manager')
 
-// cache equipos mínimos para tarjetas
-const teams = ref<Array<Pick<Team, 'id' | 'displayName'>>>([])
+/* stores & data */
+const mStore = useMatchStore()
+type TeamMin = { id: string; name: string; crestUrl?: string }
+const teams = ref<TeamMin[]>([])
 
-// fetch inicial
-async function fetchNow() {
-  const filters: { status?: MatchStatus; phase?: MatchPhase } = {
-    ...(status.value ? { status: status.value } : {}),
-    ...(phase.value ? { phase: phase.value } : {})
-  }
-  await store.fetch(props.tournamentId, filters)
+function teamById (id: string): TeamMin | undefined {
+  return teams.value.find(t => t.id === id)
 }
-defineExpose({ refetch: fetchNow }) // ← el padre puede pedir un refresh
 
 onMounted(async () => {
-  await fetchNow()
   try {
-    const list = await listTeamsByTournament(props.tournamentId)
-    teams.value = list.map(t => ({ id: t.id, displayName: t.displayName }))
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Error cargando equipos'
-    Notify.create({ type: 'negative', message: msg })
+    await Promise.all([
+      mStore.fetch(props.tournamentId),
+      loadTeams()
+    ])
+  } catch {
+    Notify.create({ type: 'negative', message: 'No se pudo cargar programación' })
   }
 })
 
-watch([status, phase], fetchNow)
+async function loadTeams (): Promise<void> {
+  const list = await listTeamsByTournament(props.tournamentId)
+  // normalizamos a TeamMin
+  teams.value = list.map((t: { id: string; displayName: string; crestUrl?: string }) => {
+    const team: TeamMin = {
+      id: t.id,
+      name: t.displayName
+    }
+    if (t.crestUrl !== undefined) {
+      team.crestUrl = t.crestUrl
+    }
+    return team
+  })
+}
 
-// eliminar partido
-async function onRemove(id: string) {
-  try {
-    await store.remove(id)
-    Notify.create({ type: 'positive', message: 'Partido eliminado' })
-    await fetchNow()
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'No se pudo eliminar'
-    Notify.create({ type: 'negative', message: msg })
+/* agrupación por “round” */
+const groupedRounds = computed<Record<string, Match[]>>(() => {
+  const out: Record<string, Match[]> = {}
+  for (const m of mStore.items.slice().sort((a, b) => (a.date || 0) - (b.date || 0))) {
+    const r = String(m.round ?? 'Sin ronda')
+    if (!out[r]) out[r] = []
+    out[r].push(m)
   }
+  return out
+})
+
+const groupedRoundsKeys = computed(() => Object.keys(groupedRounds.value))
+
+function roundTitle (key: string): string {
+  // si viene "Fecha X" lo dejamos; si es número, usamos “X° FECHA”
+  const n = Number(key)
+  if (!Number.isNaN(n)) return `${n}° FECHA`
+  // si ya te llega "Fecha 7" lo usamos como está
+  return key
+}
+
+/* helpers UI */
+function pad2 (n: number): string { return n < 10 ? `0${n}` : String(n) }
+const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
+
+function formatDateTime (ms?: number): string {
+  if (!ms) return '—'
+  const d = new Date(ms)
+  const dd = pad2(d.getDate())
+  const mon = months[d.getMonth()]
+  const day = days[d.getDay()]
+  const h = d.getHours()
+  const mm = pad2(d.getMinutes())
+  const hh = h % 12 || 12
+  const ampm = h < 12 ? 'a. m.' : 'p. m.'
+  return `${dd} ${mon} | ${day} · ${hh}:${mm} ${ampm}`
 }
 </script>
 
 <style scoped>
-.grid {
-  display: grid;
+.q-btn .q-icon, .q-btn .q-spinner {
+    font-size: 20px;
+    padding: 0;
 }
+.container-match {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.font-weight-bold {
+  font-weight: 900 !important;
+}
+.rounded-borders { border-radius: 12px; }
+.match-row { padding: 4px 0; }
 </style>
