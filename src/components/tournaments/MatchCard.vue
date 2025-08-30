@@ -1,7 +1,7 @@
 <template>
-  <div class="row items-center no-wrap q-px-sm q-py-xs">
+  <div class="row items-center no-wrap q-px-sm q-py-xs text-body2">
     <div class="col-5 row items-center justify-end q-pr-sm">
-      <div class="row text-subtitle1 ellipsis">
+      <div class="row  ellipsis">
         <div>
           {{ homeName.toUpperCase() }}
         </div>
@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="col-2 row items-center justify-center">
-      <div class="score text-h6">
+      <div class="score">
         {{ homeScoreDisplay }}
 
         <span class="dash">—</span>
@@ -25,7 +25,7 @@
       </div>
     </div>
     <div class="col-5 row items-center q-pl-sm">
-      <div class="row text-subtitle1 ellipsis">
+      <div class="row ellipsis">
         <div class="q-px-sm" >
           <q-avatar v-if="awayCrest" size="25px" color="primary" text-color="white">
             <img :src="awayCrest" />
