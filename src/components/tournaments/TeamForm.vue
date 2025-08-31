@@ -1,7 +1,7 @@
 <template>
   <q-form @submit.prevent="onSubmit" class="q-gutter-md">
-    <div class="row q-col-gutter-md">
-      <div class="col-12 col-md-6">
+    <div class="row justify-center q-col-gutter-md">
+      <div class="col-11 col-md-5">
         <q-input
           v-model="form.displayName"
           label="Nombre del equipo"
@@ -9,7 +9,7 @@
           dense filled
         />
       </div>
-      <div class="col-12 col-md-6">
+      <div class="col-11 col-md-5">
         <q-input
           v-model="form.city"
           label="Ciudad"
@@ -18,7 +18,7 @@
         />
       </div>
 
-      <div class="col-12 col-md-6">
+      <div class="col-11 col-md-5">
         <q-input
           v-model="form.colors"
           label="Color primario de grupo (opcional)"
@@ -27,7 +27,7 @@
         />
       </div>
 
-      <div class="col-12">
+      <div class="col-11 col-md-5">
         <div class="row items-center q-gutter-md">
           <div>
             <q-avatar size="72px" color="grey-2">
@@ -38,7 +38,7 @@
             <q-file
               v-model="localFile"
               accept="image/*"
-              label="Escudo / logo"
+              label="Subir Escudo / logo"
               dense filled
               clearable
               @update:model-value="onFileChange"
@@ -65,6 +65,8 @@ import { ref, computed, watch } from 'vue'
 import { uploadImage } from '@/services/uploadService'
 import { Notify } from 'quasar'
 import type { Team } from '@/types/auth'
+
+type UploadResult = string | { url: string; path: string }
 
 // Avatar por defecto (teams)
 const DEFAULT_TEAM_AVATAR =
@@ -120,17 +122,18 @@ async function onSubmit () {
     submitting.value = true
 
     let photoURL = form.value.photoURL || DEFAULT_TEAM_AVATAR
-    let path: string | undefined = storedPath.value
-
+    let path: string | undefined = undefined
     if (localFile.value) {
       const up = await uploadImage(
         localFile.value,
-        storedPath.value
-          ? { folder: 'teams', replacePath: storedPath.value }
-          : { folder: 'teams' }
-      )
-      photoURL = up.url
-      path = up.path
+        'teams'
+      ) as UploadResult
+      if (typeof up === 'string') {
+        photoURL = up
+      } else if (up && typeof up === 'object' && 'url' in up && 'path' in up) {
+        photoURL = up.url
+        path = up.path
+      }
     }
 
     const payload = {
