@@ -42,6 +42,7 @@ export async function listTournamentsByManager(managerId?: string): Promise<Tour
   return snaps.docs.map(d => ({ id: d.id, ...d.data() } as unknown as Tournament))
 }
 
+
 export async function updateTournament(id: string, data: Partial<Tournament>): Promise<void> {
   await updateDoc(doc(colTournaments, id), {
     ...data,

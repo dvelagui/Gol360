@@ -9,18 +9,9 @@
     <div class="row items-center q-col-gutter-md q-mb-md">
 
       <div class="col-12 col-md-3">
-        <q-select
-          v-model="tId"
-          :options="tournaments"
-          :option-label="tournaments => tournaments.displayName"
-          :option-value="tournaments => tournaments.tournamentId"
-          dense
-          filled
-          clearable
-          label="Seleccione el campeonato"
-          emit-value
-          map-options
-        />
+        <q-select v-model="tId" :options="tournaments" :option-label="tournaments => tournaments.displayName"
+          :option-value="tournaments => tournaments.tournamentId" dense filled clearable
+          label="Seleccione el campeonato" emit-value map-options />
       </div>
     </div>
     <q-tabs v-model="tab" class="bg-transparent text-secondary" active-color="primary" indicator-color="primary"
@@ -70,6 +61,7 @@ import { Notify } from 'quasar'
 import { useDatabaseStore } from '@/stores/database'
 import { useTournamentStore } from '@/stores/tournaments'
 import { useUserStore } from '@/stores/user'
+import { usePlayerStore } from '@/stores/players'
 import { listTeamsByTournament } from '@/services/teamService'
 import { useEventStore } from '@/stores/events'
 import { confirmResult, setMatchScore } from '@/services/matchService'
@@ -103,6 +95,7 @@ interface MatchFormModel {
 const tStore = useTournamentStore()
 const eStore = useEventStore()
 const uStore = useUserStore()
+const pStore = usePlayerStore()
 const database = useDatabaseStore()
 
 const tournaments = ref<Tournament[]>([])
@@ -114,13 +107,12 @@ async function fetchByRole() {
   if (!role.value) return
   // admin ve todos; manager solo los suyos
   if (role.value === 'manager') {
-    console.log(uStore.user?.uid);
-
     await tStore.fetch(uStore.user?.uid || '')
     tournaments.value = tStore.items
   } else if ((role.value === 'player')) {
-    await tStore.fetch(uStore.user?.uid || '')
-    tournaments.value = tStore.items
+    await tStore.fetch()
+    await pStore.fetchByEmail(uStore.user?.email || '')
+    tournaments.value = tStore.items.filter(t => pStore.items.some(p => p.tournamentId === t.tournamentId));
   } else {
     await tStore.fetch()
     tournaments.value = tStore.items

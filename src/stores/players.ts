@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import type { Player } from '@/types/auth'
 import {
   listPlayersByTeam,
+  listPlayersByEmail,
   getPlayer,
   createPlayer,
   updatePlayer,
@@ -38,6 +39,19 @@ export const usePlayerStore = defineStore('players', {
       this.error = null
       try {
         this.items = await listPlayersByTeam(teamId)
+      } catch (e: any) {
+        this.items = []
+        this.error = e?.message ?? 'No se pudieron cargar los jugadores'
+      } finally {
+        this.loading = false
+      }
+    },
+    async fetchByEmail(email: string): Promise<void> {
+      this.loading = true
+      this.error = null
+      try {
+        const players = await listPlayersByEmail(email)
+        this.items = players
       } catch (e: any) {
         this.items = []
         this.error = e?.message ?? 'No se pudieron cargar los jugadores'

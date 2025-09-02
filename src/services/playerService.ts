@@ -51,6 +51,11 @@ export async function listPlayersByTeam(teamId: string): Promise<Player[]> {
   const snaps = await getDocs(q)
   return snaps.docs.map(d => ({ id: d.id, ...d.data() } as Player))
 }
+export async function listPlayersByEmail(email: string): Promise<Player[]> {
+  const q: Query = query(colPlayers, where('email', '==', email))
+  const snaps = await getDocs(q)
+  return snaps.docs.map(d => ({ id: d.id, ...d.data() } as Player))
+}
 
 /**
  * (Compatibilidad) Promueve a capitán UN jugador (no maneja el anterior ni el team)
