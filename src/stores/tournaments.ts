@@ -19,6 +19,8 @@ export const useTournamentStore = defineStore('tournaments', {
   }),
   actions: {
     async fetch(ownerId?: string) {
+      console.log(ownerId);
+
       this.loading = true
       this.error = null
       try {

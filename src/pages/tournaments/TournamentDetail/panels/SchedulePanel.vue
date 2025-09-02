@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, defineAsyncComponent } from 'vue'
+import { onMounted, ref, computed, defineAsyncComponent, watch } from 'vue'
 import { Notify } from 'quasar'
 import { useMatchStore } from '@/stores/matches'
 import { listTeamsByTournament } from '@/services/teamService'
@@ -135,6 +135,10 @@ function formatDateTime(ms?: number): string {
   const ampm = h < 12 ? 'a. m.' : 'p. m.'
   return `${dd} ${mon} | ${day} · ${hh}:${mm} ${ampm}`
 }
+
+watch(() => props.tournamentId, async () => {
+  await mStore.fetch(props.tournamentId)
+})
 </script>
 
 <style scoped>

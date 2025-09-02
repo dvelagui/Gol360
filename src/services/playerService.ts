@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  addDoc,
   doc,
   getDoc,
   getDocs,
@@ -10,7 +9,8 @@ import {
   deleteDoc,
   serverTimestamp,
   type Query,
-  orderBy
+  orderBy,
+  setDoc
 } from 'firebase/firestore'
 import { colPlayers, colTeams } from './firestore/collections'
 import type { Player } from '@/types/auth'
@@ -21,13 +21,16 @@ import type { Player } from '@/types/auth'
 export async function createPlayer(
   data: Omit<Player, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
-  const ref = await addDoc(colPlayers, {
+  const ref = doc(colPlayers) // id auto
+  const dataWithId =  {
     ...data,
     // por defecto un jugador nuevo está activo (si tu tipo lo contempla)
     active: (data as any).active ?? true,
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  } as any)
+    updatedAt: serverTimestamp(),
+    id: ref.id
+  }
+  await setDoc(ref, dataWithId)
   return ref.id
 }
 

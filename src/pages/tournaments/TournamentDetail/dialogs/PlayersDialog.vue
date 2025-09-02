@@ -68,11 +68,7 @@
           <q-btn dense round flat icon="close" v-close-popup />
         </q-card-section>
         <q-separator />
-        <q-card-section v-if="team">
-          <PlayerForm :tournament-id="team.tournamentId" :team-id="team.id" :model-value="playerModel"
-            @save="(payload) => savePlayer({ ...payload, createdBy: playerModel.createdBy || '' })"
-            @cancel="() => (showForm = false)" />
-        </q-card-section>
+
       </q-card>
     </q-dialog>
     <PlayerAccountFormDialog v-model="showCreateAccount" :tournament-id="tournamentId" :team="team" @created="async () => {
@@ -85,7 +81,6 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { Notify } from 'quasar'
 import { usePlayerStore } from '@/stores/players'
-import PlayerForm from '@/components/tournaments/PlayerForm.vue'
 import type { Team } from '@/types/auth'
 import type { Player } from '@/types/auth'
 import { defineAsyncComponent } from 'vue'
@@ -129,22 +124,7 @@ function openEdit(p: Player) {
   showForm.value = true
 }
 
-async function savePlayer(payload: Omit<Player, 'id' | 'createdBy' | 'createdAt'> & { createdBy: string }) {
-  try {
-    if (editId.value) {
-      await store.update(editId.value, payload)
-      Notify.create({ type: 'positive', message: 'Jugador actualizado' })
-    } else {
-      await store.add(payload)
-      Notify.create({ type: 'positive', message: 'Jugador creado' })
-    }
-    showForm.value = false
-    if (props.team) await store.fetchByTeam(props.team.id)
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Error guardando jugador'
-    Notify.create({ type: 'negative', message: msg })
-  }
-}
+
 
 async function removePlayer(id: string) {
   try {

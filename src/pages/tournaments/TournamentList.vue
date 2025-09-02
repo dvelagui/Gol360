@@ -171,10 +171,10 @@ const filtered = computed(() => {
 const detailRouteName = computed(() => {
   const r = database.userData?.role
   return {
-    admin:   'tournament-detail-admin',
-    manager: 'tournament-detail-manager',
-    team:    'tournament-detail-team',
-    player:  'tournament-detail-player'
+    admin:   'tournament-summary-admin',
+    manager: 'tournament-summary-manager',
+    team:    'tournament-summary-team',
+    player:  'tournament-summary-player'
   }[r ?? 'admin']
 })
 
