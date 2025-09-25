@@ -77,22 +77,21 @@ const initials = computed(() => {
 })
 
 const rolePermissions: Record<Role, string[]> = {
-  admin: ['home', 'dashboard', 'teams', 'matches', 'videos', 'analytics', 'calendar', 'profile'],
-  manager: ['home', 'dashboard', 'teams', 'matches', 'videos', 'calendar', 'profile'],
-  team: ['home', 'team', 'matches', 'videos', 'profile'],
-  player: ['home', 'matches', 'videos', 'profile'],
+  admin: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  manager: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  team: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  player: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
 }
 
 const allLinks: NavLink[] = [
-  { id: 'home', icon: 'home', title: 'Inicio', url: '/' },
-  { id: 'dashboard', icon: 'dashboard', title: 'Panel', url: '/dashboard' },
-  { id: 'teams', icon: 'groups', title: 'Equipos', url: '/teams' },
-  { id: 'team', icon: 'group', title: 'Mi Equipo', url: '/team' },
-  { id: 'matches', icon: 'sports_soccer', title: 'Partidos', url: '/matches' },
-  { id: 'videos', icon: 'video_library', title: 'Videos', url: '/videos' },
-  { id: 'analytics', icon: 'analytics', title: 'Analítica', url: '/analytics' },
-  { id: 'calendar', icon: 'calendar_month', title: 'Calendario', url: '/calendar' },
+  { id: 'dashboard', icon: 'home', title: 'Inicio', url: '/' },
   { id: 'profile', icon: 'account_circle', title: 'Perfil', url: '/profile' },
+  { id: 'details', icon: 'sports_soccer', title: 'Competencia', url: '/details' },
+  { id: 'resumen', icon: 'calendar_month', title: 'Programación', url: '/resumen' },
+  { id: 'analytics', icon: 'analytics', title: 'Estadísticas', url: '/analytics' },
+  { id: 'videos', icon: 'video_library', title: 'Videos', url: '/videos' },
+  { id: 'store', icon: 'store', title: 'Tienda', url: '/store' },
+  { id: 'contact', icon: 'mail', title: 'Contacto', url: '/contact' },
 ]
 
 const visibleLinks = computed(() => {

@@ -27,7 +27,7 @@
       <q-card class="col-12 col-md-6">
         <q-card-section class="row items-center justify-between">
           <div class="text-subtitle1 text-weight-bold">Torneos</div>
-          <q-btn flat icon="open_in_new" @click="$router.push('/tournaments')" />
+          <q-btn flat icon="open_in_new" @click="fetchFunctions" />
         </q-card-section>
         <q-separator />
         <q-list dense>
@@ -44,7 +44,7 @@
       <q-card class="col-12 col-md-6">
         <q-card-section class="row items-center justify-between">
           <div class="text-subtitle1 text-weight-bold">Usuarios recientes</div>
-          <q-btn flat icon="open_in_new" @click="$router.push('/users')" />
+          <q-btn flat icon="open_in_new" @click="functionUser" />
         </q-card-section>
         <q-separator />
         <q-list dense>
@@ -65,7 +65,7 @@
     <q-card>
       <q-card-section class="row items-center justify-between">
         <div class="text-subtitle1 text-weight-bold">Próximos partidos</div>
-        <q-btn flat icon="calendar_month" label="Ver calendario" no-caps @click="$router.push('/calendar')" />
+        <q-btn flat icon="calendar_month" label="Ver calendario" no-caps @click="functionVideo" />
       </q-card-section>
       <q-separator />
       <q-table
@@ -79,7 +79,6 @@
         <template #body-cell-actions="props">
           <q-td :props="props">
             <q-btn size="sm" flat icon="preview" @click="$router.push(`/matches/${props.row.id}`)" />
-            <q-btn size="sm" flat icon="edit" @click="editMatch(props.row.id)" />
           </q-td>
         </template>
       </q-table>
@@ -89,7 +88,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 const kpis = ref([
   { icon: 'emoji_events', label: 'Torneos activos', value: 3 },
@@ -115,11 +113,32 @@ const columns = [
   { name:'field',label:'Cancha',field:'field' },
   { name:'actions', label:'', field:'actions' }
 ]
-const router = useRouter()
 
-function openCreateTournament(){ /* abrir diálogo/route de nuevo torneo */ }
-function editMatch(_id:string){
-  // Navegar a la página de edición del partido
-  void router.push(`/matches/${_id}/edit`)
+async function openCreateTournament(){
+  const res = await fetch("https://us-central1-gol360-api-dev.cloudfunctions.net/api/v1/matches");
+  const data = await res.json();
+  console.log(data);
 }
+
+async function fetchFunctions(){
+  const res = await fetch("https://us-central1-gol360-api-dev.cloudfunctions.net/api/v1/matches/EJ96TH5-T96Q0W");
+  const data = await res.json();
+  console.log(data);
+}
+
+async function functionUser(){
+  const res = await fetch("https://us-central1-gol360-api-dev.cloudfunctions.net/api/v1/matches/EJ96TH5-T96Q0W/spotlights");
+  const data = await res.json();
+  console.log(data);
+}
+
+async function functionVideo(){
+  const res = await fetch("https://us-central1-gol360-api-dev.cloudfunctions.net/api/v1/matches/EJ96TH5-T96Q0W/videos");
+  const data = await res.json();
+  console.log(data);
+}
+
+
+
+
 </script>

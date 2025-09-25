@@ -59,12 +59,12 @@ const routes: RouteRecordRaw[] = [
     },
      { path: 'tournaments/:id', redirect: to => ({ path: `/admin/tournaments/${to.params.id as string}/resumen` }) },
 
-      { path: 'tournaments/:id/resumen',
+      { path: '/resumen',
         name: 'tournament-summary-admin',
         component: () => import('@/pages/tournaments/TournamentSummary.vue'),
         meta: { requiresAuth: true, requiresRole: 'admin' }
       },
-      { path: 'tournaments/:id/details',
+      { path: '/details',
         name: 'tournament-manage-admin',
         component: () => import('@/pages/tournaments/TournamentManage.vue'),
         meta: { requiresAuth: true, requiresRole: 'admin' }
@@ -92,12 +92,12 @@ const routes: RouteRecordRaw[] = [
     },
     { path: 'tournaments/:id', redirect: to => ({ path: `/manager/tournaments/${to.params.id as string}/resumen` }) },
 
-      { path: 'tournaments/:id/resumen',
+      { path: '/resumen',
         name: 'tournament-summary-manager',
         component: () => import('@/pages/tournaments/TournamentSummary.vue'),
         meta: { requiresAuth: true, requiresRole: 'manager' }
       },
-      { path: 'tournaments/:id/details',
+      { path: '/details',
         name: 'tournament-manage-manager',
         component: () => import('@/pages/tournaments/TournamentManage.vue'),
         meta: { requiresAuth: true, requiresRole: 'manager' }
@@ -118,12 +118,12 @@ const routes: RouteRecordRaw[] = [
     },
     { path: 'tournaments/:id', redirect: to => ({ path: `/team/tournaments/${to.params.id as string}/resumen` }) },
 
-      { path: 'tournaments/:id/resumen',
+      { path: '/resumen',
         name: 'tournament-summary-team',
         component: () => import('@/pages/tournaments/TournamentSummary.vue'),
         meta: { requiresAuth: true, requiresRole: 'team' }
       },
-      { path: 'tournaments/:id/details',
+      { path: '/details',
         name: 'tournament-manage-team',
         component: () => import('@/pages/tournaments/TournamentManage.vue'),
         meta: { requiresAuth: true, requiresRole: 'team' }
@@ -144,12 +144,12 @@ const routes: RouteRecordRaw[] = [
     },
     { path: 'tournaments/:id', redirect: to => ({ path: `/player/tournaments/${to.params.id as string}/resumen` }) },
 
-      { path: 'tournaments/:id/resumen',
+      { path: 'tournaments/resumen',
         name: 'tournament-summary-player',
         component: () => import('@/pages/tournaments/TournamentSummary.vue'),
         meta: { requiresAuth: true, requiresRole: 'player' }
       },
-      { path: 'tournaments/:id/details',
+      { path: 'tournaments/details',
         name: 'tournament-manage-player',
         component: () => import('@/pages/tournaments/TournamentManage.vue'),
         meta: { requiresAuth: true, requiresRole: 'player' }
