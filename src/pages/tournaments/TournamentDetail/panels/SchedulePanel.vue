@@ -13,7 +13,7 @@
     </div>
 
     <div v-else class="container-match q-gutter-y-md">
-      <div v-for="roundKey in groupedRoundsKeys" :key="roundKey" class="rounded-borders bg-white q-pa-md shadow-2">
+      <div v-for="roundKey in groupedRoundsKeys" :key="roundKey" class="rounded-borders bg-white q-pa-xs shadow-2">
         <div class="text-h6 q-mb-xs text-center text-primary font-weight-bold">{{ roundTitle(roundKey) }}</div>
 
         <div v-for="(m, idx) in groupedRounds[roundKey]" :key="m.id" class="match-row">
