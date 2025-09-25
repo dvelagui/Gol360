@@ -1,18 +1,21 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="row items-center justify-between q-mb-md">
+    <div class="row items-center  q-mb-md">
       <div>
+        <div class="sports-font text-h4">La Jornada</div>
         <div class="text-h5">{{ tName }}</div>
-        <div class="text-caption text-grey-7">ID: {{ tId }}</div>
       </div>
     </div>
-    <div class="row items-center q-col-gutter-md q-mb-md">
-
+    <div class="row items-center justify-between q-col-gutter-md q-mb-md">
       <div class="col-12 col-md-3">
         <q-select v-model="tId" :options="tournaments" :option-label="tournaments => tournaments.displayName"
           :option-value="tournaments => tournaments.tournamentId" dense filled clearable
           label="Seleccione el campeonato" emit-value map-options />
-      </div>
+          <div class="text-caption text-grey-7 q-mt-sm text-right">ID: {{ tId }}</div>
+        </div>
+        <div class="col-12 col-md-9 text-md-right text-center ad-banner">
+          <img src="@/assets/display_banner_01.jpg" alt="banner">
+        </div>
     </div>
     <q-tabs v-model="tab" class="bg-transparent text-secondary" active-color="primary" indicator-color="primary"
       align="left" narrow-indicator>
@@ -267,7 +270,29 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.sports-font {
+  font-family: 'Arial Black', Impact, sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #f2c526;
+  -webkit-text-stroke: 2px #013f21;
+  text-shadow: 0px 0px 10px #218e61;
+  background-color: #013f21;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
 .rounded-borders {
   border-radius: 12px;
+}
+
+.ad-banner img {
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  width: 100%;
+  max-width: 80%;
+  max-height: 150px;
 }
 </style>

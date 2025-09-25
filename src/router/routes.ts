@@ -61,12 +61,12 @@ const routes: RouteRecordRaw[] = [
 
       { path: '/resumen',
         name: 'tournament-summary-admin',
-        component: () => import('@/pages/tournaments/TournamentSummary.vue'),
+        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
         meta: { requiresAuth: true, requiresRole: 'admin' }
       },
       { path: '/details',
         name: 'tournament-manage-admin',
-        component: () => import('@/pages/tournaments/TournamentManage.vue'),
+        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
         meta: { requiresAuth: true, requiresRole: 'admin' }
       },
   ],
@@ -94,12 +94,12 @@ const routes: RouteRecordRaw[] = [
 
       { path: '/resumen',
         name: 'tournament-summary-manager',
-        component: () => import('@/pages/tournaments/TournamentSummary.vue'),
+        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
         meta: { requiresAuth: true, requiresRole: 'manager' }
       },
       { path: '/details',
         name: 'tournament-manage-manager',
-        component: () => import('@/pages/tournaments/TournamentManage.vue'),
+        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
         meta: { requiresAuth: true, requiresRole: 'manager' }
       },
   ],
@@ -120,12 +120,12 @@ const routes: RouteRecordRaw[] = [
 
       { path: '/resumen',
         name: 'tournament-summary-team',
-        component: () => import('@/pages/tournaments/TournamentSummary.vue'),
+        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
         meta: { requiresAuth: true, requiresRole: 'team' }
       },
       { path: '/details',
         name: 'tournament-manage-team',
-        component: () => import('@/pages/tournaments/TournamentManage.vue'),
+        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
         meta: { requiresAuth: true, requiresRole: 'team' }
       },
   ],
@@ -146,12 +146,12 @@ const routes: RouteRecordRaw[] = [
 
       { path: 'tournaments/resumen',
         name: 'tournament-summary-player',
-        component: () => import('@/pages/tournaments/TournamentSummary.vue'),
+        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
         meta: { requiresAuth: true, requiresRole: 'player' }
       },
       { path: 'tournaments/details',
         name: 'tournament-manage-player',
-        component: () => import('@/pages/tournaments/TournamentManage.vue'),
+        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
         meta: { requiresAuth: true, requiresRole: 'player' }
       },
   ],

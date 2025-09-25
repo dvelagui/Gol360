@@ -1,7 +1,7 @@
 <template>
-  <div class="row items-center no-wrap q-px-sm q-py-xs text-body2">
-    <div class="col-5 row items-center justify-end q-pr-sm">
-      <div class="row  ellipsis">
+  <div class="row items-center no-wrap q-pa-xs text-body2">
+    <div class="col-4 row items-center justify-start q-pr-sm">
+      <div class="row">
         <div class="q-mt-xs">
           {{ homeName.toUpperCase() }}
         </div>
@@ -15,8 +15,8 @@
         </div>
       </div>
     </div>
-    <div class="col-2 row items-center justify-center">
-      <div class="score">
+    <div class="col-4 row items-center justify-center score-match">
+      <div class="score text-weight-bold text-h6">
         {{ homeScoreDisplay }}
 
         <span class="dash">—</span>
@@ -24,8 +24,8 @@
         {{ awayScoreDisplay }}
       </div>
     </div>
-    <div class="col-5 row items-center q-pl-sm">
-      <div class="row ellipsis">
+    <div class="col-4 row items-center justify-end q-pa-xs">
+      <div class="row">
         <div class="q-px-sm" >
           <q-avatar v-if="awayCrest" size="25px"  text-color="white">
             <img :src="awayCrest" />
@@ -89,6 +89,11 @@ const awayScoreDisplay = computed(() => props.match.score?.away ?? '')
 </script>
 
 <style scoped>
+.score-match {
+  background-color: rgba(190, 190, 190, 0.5);
+  border-radius: 12px;
+  padding: 10px;
+}
 .score {
   font-weight: 900;
   letter-spacing: .5px;
