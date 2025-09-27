@@ -53,7 +53,7 @@ import type { Team } from '@/types/auth'
 /* Lazy components */
 const SchedulePanel = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
 const TeamsPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/TeamsPanel.vue'))
-const PlayersPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/PlayersPanel.vue'))
+const PlayersPanel = defineAsyncComponent(() => import('src/components/tournaments/panels/PlayersPanel.vue'))
 const TeamFormDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/TeamFormDialog.vue'))
 const PlayersDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/PlayersDialog.vue'))
 const PlayerProfileDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/PlayerProfileDialog.vue'))
