@@ -72,12 +72,12 @@ import type { Match, MatchEvent, MatchPhase } from '@/types/competition'
 import type { Tournament } from '@/types/auth'
 
 /* Lazy components */
-const SchedulePanel = defineAsyncComponent(() => import('./TournamentDetail/panels/SchedulePanel.vue'))
-const StandingsPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/StandingsPanel.vue'))
-const RankingsPanel = defineAsyncComponent(() => import('./TournamentDetail/panels/RankingsPanel.vue'))
-const MatchFormDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/MatchFormDialog.vue'))
-const ResultsDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/ResultsDialog.vue'))
-const EventDialog = defineAsyncComponent(() => import('./TournamentDetail/dialogs/EventDialog.vue'))
+const SchedulePanel = defineAsyncComponent(() => import('@/components/tournaments/panels/SchedulePanel.vue'))
+const StandingsPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/StandingsPanel.vue'))
+const RankingsPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/RankingsPanel.vue'))
+const MatchFormDialog = defineAsyncComponent(() => import('@/components/tournaments/dialogs/MatchFormDialog.vue'))
+const ResultsDialog = defineAsyncComponent(() => import('@/components/tournaments/dialogs/ResultsDialog.vue'))
+const EventDialog = defineAsyncComponent(() => import('@/components/tournaments/dialogs/EventDialog.vue'))
 
 
 type Role = 'admin' | 'manager' | 'team' | 'player' | undefined

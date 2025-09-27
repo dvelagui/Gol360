@@ -48,7 +48,7 @@ import { useMatchStore } from '@/stores/matches'
 import { listTeamsByTournament } from '@/services/teamService'
 import type { Match } from '@/types/competition'
 
-const MatchCard = defineAsyncComponent(() => import('@/components/tournaments/MatchCard.vue'))
+const MatchCard = defineAsyncComponent(() => import('@/components/tournaments/cards/MatchCard.vue'))
 
 const props = defineProps<{
   tournamentId: string
