@@ -2,7 +2,6 @@
   <q-page class="q-pa-lg">
     <div class="row items-center justify-center justify-md-between q-mb-md">
       <div>
-      <!--  <div class="sports-font text-h4">La Jornada <q-icon name="sports_soccer-emoji_events" /></div> -->
         <div class="sports-font text-h4">La Jornada <q-icon name="sports" /></div>
         <div class="text-h5">{{ tName }}</div>
       </div>
@@ -27,10 +26,10 @@
 
     <q-separator class="q-mb-md" />
 
-    <q-tab-panels v-model="tab" animated swipeable>
+    <q-tab-panels v-model="tab" animated>
       <q-tab-panel name="schedule" class="q-pa-none">
-        <div class="row q-gutter-sm justify-end">
-          <q-btn v-if="canCreateMatch" color="accent" text-color="secondary" icon="event" label="Nuevo partido"
+        <div v-if="canCreateMatch" class="row q-gutter-sm justify-end q-mb-md">
+          <q-btn color="accent" text-color="secondary" icon="event" label="Nuevo partido"
             @click="openMatchCreate" />
         </div>
         <SchedulePanel ref="scheduleRef" :tournament-id="tId" v-if="role" :role="role" @edit="openMatchEdit"
@@ -107,38 +106,64 @@ const tId = ref<string>('')
 const tab = ref<'schedule' | 'teams' | 'players' | 'standings' | 'leaders'>('schedule')
 
 const role = computed<Role>(() => database.userData?.role)
+const isLoading = ref(false)
+
 async function fetchByRole() {
-  if (!role.value) return
-  // admin ve todos; manager solo los suyos
-  if (role.value === 'manager') {
-    await tStore.fetch(uStore.user?.uid || '')
-    tournaments.value = tStore.items
-  } else if ((role.value === 'player')) {
-    await tStore.fetch()
-    await pStore.fetchByEmail(uStore.user?.email || '')
-    tournaments.value = tStore.items.filter(t => pStore.items.some(p => p.tournamentId === t.tournamentId));
-  } else {
-    await tStore.fetch()
-    tournaments.value = tStore.items
+  const currentRole = role.value;
+  if (!currentRole || isLoading.value) return;
+
+  isLoading.value = true;
+  try {
+    switch (currentRole) {
+      case 'manager':
+        await tStore.fetch(uStore.user?.uid || '');
+        tournaments.value = tStore.items;
+        break;
+      case 'player':
+        await tStore.fetch();
+        await pStore.fetchByEmail(uStore.user?.email || '');
+        tournaments.value = tStore.items.filter(t =>
+          pStore.items.some(p => p.tournamentId === t.tournamentId)
+        );
+        break;
+      case 'admin':
+      case 'team':
+      default:
+        await tStore.fetch();
+        tournaments.value = tStore.items;
+        break;
+    }
+  } finally {
+    isLoading.value = false;
   }
 }
 const tName = computed(() => tStore.item?.displayName || '')
 
 
-const canCreateMatch = computed<boolean>(() => role.value === 'admin' || role.value === 'manager')
+const canCreateMatch = computed<boolean>(() => {
+  const userRole = role.value;
+  return userRole === 'admin' || userRole === 'manager';
+});
 const canEditMatch = canCreateMatch
 
 
 
 /* Equipos mínimos para selects/diálogos de partidos */
 const teams = ref<TeamMin[]>([])
+const teamsLoading = ref(false)
+
 async function loadTeams(): Promise<void> {
+  if (!tId.value || teamsLoading.value) return;
+
+  teamsLoading.value = true;
   try {
-    const list = await listTeamsByTournament(tId.value)
-    teams.value = list.map(t => ({ id: t.id, name: t.displayName }))
+    const list = await listTeamsByTournament(tId.value);
+    teams.value = list.map(t => ({ id: t.id, name: t.displayName }));
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Error cargando equipos'
-    Notify.create({ type: 'negative', message: msg })
+    const msg = e instanceof Error ? e.message : 'Error cargando equipos';
+    Notify.create({ type: 'negative', message: msg });
+  } finally {
+    teamsLoading.value = false;
   }
 }
 
@@ -263,10 +288,23 @@ async function removeEv(id: string): Promise<void> {
 
 
 onMounted(async () => {
-  void fetchByRole()
-  await fetchTournament(tId.value)
-  watch(role, fetchByRole)
-  watch(tId, loadTeams)
+  await fetchByRole();
+  await fetchTournament(tId.value);
+
+  // Watch role changes and refetch tournaments accordingly
+  watch(role, async (newRole, oldRole) => {
+    if (newRole !== oldRole && newRole) {
+      await fetchByRole();
+    }
+  }, { immediate: false });
+
+  // Watch tournament ID changes and load teams
+  watch(tId, async (newTId, oldTId) => {
+    if (newTId !== oldTId) {
+      await fetchTournament(newTId);
+      await loadTeams();
+    }
+  }, { immediate: false });
 })
 </script>
 
