@@ -99,8 +99,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import TournamentCard from '@/components/tournaments/TournamentCard.vue'
-import TournamentForm from '@/components/tournaments/TournamentForm.vue'
+import TournamentCard from '@/components/tournaments/cards/TournamentCard.vue'
+import TournamentForm from '@/components/tournaments/forms/TournamentForm.vue'
 import { useTournamentStore } from '@/stores/tournaments'
 import { useUserStore } from '@/stores/user'
 import { useDatabaseStore } from '@/stores/database'

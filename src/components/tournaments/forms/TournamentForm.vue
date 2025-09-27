@@ -99,7 +99,7 @@ import { colManagers } from '@/services/firestore/collections'
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import type { Tournament } from '@/types/auth'
 import { defineAsyncComponent } from 'vue'
-const ManagerFormDialog = defineAsyncComponent(() => import('@/pages/tournaments/TournamentDetail/dialogs/ManagerFormDialog.vue'))
+const ManagerFormDialog = defineAsyncComponent(() => import('@/components/tournaments/dialogs/ManagerFormDialog.vue'))
 
 
 /** Opciones normalizadas para el tipo de campeonato */

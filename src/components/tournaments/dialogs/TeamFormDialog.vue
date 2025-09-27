@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Notify } from 'quasar'
-import TeamForm from '@/components/tournaments/TeamForm.vue'
+import TeamForm from '@/components/tournaments/forms/TeamForm.vue'
 import { useTeamStore } from '@/stores/teams'
 import type { Team } from '@/types/auth'
 
