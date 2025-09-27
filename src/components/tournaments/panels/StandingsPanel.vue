@@ -50,10 +50,10 @@ import { listTeamsByTournament } from '@/services/teamService'
 
 // ⚠️ Usa el mismo casing que ya existe en tu proyecto (Standings con S mayúscula)
 const StandingsTable = defineAsyncComponent(() =>
-  import('@/components/tournaments/Standings/StandingsTable.vue')
+  import('@/components/tournaments/cards/StandingsTable.vue')
 )
 const StandingsCards = defineAsyncComponent(() =>
-  import('@/components/tournaments/Standings/StandingsCards.vue')
+  import('@/components/tournaments/cards/StandingsCards.vue')
 )
 
 const props = defineProps<{ tournamentId: string }>()
