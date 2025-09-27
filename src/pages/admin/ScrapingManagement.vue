@@ -90,7 +90,7 @@
 
               <div class="col-12 col-md-5">
                 <q-select
-                  v-model="newJob.dataTypes"
+                  v-model="dataTypes"
                   :options="dataTypeOptions"
                   label="Tipos de Datos a Extraer"
                   multiple
@@ -311,7 +311,6 @@ const $q = useQuasar();
 const {
   jobs,
   loading,
-  error,
   hasMore,
   pollingEnabled,
   runningJobs,
@@ -360,7 +359,7 @@ const jobColumns = [
     name: 'jobId',
     label: 'Job ID',
     field: 'jobId',
-    align: 'left',
+    align: "left" as const,
     sortable: true,
     format: (val: string) => val.substring(0, 20) + '...'
   },
@@ -368,35 +367,37 @@ const jobColumns = [
     name: 'status',
     label: 'Estado',
     field: 'status',
-    align: 'center',
+    align: "center" as const,
     sortable: true
   },
   {
     name: 'match',
     label: 'Partido',
-    field: (row: any) => `${row.homeTeam || row.request?.homeTeam || 'N/A'} vs ${row.awayTeam || row.request?.awayTeam || 'N/A'}`,
-    align: 'left',
+    field: (row: { homeTeam?: string; awayTeam?: string; request?: { homeTeam?: string; awayTeam?: string } }) =>
+      `${row.homeTeam || row.request?.homeTeam || 'N/A'} vs ${row.awayTeam || row.request?.awayTeam || 'N/A'}`,
+    align: "left" as const,
     sortable: false
   },
   {
     name: 'tournament',
     label: 'Torneo',
-    field: (row: any) => row.tournamentId || row.request?.tournamentId || 'N/A',
-    align: 'left',
+    field: (row: { tournamentId?: string; request?: { tournamentId?: string } }) =>
+      row.tournamentId || row.request?.tournamentId || 'N/A',
+    align: "left" as const,
     sortable: true
   },
   {
     name: 'progress',
     label: 'Progreso',
     field: 'progress',
-    align: 'center',
+    align: "center" as const,
     sortable: false
   },
   {
     name: 'createdAt',
     label: 'Creado',
     field: 'createdAt',
-    align: 'center',
+    align: "center" as const,
     sortable: true,
     format: (val: string) => new Date(val).toLocaleString()
   },
@@ -404,7 +405,7 @@ const jobColumns = [
     name: 'actions',
     label: 'Acciones',
     field: '',
-    align: 'center',
+    align: "center" as const,
     sortable: false
   }
 ];
@@ -464,11 +465,12 @@ async function onDebugRequest() {
       ok: true,
       class: 'debug-dialog'
     });
-  } catch (err) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     $q.notify({
       type: 'negative',
       message: 'Error en debug',
-      caption: err instanceof Error ? err.message : 'Error desconocido'
+      caption: errorMessage
     });
   }
 }
@@ -503,7 +505,7 @@ async function refreshJobStatus(jobId: string) {
       message: 'Estado actualizado',
       position: 'top'
     });
-  } catch (err) {
+  } catch {
     $q.notify({
       type: 'negative',
       message: 'Error al actualizar estado'
@@ -511,29 +513,32 @@ async function refreshJobStatus(jobId: string) {
   }
 }
 
-async function cancelJob(jobId: string) {
+function cancelJob(jobId: string) {
   $q.dialog({
     title: 'Confirmar Cancelación',
     message: '¿Estás seguro de que quieres cancelar este job?',
     cancel: true,
     persistent: true
-  }).onOk(async () => {
-    try {
-      await cancelJobAction(jobId);
-      $q.notify({
-        type: 'positive',
-        message: 'Job cancelado exitosamente'
-      });
-    } catch (err) {
-      $q.notify({
-        type: 'negative',
-        message: 'Error al cancelar job'
-      });
-    }
+  }).onOk(() => {
+    void (async () => {
+      try {
+        await cancelJobAction(jobId);
+        $q.notify({
+          type: 'positive',
+          message: 'Job cancelado exitosamente'
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Error al cancelar job';
+        $q.notify({
+          type: 'negative',
+          message: errorMessage
+        });
+      }
+    })();
   });
 }
 
-function viewAnalytics(job: any) {
+function viewAnalytics(job: { tournamentId?: string; matchId?: string; request?: { tournamentId?: string; matchId?: string } }) {
   const tournamentId = job.tournamentId || job.request?.tournamentId;
   const matchId = job.matchId || job.request?.matchId;
 
@@ -548,9 +553,11 @@ function viewAnalytics(job: any) {
 }
 
 function applyFilters() {
-  loadJobs({
-    status: statusFilter.value || undefined
-  });
+  if (statusFilter.value) {
+    void loadJobs({ status: statusFilter.value });
+  } else {
+    void loadJobs({});
+  }
 }
 
 function togglePolling() {

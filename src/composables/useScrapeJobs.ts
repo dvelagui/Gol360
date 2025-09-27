@@ -1,5 +1,5 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import veoScrapeService, { type ScrapeJob, type ScrapeJobRequest, type JobsListResponse } from '@/services/veoScrapeService';
+import veoScrapeService, { type ScrapeJob, type ScrapeJobRequest } from '@/services/veoScrapeService';
 
 export function useScrapeJobs() {
   const jobs = ref<ScrapeJob[]>([]);
@@ -42,17 +42,32 @@ export function useScrapeJobs() {
       loading.value = true;
       error.value = null;
 
-      const result = await veoScrapeService.listJobs({
-        limit: options?.limit || 20,
-        status: options?.status,
-        tournamentId: options?.tournamentId,
-        startAfter: options?.append ? lastJobId.value || undefined : undefined
-      });
+      const jobOptions: {
+        limit?: number;
+        status?: string;
+        tournamentId?: string;
+        startAfter?: string;
+      } = {
+        limit: options?.limit || 20
+      };
+      if (options?.status !== undefined) jobOptions.status = options.status;
+      if (options?.tournamentId !== undefined) jobOptions.tournamentId = options.tournamentId;
+      if (options?.append && lastJobId.value !== null) jobOptions.startAfter = lastJobId.value;
+
+      const result = await veoScrapeService.listJobs(jobOptions);
 
       if (options?.append) {
-        jobs.value.push(...result.jobs.map(j => ({ ...j, request: {} as ScrapeJobRequest })));
+        jobs.value.push(...result.jobs.map(j => ({
+          ...j,
+          status: j.status as "pending" | "running" | "completed" | "failed" | "cancelled",
+          request: {} as ScrapeJobRequest
+        })));
       } else {
-        jobs.value = result.jobs.map(j => ({ ...j, request: {} as ScrapeJobRequest }));
+        jobs.value = result.jobs.map(j => ({
+          ...j,
+          status: j.status as "pending" | "running" | "completed" | "failed" | "cancelled",
+          request: {} as ScrapeJobRequest
+        }));
       }
 
       hasMore.value = result.hasMore;
@@ -116,7 +131,9 @@ export function useScrapeJobs() {
       // Actualizar el job localmente
       const index = jobs.value.findIndex(j => j.jobId === jobId);
       if (index !== -1) {
-        jobs.value[index].status = 'cancelled';
+        if (jobs.value[index]) {
+          jobs.value[index].status = 'cancelled';
+        }
       }
 
       return result;
@@ -135,16 +152,14 @@ export function useScrapeJobs() {
     }
 
     pollingEnabled.value = true;
-    pollingInterval.value = setInterval(async () => {
+    pollingInterval.value = setInterval(() => {
       if (runningJobs.value.length > 0) {
         // Solo actualizar jobs que están corriendo
-        for (const job of runningJobs.value) {
-          try {
-            await getJobStatus(job.jobId);
-          } catch (err) {
+        runningJobs.value.forEach(job => {
+          getJobStatus(job.jobId).catch(err => {
             console.error(`Error polling job ${job.jobId}:`, err);
-          }
-        }
+          });
+        });
       }
     }, intervalMs);
   }
@@ -167,7 +182,7 @@ export function useScrapeJobs() {
   }
 
   onMounted(() => {
-    loadJobs();
+    void loadJobs();
   });
 
   onUnmounted(() => {

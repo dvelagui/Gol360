@@ -4,8 +4,8 @@ import veoScrapeService, { type AnalyticsData } from '@/services/veoScrapeServic
 export function useMatchAnalytics() {
   const analytics = ref<AnalyticsData | null>(null);
   const teamAnalytics = ref<Record<string, AnalyticsData | null>>({});
-  const highlights = ref<any[]>([]);
-  const playerMoments = ref<any[]>([]);
+  const highlights = ref<unknown[]>([]);
+  const playerMoments = ref<unknown[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 

@@ -47,7 +47,11 @@ export interface JobsListResponse {
     matchId?: string;
     homeTeam?: string;
     awayTeam?: string;
-    progress?: any;
+    progress?: {
+      current: number;
+      total: number;
+      currentStep: string;
+    };
   }>;
   total: number;
   limit: number;
@@ -79,8 +83,8 @@ export interface AnalyticsData {
   match_id: string;
   teams: string[];
   processed_at?: string;
-  data: {
-    [dataType: string]: any[];
+    data: {
+    [dataType: string]: unknown[];
   };
 }
 
@@ -172,9 +176,9 @@ class VeoScrapeService {
   ): Promise<{
     tournament_id: string;
     match_id: string;
-    highlights: any[];
+    highlights: unknown[];
     total: number;
-    filters: any;
+    filters: unknown[];
   }> {
     const params = new URLSearchParams();
     if (options?.teams) {
@@ -202,9 +206,9 @@ class VeoScrapeService {
   ): Promise<{
     tournament_id: string;
     match_id: string;
-    player_moments: any[];
+    player_moments: unknown[];
     total: number;
-    filters: any;
+    filters: unknown[];
   }> {
     const params = new URLSearchParams();
     if (options?.teams) {
@@ -219,12 +223,12 @@ class VeoScrapeService {
     return response.data;
   }
 
-  async debugJobStructure(): Promise<any> {
+  async debugJobStructure(): Promise<unknown> {
     const response = await api.get('/api/scrape/debug/job-structure');
     return response.data;
   }
 
-  async debugScrapeRequest(request: ScrapeJobRequest): Promise<any> {
+  async debugScrapeRequest(request: ScrapeJobRequest): Promise<unknown> {
     const response = await api.post('/api/scrape/debug', request);
     return response.data;
   }
