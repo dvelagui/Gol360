@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import MatchForm from '@/components/tournaments/MatchForm.vue'
+import MatchForm from '@/components/tournaments/forms/MatchForm.vue'
 import { useMatchStore } from '@/stores/matches'
 import type { Match, MatchPhase } from '@/types/competition'
 //import type { QSelectOption } from 'quasar' // opcional si lo usas en el form

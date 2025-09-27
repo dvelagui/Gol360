@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import ResultsForm from '@/components/tournaments/ResultForm.vue'
+import ResultsForm from '@/components/tournaments/forms/ResultForm.vue'
 import type { Match } from '@/types/competition'
 
 const props = defineProps<{

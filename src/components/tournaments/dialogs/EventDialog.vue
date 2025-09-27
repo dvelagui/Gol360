@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import MatchEventForm from '@/components/tournaments/MatchEventForm.vue'
+import MatchEventForm from '@/components/tournaments/forms/MatchEventForm.vue'
 import type { Match, MatchEvent } from '@/types/competition'
 
 const props = defineProps<{

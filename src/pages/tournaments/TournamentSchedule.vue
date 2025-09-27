@@ -3,7 +3,6 @@
     <div class="row items-center justify-center justify-md-between q-mb-md">
       <div>
         <div class="sports-font text-h4">La Jornada <q-icon name="sports" /></div>
-        <div class="text-h5">{{ tName }}</div>
       </div>
     </div>
     <div class="row items-center justify-between q-col-gutter-md q-mb-md">
@@ -137,7 +136,6 @@ async function fetchByRole() {
     isLoading.value = false;
   }
 }
-const tName = computed(() => tStore.item?.displayName || '')
 
 
 const canCreateMatch = computed<boolean>(() => {
