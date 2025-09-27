@@ -57,18 +57,25 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/tournaments/TournamentList.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' },
     },
-     { path: 'tournaments/:id', redirect: to => ({ path: `/admin/tournaments/${to.params.id as string}/resumen` }) },
-
-      { path: '/resumen',
-        name: 'tournament-summary-admin',
-        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
-        meta: { requiresAuth: true, requiresRole: 'admin' }
-      },
-      { path: '/details',
-        name: 'tournament-manage-admin',
-        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
-        meta: { requiresAuth: true, requiresRole: 'admin' }
-      },
+    {
+      path: 'tournaments/schedule',
+      name: 'tournament-schedule-admin',
+      component: () => import('@/pages/tournaments/TournamentSchedule.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' }
+    },
+    {
+      path: 'tournaments/competition',
+      name: 'tournament-competition-admin',
+      component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' }
+    },
+    // Scraping Management - solo admin
+    {
+      path: 'scraping',
+      name: 'scraping-management',
+      component: () => import('@/pages/admin/ScrapingManagement.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
   ],
 },
 
@@ -90,18 +97,18 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/tournaments/TournamentList.vue'),
       meta: { requiresAuth: true, requiresRole: 'manager' },
     },
-    { path: 'tournaments/:id', redirect: to => ({ path: `/manager/tournaments/${to.params.id as string}/resumen` }) },
-
-      { path: '/resumen',
-        name: 'tournament-summary-manager',
-        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
-        meta: { requiresAuth: true, requiresRole: 'manager' }
-      },
-      { path: '/details',
-        name: 'tournament-manage-manager',
-        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
-        meta: { requiresAuth: true, requiresRole: 'manager' }
-      },
+    {
+      path: 'tournaments/schedule',
+      name: 'tournament-schedule-manager',
+      component: () => import('@/pages/tournaments/TournamentSchedule.vue'),
+      meta: { requiresAuth: true, requiresRole: 'manager' }
+    },
+    {
+      path: 'tournaments/competition',
+      name: 'tournament-competition-manager',
+      component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
+      meta: { requiresAuth: true, requiresRole: 'manager' }
+    },
   ],
 },
 
@@ -116,18 +123,18 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/dashboard/TeamDashboard.vue'),
       meta: { requiresAuth: true, requiresRole: 'team' },
     },
-    { path: 'tournaments/:id', redirect: to => ({ path: `/team/tournaments/${to.params.id as string}/resumen` }) },
-
-      { path: '/resumen',
-        name: 'tournament-summary-team',
-        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
-        meta: { requiresAuth: true, requiresRole: 'team' }
-      },
-      { path: '/details',
-        name: 'tournament-manage-team',
-        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
-        meta: { requiresAuth: true, requiresRole: 'team' }
-      },
+    {
+      path: 'tournaments/schedule',
+      name: 'tournament-schedule-team',
+      component: () => import('@/pages/tournaments/TournamentSchedule.vue'),
+      meta: { requiresAuth: true, requiresRole: 'team' }
+    },
+    {
+      path: 'tournaments/competition',
+      name: 'tournament-competition-team',
+      component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
+      meta: { requiresAuth: true, requiresRole: 'team' }
+    },
   ],
 },
 
@@ -142,18 +149,18 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/dashboard/PlayerDashboard.vue'),
       meta: { requiresAuth: true, requiresRole: 'player' },
     },
-    { path: 'tournaments/:id', redirect: to => ({ path: `/player/tournaments/${to.params.id as string}/resumen` }) },
-
-      { path: 'tournaments/resumen',
-        name: 'tournament-summary-player',
-        component: () => import('@/pages/tournaments/TournamentResumen.vue'),
-        meta: { requiresAuth: true, requiresRole: 'player' }
-      },
-      { path: 'tournaments/details',
-        name: 'tournament-manage-player',
-        component: () => import('@/pages/tournaments/TournamentDetails.vue'),
-        meta: { requiresAuth: true, requiresRole: 'player' }
-      },
+    {
+      path: 'tournaments/schedule',
+      name: 'tournament-schedule-player',
+      component: () => import('@/pages/tournaments/TournamentSchedule.vue'),
+      meta: { requiresAuth: true, requiresRole: 'player' }
+    },
+    {
+      path: 'tournaments/competition',
+      name: 'tournament-competition-player',
+      component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
+      meta: { requiresAuth: true, requiresRole: 'player' }
+    },
   ],
 },
 

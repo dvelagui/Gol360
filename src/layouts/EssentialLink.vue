@@ -77,25 +77,38 @@ const initials = computed(() => {
 })
 
 const rolePermissions: Record<Role, string[]> = {
-  admin: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
-  manager: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
-  team: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
-  player: ['dashboard', 'details', 'resumen', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  admin: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact', 'scraping'],
+  manager: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  team: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  player: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
 }
 
-const allLinks: NavLink[] = [
-  { id: 'dashboard', icon: 'home', title: 'Inicio', url: '/' },
-  { id: 'profile', icon: 'account_circle', title: 'Perfil', url: '/profile' },
-  { id: 'details', icon: 'sports_soccer', title: 'Competencia', url: '/details' },
-  { id: 'resumen', icon: 'calendar_month', title: 'Programación', url: '/resumen' },
-  { id: 'analytics', icon: 'analytics', title: 'Estadísticas', url: '/analytics' },
-  { id: 'videos', icon: 'video_library', title: 'Videos', url: '/videos' },
-  { id: 'store', icon: 'store', title: 'Tienda', url: '/store' },
-  { id: 'contact', icon: 'mail', title: 'Contacto', url: '/contact' },
+const baseLinks: Omit<NavLink, 'url'>[] = [
+  { id: 'dashboard', icon: 'home', title: 'Inicio' },
+  { id: 'profile', icon: 'account_circle', title: 'Perfil' },
+  { id: 'competition', icon: 'sports_soccer', title: 'Competencia' },
+  { id: 'schedule', icon: 'calendar_month', title: 'Programación' },
+  { id: 'analytics', icon: 'analytics', title: 'Estadísticas' },
+  { id: 'videos', icon: 'video_library', title: 'Videos' },
+  { id: 'scraping', icon: 'cloud_download', title: 'Scraping Veo' },
+  { id: 'store', icon: 'store', title: 'Tienda' },
+  { id: 'contact', icon: 'mail', title: 'Contacto' },
 ]
 
+const allLinks = computed(() => {
+  const rolePrefix = `/${role.value}`;
+  return baseLinks.map(link => ({
+    ...link,
+    url: link.id === 'dashboard' ? rolePrefix :
+         link.id === 'scraping' ? `${rolePrefix}/scraping` :
+         link.id === 'competition' ? `${rolePrefix}/tournaments/competition` :
+         link.id === 'schedule' ? `${rolePrefix}/tournaments/schedule` :
+         `${rolePrefix}/${link.id}`
+  }));
+})
+
 const visibleLinks = computed(() => {
-  return allLinks.filter(l => rolePermissions[role.value]?.includes(l.id))
+  return allLinks.value.filter(l => rolePermissions[role.value]?.includes(l.id))
 })
 
 function go(path: string) {

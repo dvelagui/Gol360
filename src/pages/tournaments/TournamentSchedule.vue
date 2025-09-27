@@ -1,9 +1,9 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="row items-center justify-center q-mb-md">
+    <div class="row items-center justify-center justify-md-between q-mb-md">
       <div>
-      <!--  <div class="sports-font text-h4">La Jornada <q-icon name="emoji_events" /></div> -->
-        <div class="sports-font text-h4">La Jornada <q-icon name="sports_soccer" /></div>
+      <!--  <div class="sports-font text-h4">La Jornada <q-icon name="sports_soccer-emoji_events" /></div> -->
+        <div class="sports-font text-h4">La Jornada <q-icon name="sports" /></div>
         <div class="text-h5">{{ tName }}</div>
       </div>
     </div>

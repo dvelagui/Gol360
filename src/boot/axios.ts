@@ -14,7 +14,12 @@ declare module 'vue' {
 // good idea to move this instance creation inside of the
 // "export default () => {}" function below (which runs individually
 // for each client)
-const api = axios.create({ baseURL: 'https://api.example.com' });
+const api = axios.create({
+  baseURL: process.env.NODE_ENV === 'production'
+    ? 'https://gol360-api-v2-1063466169-us-central1.a.run.app'
+    : 'http://localhost:8080',
+  timeout: 30000
+});
 
 export default defineBoot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
