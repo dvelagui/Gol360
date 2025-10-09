@@ -13,7 +13,7 @@
           <div class="text-caption text-grey-7 q-mt-sm text-right">ID: {{ tId }}</div>
         </div>
         <div class="col-12 col-md-9 text-md-right text-center ad-banner">
-          <img src="@/assets/display_banner_01.jpg" alt="banner">
+         <!--  <img src="@/assets/display_banner_01.jpg" alt="banner"> -->
         </div>
     </div>
     <q-tabs v-model="tab" class="bg-transparent text-secondary" active-color="primary" indicator-color="primary"
@@ -64,8 +64,8 @@ import { useDatabaseStore } from '@/stores/database'
 import { useTournamentStore } from '@/stores/tournaments'
 import { useUserStore } from '@/stores/user'
 import { usePlayerStore } from '@/stores/players'
-import { listTeamsByTournament } from '@/services/teamService'
 import { useEventStore } from '@/stores/events'
+import { listTeamsByTournament } from '@/services/teamService'
 import { confirmResult, setMatchScore } from '@/services/matchService'
 import type { Match, MatchEvent, MatchPhase } from '@/types/competition'
 import type { Tournament } from '@/types/auth'

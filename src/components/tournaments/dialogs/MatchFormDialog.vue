@@ -1,12 +1,24 @@
 <template>
   <q-dialog v-model="model">
-    <q-card style="min-width: 720px; max-width: 95vw;">
-      <q-card-section class="row items-center">
-        <div class="text-subtitle1">{{ isEdit ? 'Editar partido' : 'Nuevo partido' }}</div>
-        <q-space /><q-btn dense round flat icon="close" v-close-popup />
+    <q-card flat bordered class="rounded-2xl overflow-hidden" style="min-width: 720px; max-width: 95vw;">
+      <!-- Header estilo moderno -->
+      <q-card-section class="bg-primary text-white q-py-md">
+        <div class="row items-center">
+          <div class="col">
+            <div class="text-subtitle1 text-weight-bold">
+              {{ isEdit ? 'Editar Partido' : 'Nuevo Partido' }}
+            </div>
+            <div class="text-caption q-mt-xs">
+              {{ isEdit ? 'Modifica los datos del encuentro' : 'Programa un nuevo encuentro' }}
+            </div>
+          </div>
+          <q-btn dense round flat icon="close" v-close-popup class="text-white" />
+        </div>
       </q-card-section>
+
       <q-separator />
-      <q-card-section>
+
+      <q-card-section class="q-pa-md">
         <MatchForm
           :tournament-id="tournamentId"
           :teams="teams"
@@ -114,3 +126,21 @@ async function onSave(modelForm: {
   }
 }
 </script>
+
+<style scoped lang="scss">
+.rounded-2xl {
+  border-radius: 16px;
+}
+
+.text-weight-bold {
+  font-weight: 900 !important;
+}
+
+@media (max-width: 600px) {
+  .q-card {
+    min-width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+  }
+}
+</style>

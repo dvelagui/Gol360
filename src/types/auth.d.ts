@@ -21,6 +21,12 @@ export interface Tournament {
   createdAt: Timestamp | FieldValue;
   photoURL?: string | null;
   status: string;
+  award?: {
+    first_place?: number;
+    second_place?: number;
+    top_scorer?: number;
+    defeat_net?: number;
+  };
 }
 
 export interface Team {

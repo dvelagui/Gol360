@@ -33,9 +33,8 @@
               </span>
             </div>
 
-            <div class="match-actions">
+            <div v-if="canEdit" class="match-actions">
               <q-btn
-                v-if="canEdit"
                 dense
                 round
                 flat
@@ -63,6 +62,7 @@
           <MatchCard
             :match="match"
             :team-by-id="getTeamById"
+            :can-edit="canEdit"
             class="q-mb-sm"
             @edit="handleEdit(match)"
             @results="handleResults(match)"

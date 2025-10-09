@@ -12,6 +12,7 @@ export { default as TeamForm } from './forms/TeamForm.vue';
 export { default as TournamentForm } from './forms/TournamentForm.vue';
 
 // Panels
+export { default as TournamentInfoPanel } from './panels/TournamentInfoPanel.vue';
 export { default as SchedulePanel } from './panels/SchedulePanel.vue';
 export { default as StandingsPanel } from './panels/StandingsPanel.vue';
 export { default as RankingsPanel } from './panels/RankingsPanel.vue';
@@ -29,3 +30,4 @@ export { default as PlayerAccountFormDialog } from './dialogs/PlayerAccountFormD
 export { default as PlayerProfileDialog } from './dialogs/PlayerProfileDialog.vue';
 export { default as PlayersDialog } from './dialogs/PlayersDialog.vue';
 export { default as TeamFormDialog } from './dialogs/TeamFormDialog.vue';
+

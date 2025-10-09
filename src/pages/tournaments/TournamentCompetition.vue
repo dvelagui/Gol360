@@ -1,10 +1,20 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="row items-center justify-between q-mb-md">
+    <div class="row items-center justify-center justify-md-between q-mb-md">
       <div>
-        <div class="text-h5">{{ tName }}</div>
-        <div class="text-caption text-grey-7">ID: {{ tId }}</div>
+        <div class="sports-font text-h4">El camerino <q-icon name="sports_soccer" /></div>
       </div>
+    </div>
+    <div class="row items-center justify-between q-col-gutter-md q-mb-md">
+      <div class="col-12 col-md-3">
+        <q-select v-model="tId" :options="tournaments" :option-label="tournaments => tournaments.displayName"
+          :option-value="tournaments => tournaments.tournamentId" dense filled clearable
+          label="Seleccione el campeonato" emit-value map-options />
+          <div class="text-caption text-grey-7 q-mt-sm text-right">ID: {{ tId }}</div>
+        </div>
+        <div class="col-12 col-md-9 text-md-right text-center ad-banner">
+          <!-- <img src="@/assets/display_banner_01.jpg" alt="banner"> -->
+        </div>
     </div>
     <q-tabs v-model="tab" class="bg-transparent text-secondary" active-color="primary" indicator-color="primary"
       align="left" narrow-indicator>
@@ -17,9 +27,11 @@
 
     <q-tab-panels v-model="tab" animated swipeable>
       <q-tab-panel name="tournament" class="q-pa-none">
-        <SchedulePanel ref="scheduleRef" :tournament-id="tId" v-if="role" :role="role" @edit="openMatchEdit"
-          @results="openResults" />
-        <SchedulePanel ref="scheduleRef" :tournament-id="tId" v-else @edit="openMatchEdit" @results="openResults" />
+        <TournamentInfoPanel
+          :tournament="tStore.item"
+          :registered-teams="teamStore.items.length"
+          :is-loading="tStore.loading || teamStore.loading"
+        />
       </q-tab-panel>
       <q-tab-panel name="teams" class="q-pa-none">
         <TeamsPanel ref="teamRef" :tournament-id="tId" :tournament-detail="tStore.item!" v-bind="role !== undefined ? { role } : {}"
@@ -40,18 +52,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { Notify } from 'quasar'
 import { useDatabaseStore } from '@/stores/database'
 import { useTournamentStore } from '@/stores/tournaments'
+import { useUserStore } from '@/stores/user'
+import { usePlayerStore } from '@/stores/players'
+import { useTeamStore } from '@/stores/teams'
 import { listTeamsByTournament } from '@/services/teamService'
+import type { Tournament } from '@/types/auth'
 
-import type { Match, MatchPhase } from '@/types/competition'
 import type { Team } from '@/types/auth'
 
 /* Lazy components */
-const SchedulePanel = defineAsyncComponent(() => import('@/components/tournaments/panels/SchedulePanel.vue'))
+const TournamentInfoPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/TournamentInfoPanel.vue'))
 const TeamsPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/TeamsPanel.vue'))
 const PlayersPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/PlayersPanel.vue'))
 const TeamFormDialog = defineAsyncComponent(() => import('@/components/tournaments/dialogs/TeamFormDialog.vue'))
@@ -61,38 +75,58 @@ const PlayerProfileDialog = defineAsyncComponent(() => import('@/components/tour
 
 type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
 interface TeamMin { id: string; name: string }
-interface MatchFormModel {
-  tournamentId: string
-  round: string
-  phase: MatchPhase
-  dateISO: string
-  field?: string
-  referee?: string
-  homeTeamId: string
-  awayTeamId: string
-  notes?: string
-  id?: string
-}
 
 const tStore = useTournamentStore()
+const uStore = useUserStore()
+const pStore = usePlayerStore()
 const database = useDatabaseStore()
-const route = useRoute()
+const teamStore = useTeamStore()
 
-const tId = route.params.id as string
-const tName = computed(() => tStore.item?.displayName || '')
+const tournaments = ref<Tournament[]>([])
+const tId = ref<string>('')
 const tab = ref<'schedule' | 'teams' | 'players' | 'standings' | 'leaders'>('schedule')
 
 const role = computed<Role>(() => database.userData?.role)
-
+const isLoading = ref(false)
 const showPlayerProfile = ref(false)
 const selectedPlayerId = ref<string | null>(null)
+
+async function fetchByRole() {
+  const currentRole = role.value;
+  if (!currentRole || isLoading.value) return;
+
+  isLoading.value = true;
+  try {
+    switch (currentRole) {
+      case 'manager':
+        await tStore.fetch(uStore.user?.uid || '');
+        tournaments.value = tStore.items;
+        break;
+      case 'player':
+        await tStore.fetch();
+        await pStore.fetchByEmail(uStore.user?.email || '');
+        tournaments.value = tStore.items.filter(t =>
+          pStore.items.some(p => p.tournamentId === t.tournamentId)
+        );
+        break;
+      case 'admin':
+      case 'team':
+      default:
+        await tStore.fetch();
+        tournaments.value = tStore.items;
+        break;
+    }
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 
 /* Equipos mínimos para selects/diálogos de partidos */
 const teams = ref<TeamMin[]>([])
 async function loadTeams(): Promise<void> {
   try {
-    const list = await listTeamsByTournament(tId)
+    const list = await listTeamsByTournament(tId.value)
     teams.value = list.map(t => ({ id: t.id, name: t.displayName }))
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Error cargando equipos'
@@ -107,14 +141,8 @@ async function fetchTournament(tournamentId?: string) {
 }
 
 /* Refs a paneles para refrescar */
-const scheduleRef = ref<{ refetch: () => Promise<void> } | null>(null)
 const teamRef = ref<{ refetch: () => Promise<void> } | null>(null)
 
-/* Diálogos Partidos */
-const showMatchForm = ref(false)
-const matchModel = ref<MatchFormModel | null>(null)
-const showResults = ref(false)
-const resultsMatch = ref<Match | null>(null)
 
 /* Diálogos Equipos/Jugadores */
 const showTeamForm = ref(false)
@@ -122,25 +150,6 @@ const teamModel = ref<Partial<Team> | null>(null)
 const showPlayers = ref(false)
 const currentTeam = ref<Team | null>(null)
 
-function openMatchEdit(m: Match) {
-  matchModel.value = {
-    tournamentId: m.tournamentId,
-    round: String(m.round),
-    phase: m.phase,
-    dateISO: new Date(m.date).toISOString().slice(0, 16),
-    homeTeamId: typeof m.homeTeamId === 'object' && m.homeTeamId !== null ? m.homeTeamId.id : m.homeTeamId,
-    awayTeamId: typeof m.awayTeamId === 'object' && m.awayTeamId !== null ? m.awayTeamId.id : m.awayTeamId,
-    ...(m.field ? { field: m.field } : {}),
-    ...(m.referee ? { referee: m.referee } : {}),
-    ...(m.notes ? { notes: m.notes } : {}),
-    id: m.id
-  }
-  showMatchForm.value = true
-}
-function openResults(m: Match) {
-  resultsMatch.value = m
-  showResults.value = true
-}
 function openTeamCreate() {
   teamModel.value = null
   showTeamForm.value = true
@@ -177,12 +186,53 @@ async function afterTeamSaved() {
 
 onMounted(async () => {
   await loadTeams()
-  await fetchTournament(tId)
+  await fetchTournament(tId.value)
+  await fetchByRole();
+
+  // Watch role changes and refetch tournaments accordingly
+  watch(role, async (newRole, oldRole) => {
+    if (newRole !== oldRole && newRole) {
+      await fetchByRole();
+    }
+  }, { immediate: false });
+
+  // Watch tournament ID changes and load teams
+  watch(tId, async (newTId, oldTId) => {
+    if (newTId !== oldTId) {
+      await fetchTournament(newTId);
+      await loadTeams();
+    }
+  }, { immediate: false });
 })
 </script>
 
 <style scoped lang="scss">
 .rounded-borders {
   border-radius: 12px;
+}
+.sports-font {
+  font-family: 'Arial Black', Impact, sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #f2c526;
+  -webkit-text-stroke: 2px #013f21;
+  text-shadow: 0px 0px 10px #218e61;
+  background-color: #013f21;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.rounded-borders {
+  border-radius: 12px;
+}
+
+.ad-banner img {
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  width: 100%;
+  max-width: 80%;
+  max-height: 150px;
 }
 </style>
