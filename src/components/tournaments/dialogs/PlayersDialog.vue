@@ -58,17 +58,98 @@
       </q-card-section>
     </q-card>
 
+    <!-- Diálogo de edición de jugador -->
     <q-dialog v-model="showForm" persistent>
       <q-card class="subdlg-card">
-        <q-card-section class="row items-center">
-          <div class="text-subtitle1">
-            {{ editId ? 'Editar jugador' : 'Nuevo jugador' }}
-          </div>
+        <q-card-section class="row items-center bg-primary text-white">
+          <div class="text-subtitle1">Editar Jugador</div>
           <q-space />
-          <q-btn dense round flat icon="close" v-close-popup />
+          <q-btn dense round flat icon="close" color="white" v-close-popup />
         </q-card-section>
         <q-separator />
 
+        <q-card-section>
+          <q-form @submit.prevent="saveEdit" class="q-gutter-md">
+            <div class="row q-col-gutter-md">
+              <!-- Nombre -->
+              <div class="col-12">
+                <q-input
+                  v-model="playerModel.displayName"
+                  label="Nombre del jugador"
+                  filled
+                  dense
+                  :rules="[val => !!val || 'El nombre es requerido']"
+                >
+                  <template #prepend>
+                    <q-icon name="person" />
+                  </template>
+                </q-input>
+              </div>
+
+              <!-- Posición -->
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model="playerModel.position"
+                  label="Posición (opcional)"
+                  filled
+                  dense
+                  hint="Ej: Delantero, Portero, etc."
+                >
+                  <template #prepend>
+                    <q-icon name="sports" />
+                  </template>
+                </q-input>
+              </div>
+
+              <!-- Dorsal -->
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model.number="playerModel.jersey"
+                  type="number"
+                  label="Dorsal"
+                  filled
+                  dense
+                  min="0"
+                  max="99"
+                >
+                  <template #prepend>
+                    <q-icon name="tag" />
+                  </template>
+                </q-input>
+              </div>
+
+              <!-- Capitán toggle -->
+              <div class="col-12">
+                <div class="row items-center q-py-sm">
+                  <q-toggle
+                    v-model="isEditCaptain"
+                    color="warning"
+                    class="q-mr-sm"
+                  />
+                  <q-icon
+                    name="military_tech"
+                    :color="isEditCaptain ? 'warning' : 'grey-5'"
+                    size="20px"
+                    class="q-mr-xs"
+                  />
+                  <span>Marcar como Capitán del equipo</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row justify-end q-gutter-sm q-mt-md">
+              <q-btn flat label="Cancelar" color="grey-7" v-close-popup />
+              <q-btn
+                type="submit"
+                unelevated
+                label="Guardar cambios"
+                color="primary"
+                icon="save"
+                :loading="savingEdit"
+              />
+            </div>
+          </q-form>
+        </q-card-section>
       </q-card>
     </q-dialog>
     <PlayerAccountFormDialog v-model="showCreateAccount" :tournament-id="tournamentId" :team="team" @created="async () => {
@@ -116,32 +197,127 @@ const canManagePlayers = computed(() => {
 const showForm = ref(false)
 const editId = ref<string | null>(null)
 const playerModel = ref<Partial<Player>>({})
-
+const isEditCaptain = ref(false)
+const savingEdit = ref(false)
 
 function openEdit(p: Player) {
   editId.value = p.id
   playerModel.value = { ...p }
+  isEditCaptain.value = p.role === 'team'
   showForm.value = true
+}
+
+async function saveEdit() {
+  if (!editId.value || !props.team?.id || !props.tournamentId) return
+
+  savingEdit.value = true
+  try {
+    const player = store.items.find(p => p.id === editId.value)
+    if (!player) {
+      Notify.create({ type: 'negative', message: 'Jugador no encontrado' })
+      return
+    }
+
+    // Obtener la participación (el player del store incluye participation)
+    type PlayerWithParticipation = Player & { participation?: { id: string; jersey?: number; position?: string; role?: 'player' | 'team' } }
+    const participation = (player as PlayerWithParticipation).participation
+    if (!participation?.id) {
+      Notify.create({ type: 'negative', message: 'No se encontró la participación del jugador' })
+      return
+    }
+
+    // Preparar datos de actualización
+    const updateData: Partial<{ position: string; jersey: number; role: 'player' | 'team' }> = {
+      role: isEditCaptain.value ? 'team' : 'player'
+    }
+
+    // Solo agregar campos opcionales si tienen valor
+    if (playerModel.value.position !== undefined && playerModel.value.position !== null) {
+      updateData.position = playerModel.value.position
+    }
+    if (playerModel.value.jersey !== undefined && playerModel.value.jersey !== null) {
+      updateData.jersey = playerModel.value.jersey
+    }
+
+    // Actualizar datos de la participación
+    await store.updateParticipation(participation.id, updateData)
+
+    // Si cambió el estado de capitán, actualizar todos los capitanes del equipo
+    if (isEditCaptain.value !== (player.role === 'team')) {
+      await store.setCaptainWithParticipations(
+        props.team.id,
+        props.tournamentId,
+        isEditCaptain.value ? editId.value : null
+      )
+    }
+
+    // Actualizar nombre del jugador en el documento principal
+    if (playerModel.value.displayName !== player.displayName) {
+      await store.update(editId.value, {
+        displayName: playerModel.value.displayName || ''
+      })
+    }
+
+    Notify.create({ type: 'positive', message: 'Jugador actualizado correctamente' })
+    showForm.value = false
+
+    // Refrescar lista
+    await store.fetchByTeamWithParticipations(props.team.id)
+  } catch (error) {
+    console.error('Error updating player:', error)
+    Notify.create({ type: 'negative', message: 'No se pudo actualizar el jugador' })
+  } finally {
+    savingEdit.value = false
+  }
 }
 
 
 
 async function removePlayer(id: string) {
   try {
-    await store.remove(id)
-    Notify.create({ type: 'positive', message: 'Jugador eliminado' })
-    if (props.team) await store.fetchByTeam(props.team.id)
-  } catch {
+    // Buscar la participación del jugador en este equipo
+    const player = store.items.find(p => p.id === id)
+    if (!player) {
+      Notify.create({ type: 'negative', message: 'Jugador no encontrado' })
+      return
+    }
+
+    // Obtener el ID de la participación
+    type PlayerWithParticipation = Player & { participation?: { id: string } }
+    const participation = (player as PlayerWithParticipation).participation
+    if (participation?.id) {
+      // Desactivar la participación en lugar de eliminar el jugador
+      await store.deactivatePlayerFromTeam(participation.id)
+      Notify.create({ type: 'positive', message: 'Jugador removido del equipo' })
+    } else {
+      // Fallback: eliminar jugador si no tiene participación
+      await store.remove(id)
+      Notify.create({ type: 'positive', message: 'Jugador eliminado' })
+    }
+
+    // Refrescar lista
+    if (props.team) await store.fetchByTeamWithParticipations(props.team.id)
+  } catch (error) {
+    console.error('Error removing player:', error)
     Notify.create({ type: 'negative', message: 'No se pudo eliminar jugador' })
   }
 }
 
 async function makeCaptain(playerId: string) {
+  if (!props.team?.id || !props.tournamentId) {
+    Notify.create({ type: 'negative', message: 'Faltan datos del equipo o torneo' })
+    return
+  }
+
   try {
-    await store.setCaptain(props.team!.id, playerId)
-    Notify.create({ type: 'positive', message: 'Capitán asignado' })
-    if (props.team) await store.fetchByTeam(props.team.id)
-  } catch {
+    // Usar el nuevo sistema de participaciones
+    await store.setCaptainWithParticipations(props.team.id, props.tournamentId, playerId)
+    Notify.create({ type: 'positive', message: 'Capitán asignado correctamente' })
+
+    // Refrescar lista con participaciones
+    await store.fetchByTeamWithParticipations(props.team.id)
+  } catch (error) {
+    console.error('Error setting captain:', error)
     Notify.create({ type: 'negative', message: 'No se pudo asignar capitán' })
   }
 }
