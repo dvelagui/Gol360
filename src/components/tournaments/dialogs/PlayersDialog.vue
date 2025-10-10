@@ -72,7 +72,7 @@
       </q-card>
     </q-dialog>
     <PlayerAccountFormDialog v-model="showCreateAccount" :tournament-id="tournamentId" :team="team" @created="async () => {
-      if (team?.id) await store.fetchByTeam(team.id)
+      if (team?.id) await store.fetchByTeamWithParticipations(team.id)
     }" />
   </q-dialog>
 </template>
@@ -147,11 +147,11 @@ async function makeCaptain(playerId: string) {
 }
 
 watch(() => props.team?.id, async (id) => {
-  if (model.value && id) await store.fetchByTeam(id)
+  if (model.value && id) await store.fetchByTeamWithParticipations(id)
 })
 
 onMounted(async () => {
-  if (model.value && props.team?.id) await store.fetchByTeam(props.team.id)
+  if (model.value && props.team?.id) await store.fetchByTeamWithParticipations(props.team.id)
 })
 </script>
 

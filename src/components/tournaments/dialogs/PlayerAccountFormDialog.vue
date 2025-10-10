@@ -22,7 +22,21 @@
             label="Email"
             dense filled
             :rules="[req, emailRule]"
-          />
+            :loading="checkingEmail"
+          >
+            <template #append v-if="existingPlayer">
+              <q-icon name="info" color="warning">
+                <q-tooltip>Este email ya está registrado: {{ existingPlayer.displayName }}</q-tooltip>
+              </q-icon>
+            </template>
+          </q-input>
+          <q-banner v-if="existingPlayer" class="bg-warning text-white q-mb-md" dense>
+            <template #avatar>
+              <q-icon name="info" />
+            </template>
+            <b>{{ existingPlayer.displayName }}</b> ya tiene este email.<br>
+            Al continuar, se agregará a este equipo.
+          </q-banner>
           <q-input
             v-model="form.phone"
             label="Teléfono de contacto (opcional)"
@@ -94,14 +108,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import { Notify } from 'quasar'
-import { createPlayerWithAccount } from '@/services/accountService'
+import { computed, reactive, ref, watch } from 'vue'
+import { Notify, Dialog } from 'quasar'
 import { req, emailRule } from '@/utils/formValidators'
-import type { Team } from '@/types/auth'
+import { usePlayerStore } from '@/stores/players'
+import { useUserStore } from '@/stores/user'
+import type { Team, Player } from '@/types/auth'
 
 const DEFAULT_PLAYER_AVATAR =
   'https://firebasestorage.googleapis.com/v0/b/gol360-app.firebasestorage.app/o/avatar%2Fplayer.png?alt=media&token=0175081b-9761-4acb-9e15-a77baf10b7f0'
+
+const playerStore = usePlayerStore()
+const userStore = useUserStore()
 
 const props = defineProps<{
   modelValue: boolean
@@ -151,35 +169,114 @@ const form = reactive<Form>({
 })
 
 const saving = ref(false)
+const existingPlayer = ref<Player | null>(null)
+const checkingEmail = ref(false)
+let emailCheckTimeout: ReturnType<typeof setTimeout> | null = null
 
-async function onSubmit() {
+// Función para verificar email duplicado
+async function checkEmailDuplicate(email: string) {
+  try {
+    const player = await playerStore.findByEmail(email.trim())
+    existingPlayer.value = player
+  } catch (error) {
+    console.error('Error checking email:', error)
+    existingPlayer.value = null
+  } finally {
+    checkingEmail.value = false
+  }
+}
+
+// Detectar email duplicado mientras el usuario escribe (con debounce manual)
+watch(() => form.email, (newEmail) => {
+  // Limpiar timeout anterior
+  if (emailCheckTimeout) {
+    clearTimeout(emailCheckTimeout)
+  }
+
+  // Resetear si el email está vacío o inválido
+  if (!newEmail || newEmail.trim() === '' || !emailRule(newEmail)) {
+    existingPlayer.value = null
+    checkingEmail.value = false
+    return
+  }
+
+  // Indicar que se está verificando
+  checkingEmail.value = true
+
+  // Esperar 500ms antes de hacer la búsqueda
+  emailCheckTimeout = setTimeout(() => {
+    void checkEmailDuplicate(newEmail)
+  }, 500)
+})
+
+function onSubmit() {
   if (!props.tournamentId || !props.team?.id) return
+
+  const email = form.email.trim()
+
+  // Si existe jugador con ese email, preguntar si agregar a este equipo
+  if (existingPlayer.value) {
+    Dialog.create({
+      title: '¿Agregar jugador existente?',
+      message: `El email "${email}" ya pertenece a <b>${existingPlayer.value.displayName}</b>.<br><br>¿Deseas agregar este jugador a <b>${props.team.displayName}</b> en este torneo?`,
+      html: true,
+      cancel: {
+        label: 'Cancelar',
+        flat: true,
+        color: 'grey-7'
+      },
+      ok: {
+        label: 'Sí, agregar al equipo',
+        color: 'primary',
+        unelevated: true
+      },
+      persistent: true
+    }).onOk(() => {
+      void addExistingPlayerToTeam(existingPlayer.value!)
+    })
+    return
+  }
+
+  // No existe, crear nuevo jugador con cuenta
+  void createNewPlayer()
+}
+
+async function createNewPlayer() {
+  if (!props.tournamentId || !props.team?.id) return
+
   try {
     saving.value = true
-    const playerData: {
-      tournamentId: string
-      teamId: string
-      fullName: string
-      email: string
-      position?: string
-      jersey?: number
-      photoURL?: string
-    } = {
-      tournamentId: props.tournamentId,
-      teamId: props.team.id,
-      fullName: form.fullName.trim(),
+
+    // Preparar datos del jugador
+    const playerData: Parameters<typeof playerStore.addWithParticipation>[0] = {
+      displayName: form.fullName.trim(),
       email: form.email.trim(),
       photoURL: form.photoURL?.trim() || DEFAULT_PLAYER_AVATAR,
+      tournamentId: props.tournamentId,
+      teamId: props.team.id,
+      role: form.isCaptain ? 'team' : 'player',
+      createdBy: userStore.user?.uid || ''
     }
-    if (form.position && form.position.trim() !== '') {
+
+    // Solo agregar campos opcionales si tienen valor
+    if (form.position?.trim()) {
       playerData.position = form.position.trim()
     }
-    if (typeof form.jersey === 'number') {
+    if (form.jersey !== undefined && form.jersey !== null) {
       playerData.jersey = form.jersey
     }
-    const playerId = await createPlayerWithAccount(playerData)
-    Notify.create({ type: 'positive', message: 'Jugador creado y cuenta generada' })
-    emit('created', playerId)
+
+    // Usar el nuevo sistema de participaciones
+    const result = await playerStore.addWithParticipation(playerData)
+
+    Notify.create({
+      type: 'positive',
+      message: `Jugador creado: ${form.fullName}`,
+      caption: result.isExisting ? 'Participación agregada' : 'Nuevo jugador creado'
+    })
+
+    emit('created', result.playerId)
+    resetForm()
     model.value = false
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'No se pudo crear el jugador'
@@ -187,5 +284,70 @@ async function onSubmit() {
   } finally {
     saving.value = false
   }
+}
+
+async function addExistingPlayerToTeam(player: Player) {
+  if (!props.tournamentId || !props.team?.id) return
+
+  try {
+    saving.value = true
+
+    // Preparar datos de participación
+    const playerData: Parameters<typeof playerStore.addWithParticipation>[0] = {
+      displayName: player.displayName, // Usar nombre existente
+      email: form.email.trim(),
+      photoURL: player.photoURL || DEFAULT_PLAYER_AVATAR,
+      tournamentId: props.tournamentId,
+      teamId: props.team.id,
+      role: form.isCaptain ? 'team' : 'player',
+      createdBy: userStore.user?.uid || ''
+    }
+
+    // Solo agregar campos opcionales si tienen valor
+    if (form.position?.trim()) {
+      playerData.position = form.position.trim()
+    }
+    if (form.jersey !== undefined && form.jersey !== null) {
+      playerData.jersey = form.jersey
+    }
+
+    // Agregar participación al jugador existente
+    const result = await playerStore.addWithParticipation(playerData)
+
+    if (result.isExisting) {
+      Notify.create({
+        type: 'warning',
+        message: `${player.displayName} ya participa en este equipo/torneo`
+      })
+    } else {
+      Notify.create({
+        type: 'positive',
+        message: `${player.displayName} agregado al equipo`,
+        caption: 'Participación creada exitosamente'
+      })
+    }
+
+    emit('created', result.playerId)
+    resetForm()
+    model.value = false
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'No se pudo agregar el jugador'
+    Notify.create({ type: 'negative', message: msg })
+  } finally {
+    saving.value = false
+  }
+}
+
+function resetForm() {
+  form.fullName = ''
+  form.email = ''
+  form.docType = ''
+  form.docNumber = ''
+  form.phone = ''
+  form.position = ''
+  form.jersey = undefined
+  form.isCaptain = false
+  form.photoURL = ''
+  existingPlayer.value = null
 }
 </script>

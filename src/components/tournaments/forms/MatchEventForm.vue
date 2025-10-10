@@ -68,13 +68,13 @@
             :options="players"
             option-value="id"
             option-label="name"
-            label="Jugador (opcional)"
+            label="Jugador"
             filled
-            clearable
             color="primary"
             :loading="loadingPlayers"
             :disable="!form.teamId?.id"
             :hint="!form.teamId?.id ? 'Selecciona primero un equipo' : ''"
+            :rules="[val => !!val?.id || 'Selecciona un jugador']"
           >
             <template #prepend>
               <q-icon name="person" color="primary" />
@@ -273,7 +273,7 @@ const typeOptionsFormatted = computed(() =>
 
 const form = ref({
   teamId: optionsTeam[0],
-  playerId: '',
+  playerId: null as { id: string; name: string } | null,
   type: 'gol' as EventType,
   minute: 0,
   extraTime: null as number | null,
@@ -290,7 +290,8 @@ watch(() => form.value.teamId, async (teamId) => {
   if (teamId?.id) {
     loadingPlayers.value = true
     try {
-      await playerStore.fetchByTeam(teamId.id)
+      // Usar el nuevo sistema de participaciones
+      await playerStore.fetchByTeamWithParticipations(teamId.id)
       players.value = playerStore.items.map(p => ({ id: p.id, name: p.displayName }))
     } catch (error) {
       console.error('Error loading players:', error)
@@ -353,7 +354,7 @@ function submit() {
     matchId: props.matchId,
     tournamentId: props.tournamentId,
     teamId: form.value.teamId,
-    playerId: form.value.playerId || null,
+    playerId: form.value.playerId,
     type: form.value.type,
     minute: Number(form.value.minute || 0),
     extraTime: form.value.extraTime ? Number(form.value.extraTime) : null,
@@ -367,7 +368,7 @@ function submit() {
   form.value.minute = 0
   form.value.extraTime = null
   form.value.metaDescription = ''
-  form.value.playerId = ''
+  form.value.playerId = null
 }
 </script>
 

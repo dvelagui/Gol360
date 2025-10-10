@@ -7,11 +7,21 @@
     </div>
     <div class="row items-center justify-between q-col-gutter-md q-mb-md">
       <div class="col-12 col-md-3">
-        <q-select v-model="tId" :options="tournaments" :option-label="tournaments => tournaments.displayName"
-          :option-value="tournaments => tournaments.tournamentId" dense filled clearable
-          label="Seleccione el campeonato" emit-value map-options />
-          <div class="text-caption text-grey-7 q-mt-sm text-right">ID: {{ tId }}</div>
-        </div>
+        <q-select
+          v-model="selectedTournament"
+          :options="tournaments"
+          option-label="displayName"
+          dense
+          filled
+          label="Seleccione el campeonato"
+          @update:model-value="updateSelection"
+        >
+          <template #prepend>
+            <q-icon name="emoji_events" color="primary" />
+          </template>
+        </q-select>
+        <div class="text-caption text-grey-7 q-mt-sm text-right">ID: {{ tId }}</div>
+      </div>
         <div class="col-12 col-md-9 text-md-right text-center ad-banner">
           <!-- <img src="@/assets/display_banner_01.jpg" alt="banner"> -->
         </div>
@@ -59,6 +69,7 @@ import { useTournamentStore } from '@/stores/tournaments'
 import { useUserStore } from '@/stores/user'
 import { usePlayerStore } from '@/stores/players'
 import { useTeamStore } from '@/stores/teams'
+import { useTournamentSelection } from '@/composables/useTournamentSelection'
 import { listTeamsByTournament } from '@/services/teamService'
 import type { Tournament } from '@/types/auth'
 
@@ -83,8 +94,13 @@ const database = useDatabaseStore()
 const teamStore = useTeamStore()
 
 const tournaments = ref<Tournament[]>([])
-const tId = ref<string>('')
 const tab = ref<'tournament' | 'teams' | 'players'>('tournament')
+
+// Usar composable para persistencia del torneo seleccionado
+const { selectedTournament, updateSelection } = useTournamentSelection(tournaments)
+
+// Computed para el ID del torneo seleccionado
+const tId = computed<string>(() => selectedTournament.value?.tournamentId || '')
 
 const role = computed<Role>(() => database.userData?.role)
 const isLoading = ref(false)
@@ -104,10 +120,20 @@ async function fetchByRole() {
         break;
       case 'player':
         await tStore.fetch();
-        await pStore.fetchByEmail(uStore.user?.email || '');
-        tournaments.value = tStore.items.filter(t =>
-          pStore.items.some(p => p.tournamentId === t.tournamentId)
-        );
+        // Obtener torneos usando el nuevo sistema de participaciones
+        if (uStore.user?.email) {
+          const player = await pStore.findByEmail(uStore.user.email);
+          if (player) {
+            const tournamentIds = await pStore.getPlayerTournaments(player.id);
+            tournaments.value = tStore.items.filter(t =>
+              tournamentIds.includes(t.tournamentId)
+            );
+          } else {
+            tournaments.value = [];
+          }
+        } else {
+          tournaments.value = [];
+        }
         break;
       case 'admin':
       case 'team':

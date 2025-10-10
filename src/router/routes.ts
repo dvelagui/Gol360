@@ -76,6 +76,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/admin/ScrapingManagement.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' },
     },
+    // Data Migration - solo admin
+    {
+      path: 'migration',
+      name: 'data-migration',
+      component: () => import('@/pages/admin/DataMigration.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
   ],
 },
 

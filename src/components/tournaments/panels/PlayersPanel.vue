@@ -65,8 +65,8 @@
           <td class="text-center">{{ p.stats.goals }}</td>
           <td class="text-center">{{ p.stats.matches }}</td>
           <td class="text-center"><q-icon name="circle" size="10px" class="text-amber" /> {{ p.stats.yellow }}</td>
-          <td class="text-center"><q-icon name="circle" size="10px" class="text-negative" /> {{ p.stats.red }}</td>
-          <td class="text-center"><q-icon name="circle" size="10px" class="text-primary" /> {{ p.stats.blue }}</td>
+          <td class="text-center"><q-icon name="circle" size="10px" color="red"  class="text-negative" /> {{ p.stats.red }}</td>
+          <td class="text-center"><q-icon name="circle" size="10px" color="blue" class="text-primary" /> {{ p.stats.blue }}</td>
           <td class="text-center">{{ p.stats.fouls }}</td>
           <td class="text-center">{{ p.stats.assists }}</td>
         </tr>
@@ -83,7 +83,9 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useTeamStore } from '@/stores/teams'
 import { usePlayerStore } from '@/stores/players'
+import { getPlayerStatsByTeam } from '@/services/statsService'
 import type { Team } from '@/types/auth'
+import type { PlayerStats } from '@/services/statsService'
 
 type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
 
@@ -102,6 +104,8 @@ const teamStore = useTeamStore()
 const playerStore = usePlayerStore()
 
 const selectedTeamId = ref({ id: '', name: '' })
+const playerStats = ref<PlayerStats[]>([])
+const loadingStats = ref(false)
 
 const teamOptions = computed(() =>
   teamStore.items.map(t => ({ id: t.id, name: t.displayName }))
@@ -112,19 +116,42 @@ const team = computed<Team | null>(() =>
 )
 
 const players = computed(() =>
-  playerStore.items.map(p => ({
-    ...p,
-    // placeholders de stats (cero) hasta conectar con statsService
-    stats: { goals: 0, matches: 0, yellow: 0, red: 0, blue: 0, fouls: 0, assists: 0 }
-  }))
+  playerStore.items.map(p => {
+    // Buscar las estadísticas del jugador
+    const stats = playerStats.value.find(s => s.playerId === p.id)
+    return {
+      ...p,
+      stats: stats || { goals: 0, matches: 0, yellow: 0, red: 0, blue: 0, fouls: 0, assists: 0 }
+    }
+  })
 )
 
 function emitOpen(id: string) {
   emit('open-profile', id)
 }
 
+async function loadPlayerStats(teamId: string) {
+  if (!teamId) {
+    playerStats.value = []
+    return
+  }
+
+  loadingStats.value = true
+  try {
+    playerStats.value = await getPlayerStatsByTeam(teamId)
+  } catch (error) {
+    console.error('Error loading player stats:', error)
+    playerStats.value = []
+  } finally {
+    loadingStats.value = false
+  }
+}
+
 watch(selectedTeamId, async (value) => {
-  if (value.id) await playerStore.fetchByTeam(value.id)
+  if (value.id) {
+    await playerStore.fetchByTeamWithParticipations(value.id)
+    await loadPlayerStats(value.id)
+  }
 })
 
 onMounted(async () => {

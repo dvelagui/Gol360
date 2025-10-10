@@ -101,7 +101,7 @@ const topScorers = computed(() => {
     if (!ev.playerId) continue
     const p = typeof ev.playerId === 'object' ? ev.playerId.id : ev.playerId
     const player = playersById.value.get(p)
-    if (!player) continue
+    if (!player || !player.teamId) continue // Skip if no player or no teamId
     const rec = goalsMap.get(p) ?? { playerId: p, playerName: player.displayName, teamId: player.teamId, goals: 0 }
     rec.goals++
     goalsMap.set(p, rec)

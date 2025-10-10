@@ -10,10 +10,16 @@ import {
   serverTimestamp,
   type Query,
   orderBy,
-  setDoc
+  setDoc,
+  limit
 } from 'firebase/firestore'
 import { colPlayers, colTeams } from './firestore/collections'
-import type { Player } from '@/types/auth'
+import type { Player, PlayerParticipation } from '@/types/auth'
+import {
+  createParticipation,
+  listParticipationsByTeam,
+  getParticipationByPlayerTeam
+} from './playerParticipationService'
 
 /**
  * Crea un jugador y devuelve el id
@@ -120,4 +126,162 @@ export async function updatePlayer(id: string, data: Partial<Player>): Promise<v
  */
 export async function removePlayer(id: string): Promise<void> {
   await deleteDoc(doc(colPlayers, id))
+}
+
+// ============================================================
+// NUEVO SISTEMA: PlayerParticipations
+// ============================================================
+
+/**
+ * Busca un jugador por email
+ */
+export async function getPlayerByEmail(email: string): Promise<Player | null> {
+  const q = query(colPlayers, where('email', '==', email), limit(1))
+  const snaps = await getDocs(q)
+  if (snaps.empty || !snaps.docs[0]) return null
+  const docSnapshot = snaps.docs[0]
+  return { id: docSnapshot.id, ...docSnapshot.data() } as Player
+}
+
+/**
+ * Crea un jugador básico (sin equipo/torneo)
+ * Para agregar a equipos/torneos usar createParticipation
+ */
+export async function createPlayerBasic(
+  data: Omit<Player, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  const ref = doc(colPlayers)
+  const dataWithId = {
+    ...data,
+    id: ref.id,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }
+  await setDoc(ref, dataWithId)
+  return ref.id
+}
+
+/**
+ * Crea o actualiza un jugador y su participación en un equipo/torneo
+ * - Si el email existe, devuelve el jugador existente
+ * - Si no existe, crea uno nuevo
+ * - Siempre crea la participación (si no existe ya)
+ */
+export async function createPlayerWithParticipation(data: {
+  // Datos del jugador
+  displayName: string
+  email?: string
+  photoURL?: string | null
+  createdBy: string
+
+  // Datos de la participación
+  tournamentId: string
+  teamId: string
+  jersey?: number
+  position?: string
+  role?: 'player' | 'team'
+}): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
+  let playerId: string
+  let isExisting = false
+
+  // 1) Buscar si existe jugador con ese email
+  if (data.email) {
+    const existingPlayer = await getPlayerByEmail(data.email)
+    if (existingPlayer) {
+      playerId = existingPlayer.id
+      isExisting = true
+      console.log(`✅ Jugador existente encontrado: ${existingPlayer.displayName} (${playerId})`)
+    } else {
+      // Crear nuevo jugador
+      const playerData: Partial<Player> = {
+        displayName: data.displayName,
+        email: data.email,
+        createdBy: data.createdBy
+      }
+      // Solo agregar photoURL si no es undefined
+      if (data.photoURL !== undefined) {
+        playerData.photoURL = data.photoURL
+      }
+      playerId = await createPlayerBasic(playerData as Omit<Player, 'id' | 'createdAt' | 'updatedAt'>)
+      console.log(`✨ Nuevo jugador creado: ${data.displayName} (${playerId})`)
+    }
+  } else {
+    // Sin email, siempre crear nuevo
+    const playerData: Partial<Player> = {
+      displayName: data.displayName,
+      createdBy: data.createdBy
+    }
+    // Solo agregar photoURL si no es undefined
+    if (data.photoURL !== undefined) {
+      playerData.photoURL = data.photoURL
+    }
+    playerId = await createPlayerBasic(playerData as Omit<Player, 'id' | 'createdAt' | 'updatedAt'>)
+    console.log(`✨ Nuevo jugador creado (sin email): ${data.displayName} (${playerId})`)
+  }
+
+  // 2) Verificar si ya tiene participación en este equipo/torneo
+  const existingParticipation = await getParticipationByPlayerTeam(
+    playerId,
+    data.teamId,
+    data.tournamentId
+  )
+
+  if (existingParticipation) {
+    console.log(`⚠️  El jugador ya participa en este equipo/torneo`)
+    return {
+      playerId,
+      participationId: existingParticipation.id,
+      isExisting: true
+    }
+  }
+
+  // 3) Crear participación
+  const participationId = await createParticipation({
+    playerId,
+    tournamentId: data.tournamentId,
+    teamId: data.teamId,
+    jersey: data.jersey,
+    position: data.position,
+    role: data.role || 'player',
+    active: true,
+    createdBy: data.createdBy
+  } as any)
+
+  console.log(`✅ Participación creada: ${participationId}`)
+
+  return { playerId, participationId, isExisting }
+}
+
+/**
+ * Lista jugadores de un equipo con sus participaciones
+ * Devuelve jugadores con datos combinados de Player + PlayerParticipation
+ */
+export async function listPlayersWithParticipationsByTeam(teamId: string): Promise<Array<Player & { participation: PlayerParticipation }>> {
+  // 1) Obtener participaciones del equipo
+  const participations = await listParticipationsByTeam(teamId)
+
+  // 2) Obtener datos de cada jugador
+  const players = await Promise.all(
+    participations.map(async (participation) => {
+      const player = await getPlayer(participation.playerId)
+      if (!player) return null
+
+      // Combinar datos del jugador con su participación
+      return {
+        ...player,
+        // Datos de la participación
+        participation,
+        // Para compatibilidad con código existente
+        teamId: participation.teamId,
+        tournamentId: participation.tournamentId,
+        jersey: participation.jersey,
+        position: participation.position,
+        role: participation.role,
+        active: participation.active
+      }
+    })
+  )
+
+  // Filtrar nulls
+  return players.filter(p => p !== null) as Array<Player & { participation: PlayerParticipation }>
 }

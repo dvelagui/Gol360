@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineStore } from 'pinia'
-import type { Player } from '@/types/auth'
+import type { Player, PlayerParticipation } from '@/types/auth'
 import {
   listPlayersByTeam,
   listPlayersByEmail,
@@ -9,8 +9,18 @@ import {
   updatePlayer,
   removePlayer,
   setCaptain as setTeamCaptain, // cambio de capitán único por equipo
-  promoteToCaptain // compatibilidad con tu flujo previo (opcional)
+  promoteToCaptain, // compatibilidad con tu flujo previo (opcional)
+  // Nuevas funciones
+  getPlayerByEmail,
+  createPlayerWithParticipation,
+  listPlayersWithParticipationsByTeam
 } from '@/services/playerService'
+import {
+  setCaptainInTeam,
+  updateParticipation,
+  deactivateParticipation,
+  getTournamentIdsByPlayer
+} from '@/services/playerParticipationService'
 
 type State = {
   items: Player[]
@@ -72,7 +82,10 @@ export const usePlayerStore = defineStore('players', {
       this.error = null
       try {
         const id = await createPlayer(payload)
-        await this.fetch(payload.teamId)
+        // Solo refrescar si el payload tiene teamId
+        if (payload.teamId) {
+          await this.fetch(payload.teamId)
+        }
         return id
       } catch (e: any) {
         this.error = e?.message ?? 'No se pudo crear el jugador'
@@ -146,6 +159,154 @@ export const usePlayerStore = defineStore('players', {
       } catch (e: any) {
         this.error = e?.message ?? 'No se pudo ascender a capitán'
         throw e
+      }
+    },
+
+    // ============================================================
+    // NUEVO SISTEMA: PlayerParticipations
+    // ============================================================
+
+    /**
+     * Carga jugadores de un equipo usando el nuevo sistema de participaciones
+     */
+    async fetchByTeamWithParticipations(teamId: string): Promise<void> {
+      this.loading = true
+      this.error = null
+      try {
+        this.items = await listPlayersWithParticipationsByTeam(teamId)
+      } catch (e: any) {
+        this.items = []
+        this.error = e?.message ?? 'No se pudieron cargar los jugadores'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    /**
+     * Busca un jugador por email (para detectar duplicados)
+     */
+    async findByEmail(email: string): Promise<Player | null> {
+      this.error = null
+      try {
+        return await getPlayerByEmail(email)
+      } catch (e: any) {
+        this.error = e?.message ?? 'Error buscando jugador'
+        return null
+      }
+    },
+
+    /**
+     * Crea jugador con participación (nuevo sistema)
+     * Detecta automáticamente si el jugador existe por email
+     */
+    async addWithParticipation(data: {
+      displayName: string
+      email?: string
+      photoURL?: string | null
+      tournamentId: string
+      teamId: string
+      jersey?: number
+      position?: string
+      role?: 'player' | 'team'
+      createdBy: string
+    }): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
+      this.error = null
+      try {
+        const result = await createPlayerWithParticipation(data)
+
+        // Refrescar lista de jugadores del equipo
+        await this.fetchByTeamWithParticipations(data.teamId)
+
+        return result
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo crear el jugador'
+        throw e
+      }
+    },
+
+    /**
+     * Actualiza la participación de un jugador (jersey, posición, etc.)
+     */
+    async updateParticipation(participationId: string, data: Partial<PlayerParticipation>) {
+      this.error = null
+      try {
+        await updateParticipation(participationId, data)
+
+        // Actualizar en cache local si el jugador está cargado
+        const idx = this.items.findIndex(p => (p as any).participation?.id === participationId)
+        if (idx >= 0) {
+          const player = this.items[idx] as any
+          this.items[idx] = {
+            ...player,
+            ...data, // Actualizar campos de compatibilidad
+            participation: {
+              ...player.participation,
+              ...data
+            }
+          }
+        }
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo actualizar la participación'
+        throw e
+      }
+    },
+
+    /**
+     * Desactiva la participación de un jugador en un equipo/torneo
+     */
+    async deactivatePlayerFromTeam(participationId: string) {
+      this.error = null
+      try {
+        await deactivateParticipation(participationId)
+
+        // Remover de cache local
+        this.items = this.items.filter(p => (p as any).participation?.id !== participationId)
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo desactivar el jugador'
+        throw e
+      }
+    },
+
+    /**
+     * Cambia el capitán usando el nuevo sistema de participaciones
+     */
+    async setCaptainWithParticipations(teamId: string, tournamentId: string, newCaptainPlayerId: string | null) {
+      this.error = null
+      try {
+        await setCaptainInTeam(teamId, tournamentId, newCaptainPlayerId)
+
+        // Actualizar cache local
+        this.items = this.items.map(p => {
+          const player = p as any
+          if (player.participation?.teamId === teamId && player.participation?.tournamentId === tournamentId) {
+            const isNewCaptain = player.id === newCaptainPlayerId
+            return {
+              ...player,
+              role: isNewCaptain ? 'team' : 'player',
+              participation: {
+                ...player.participation,
+                role: isNewCaptain ? 'team' : 'player'
+              }
+            }
+          }
+          return p
+        })
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo cambiar el capitán'
+        throw e
+      }
+    },
+
+    /**
+     * Obtiene los IDs de torneos en los que participa un jugador
+     */
+    async getPlayerTournaments(playerId: string): Promise<string[]> {
+      this.error = null
+      try {
+        return await getTournamentIdsByPlayer(playerId)
+      } catch (e: any) {
+        this.error = e?.message ?? 'Error obteniendo torneos del jugador'
+        return []
       }
     }
   }
