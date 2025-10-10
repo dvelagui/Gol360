@@ -84,7 +84,7 @@ const teamStore = useTeamStore()
 
 const tournaments = ref<Tournament[]>([])
 const tId = ref<string>('')
-const tab = ref<'schedule' | 'teams' | 'players' | 'standings' | 'leaders'>('schedule')
+const tab = ref<'tournament' | 'teams' | 'players'>('tournament')
 
 const role = computed<Role>(() => database.userData?.role)
 const isLoading = ref(false)
@@ -185,9 +185,14 @@ async function afterTeamSaved() {
 
 
 onMounted(async () => {
-  await loadTeams()
-  await fetchTournament(tId.value)
   await fetchByRole();
+
+  // Si ya hay un torneo seleccionado al montar, cargar sus datos
+  if (tId.value) {
+    await fetchTournament(tId.value);
+    await teamStore.fetch(tId.value);
+    await loadTeams();
+  }
 
   // Watch role changes and refetch tournaments accordingly
   watch(role, async (newRole, oldRole) => {
@@ -196,10 +201,19 @@ onMounted(async () => {
     }
   }, { immediate: false });
 
-  // Watch tournament ID changes and load teams
+  // Watch tournament ID changes and load all data
   watch(tId, async (newTId, oldTId) => {
-    if (newTId !== oldTId) {
+    if (newTId !== oldTId && newTId) {
+      // Cambiar al tab de torneo automáticamente
+      tab.value = 'tournament';
+
+      // Cargar datos del torneo
       await fetchTournament(newTId);
+
+      // Cargar equipos para el store (usado en TeamsPanel y TournamentInfoPanel)
+      await teamStore.fetch(newTId);
+
+      // Cargar lista mínima de equipos (usado en selects/dialogs)
       await loadTeams();
     }
   }, { immediate: false });
