@@ -246,7 +246,7 @@ async function onConfirm(score: { home: number; away: number }): Promise<void> {
 
 /* Envío de evento */
 async function submitEvent(
-  payload: Omit<MatchEvent, 'id' | 'createdAt' | 'status'> & { status?: 'proposed' | 'approved' }
+  payload: Omit<MatchEvent, 'id' | 'createdAt' | 'status'> & { status?: 'propuesto' | 'aprobado' }
 ): Promise<void> {
   try {
     const base: Omit<MatchEvent, 'id' | 'createdAt' | 'status'> = {

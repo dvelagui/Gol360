@@ -218,15 +218,19 @@ async function loadTeams(): Promise<void> {
   try {
     const teamsList = await listTeamsByTournament(props.tournamentId)
 
-    teams.value = teamsList.map((team: { id: string; displayName: string; crestUrl?: string }) => ({
-      id: team.id,
-      name: team.displayName,
-      ...(team.crestUrl && { crestUrl: team.crestUrl })
-    }))
+    teams.value = teamsList.map((team) => {
+      // Priorizar crestUrl, luego photoURL, luego string vacío
+      const imageUrl = team.crestUrl || team.photoURL || ''
+
+      return {
+        id: team.id,
+        name: team.displayName,
+        crestUrl: imageUrl
+      }
+    })
 
     // Create map for O(1) lookups
     teamsMap.value = new Map(teams.value.map(team => [team.id, team]))
-
   } catch (error) {
     console.error('Error loading teams:', error)
     Notify.create({
@@ -288,69 +292,172 @@ watch(
 )
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .container-match {
   width: 100%;
-  max-width: 700px;
+  max-width: 900px;
   margin: 0 auto;
+  padding: 0 4px;
 }
 
 .round-container {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 1px 5px rgb(0 0 0 / 12%), 0 2px 2px rgb(0 0 0 / 14%), 0 3px 1px -2px rgb(0 0 0 / 20%);
-  padding: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  border: 2px solid #e3f2fd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #064F34, #138A59, #1976D2);
+  }
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
 }
 
 .round-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 900;
-  color: var(--q-primary);
+  background: linear-gradient(135deg, #064F34, #138A59);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #064F34, #1976D2);
+    border-radius: 2px;
+  }
 }
 
 .match-row {
-  padding: 4px 0;
+  padding: 12px 0;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(25, 118, 210, 0.02);
+  }
 }
 
 .match-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(6, 79, 52, 0.05), rgba(19, 138, 89, 0.05));
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 .match-info {
-  font-size: 0.75rem;
-  color: #757575;
+  font-size: 0.813rem;
+  font-weight: 600;
+  color: #064F34;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::before {
+    content: '📅';
+    font-size: 1rem;
+  }
 }
 
 .group-indicator {
-  color: #616161;
+  color: #1976D2;
+  font-weight: 700;
+  background: rgba(25, 118, 210, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
 }
 
 .match-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+
+  .q-btn {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
 }
 
 .q-btn .q-icon,
 .q-btn .q-spinner {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 @media (max-width: 600px) {
+  .container-match {
+    padding: 0 8px;
+  }
+
+  .round-container {
+    padding: 12px 8px;
+    border-radius: 12px;
+  }
+
+  .round-title {
+    font-size: 1.25rem;
+    margin-bottom: 12px;
+    padding: 8px 0;
+  }
+
+  .match-row {
+    padding: 8px 0;
+    margin-bottom: 6px;
+  }
+
   .match-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .match-info {
+    font-size: 0.75rem;
+    width: 100%;
   }
 
   .match-actions {
     align-self: flex-end;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .q-btn .q-icon {
+    font-size: 18px;
   }
 }
 </style>
