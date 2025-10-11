@@ -79,13 +79,13 @@
             <q-card flat bordered class="kpi stat-card-cards">
               <q-card-section class="text-center">
                 <div class="row justify-center items-center q-mb-sm q-gutter-xs">
-                  <q-icon name="square" size="20px" color="warning" />
-                  <q-icon name="stop" size="20px" color="negative" />
+                  <q-icon name="square" size="20px" color="yellow" />
+                  <q-icon name="stop" size="20px" color="red" />
                 </div>
                 <div class="text-h4 text-weight-bold">
-                  <span class="text-warning">{{ stats.yellow }}</span>
+                  <span class="text-warning" color="yellow">{{ stats.yellow }}</span>
                   <span class="q-mx-xs text-grey-5">/</span>
-                  <span class="text-negative">{{ stats.red }}</span>
+                  <span class="text-negative" color="red">{{ stats.red }}</span>
                 </div>
                 <div class="text-caption text-grey-7">Tarjetas</div>
               </q-card-section>
