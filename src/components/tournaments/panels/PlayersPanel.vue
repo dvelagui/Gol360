@@ -26,7 +26,7 @@
             </div>
           </div>
           <div class="col-6 col-md-2 q-pa-xs text-right">
-            <q-btn class="q-my-xs text-caption" outline color="white" text-color="white" label="Editar Jugadores"
+            <q-btn v-if="canCreateMatch" class="q-my-xs text-caption" outline color="white" text-color="white" label="Editar Jugadores"
               unelevated :disable="!team" @click="team && $emit('add-players', team)" />
           </div>
         </div>
@@ -99,6 +99,11 @@ const emit = defineEmits<{
   (e: 'open-profile', playerId: string): void
   (e: 'add-players', team: Team): void
 }>()
+
+const canCreateMatch = computed<boolean>(() => {
+  const userRole = props.role;
+  return userRole === 'admin' || userRole === 'manager';
+});
 
 const teamStore = useTeamStore()
 const playerStore = usePlayerStore()
