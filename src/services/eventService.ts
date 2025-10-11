@@ -16,6 +16,14 @@ export async function listEvents(matchId: string): Promise<MatchEvent[]> {
   return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }))
 }
 
+export async function listEventsByTournament(tournamentId: string): Promise<MatchEvent[]> {
+  const q = query(col, where('tournamentId', '==', tournamentId))
+  const snap = await getDocs(q)
+  const events = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }))
+  // Ordenar en memoria en lugar de en Firestore (evita necesidad de índice)
+  return events.sort((a, b) => b.createdAt - a.createdAt)
+}
+
 export async function addEvent(payload: Omit<MatchEvent,'id'|'createdAt'|'status'> & { status?: 'propuesto'|'aprobado' }) {
   const docData = cleanUndefined({
     ...payload,

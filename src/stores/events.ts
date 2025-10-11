@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { MatchEvent } from '@/types/competition'
-import { listEvents, addEvent, approveEvent, rejectEvent, removeEvent, updateEvent } from '@/services/eventService'
+import { listEvents, listEventsByTournament, addEvent, approveEvent, rejectEvent, removeEvent, updateEvent } from '@/services/eventService'
 
 export const useEventStore = defineStore('events', {
   state: () => ({
@@ -11,6 +11,11 @@ export const useEventStore = defineStore('events', {
     async fetch(matchId: string) {
       this.loading = true
       try { this.items = await listEvents(matchId) }
+      finally { this.loading = false }
+    },
+    async fetchByTournament(tournamentId: string) {
+      this.loading = true
+      try { this.items = await listEventsByTournament(tournamentId) }
       finally { this.loading = false }
     },
     async create(evt: Parameters<typeof addEvent>[0]) {
