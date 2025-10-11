@@ -191,7 +191,6 @@ async function loadTeamsAndPlayers() {
 }
 
 async function refetch() {
-  console.log('🔄 [RankingsPanel] Iniciando refetch para tournamentId:', props.tournamentId)
   loading.value = true
   try {
     await Promise.all([
@@ -199,13 +198,6 @@ async function refetch() {
       mStore.fetch(props.tournamentId),
       loadTeamsAndPlayers()
     ])
-    console.log('✅ [RankingsPanel] Datos cargados:')
-    console.log('  - Eventos:', eStore.items.length)
-    console.log('  - Partidos:', mStore.items.length)
-    console.log('  - Equipos:', teams.value.length)
-
-    // Mostrar algunos eventos de ejemplo
-    console.log('📋 Primeros 3 eventos:', eStore.items.slice(0, 3))
   } finally {
     loading.value = false
   }
@@ -215,36 +207,12 @@ onMounted(refetch)
 
 /* Top Scorers */
 const topScorers = computed(() => {
-  console.log('🔍 [RankingsPanel] Calculando topScorers...')
-  console.log('📊 Total eventos en store:', eStore.items.length)
-
   const goalsMap = new Map<string, { playerId: string; playerName: string; teamId: string; goals: number }>()
 
-  let goalCount = 0
-  let approvedCount = 0
-
   for (const ev of eStore.items as MatchEvent[]) {
-    if (ev.type === 'gol' || ev.type === 'penalti_marcado') {
-      goalCount++
-      console.log('⚽ Evento gol encontrado:', {
-        type: ev.type,
-        status: ev.status,
-        playerId: ev.playerId,
-        teamId: ev.teamId
-      })
-    }
-
     if (ev.type !== 'gol' && ev.type !== 'penalti_marcado') continue
-    if (ev.status !== 'aprobado') {
-      console.log('❌ Gol no aprobado, status:', ev.status)
-      continue
-    }
-    approvedCount++
-
-    if (!ev.playerId) {
-      console.log('⚠️ Gol sin playerId')
-      continue
-    }
+    if (ev.status !== 'aprobado') continue
+    if (!ev.playerId) continue
 
     const playerId = typeof ev.playerId === 'object' ? ev.playerId.id : ev.playerId
     const playerName = typeof ev.playerId === 'object' ? ev.playerId.name : 'Jugador'
@@ -255,14 +223,9 @@ const topScorers = computed(() => {
     goalsMap.set(playerId, rec)
   }
 
-  console.log(`📈 Goles totales: ${goalCount}, Aprobados: ${approvedCount}, Jugadores únicos: ${goalsMap.size}`)
-
-  const result = Array.from(goalsMap.values())
+  return Array.from(goalsMap.values())
     .sort((a, b) => b.goals - a.goals)
     .slice(0, 10)
-
-  console.log('🏆 Top Scorers resultado:', result)
-  return result
 })
 
 /* Top Assists */

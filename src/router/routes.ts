@@ -69,6 +69,12 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' }
     },
+    {
+      path: 'tournaments/stats',
+      name: 'tournament-stats-admin',
+      component: () => import('@/pages/tournaments/TournamentStats.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' }
+    },
     // Scraping Management - solo admin
     {
       path: 'scraping',
@@ -116,6 +122,12 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
       meta: { requiresAuth: true, requiresRole: 'manager' }
     },
+    {
+      path: 'tournaments/stats',
+      name: 'tournament-stats-manager',
+      component: () => import('@/pages/tournaments/TournamentStats.vue'),
+      meta: { requiresAuth: true, requiresRole: 'manager' }
+    },
   ],
 },
 
@@ -142,6 +154,12 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
       meta: { requiresAuth: true, requiresRole: 'team' }
     },
+    {
+      path: 'tournaments/stats',
+      name: 'tournament-stats-team',
+      component: () => import('@/pages/tournaments/TournamentStats.vue'),
+      meta: { requiresAuth: true, requiresRole: 'team' }
+    },
   ],
 },
 
@@ -166,6 +184,12 @@ const routes: RouteRecordRaw[] = [
       path: 'tournaments/competition',
       name: 'tournament-competition-player',
       component: () => import('@/pages/tournaments/TournamentCompetition.vue'),
+      meta: { requiresAuth: true, requiresRole: 'player' }
+    },
+    {
+      path: 'tournaments/stats',
+      name: 'tournament-stats-player',
+      component: () => import('@/pages/tournaments/TournamentStats.vue'),
       meta: { requiresAuth: true, requiresRole: 'player' }
     },
   ],

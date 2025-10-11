@@ -1,39 +1,85 @@
 <template>
-  <q-page class="q-pa-lg">
-    <div class="row items-center justify-center justify-md-between q-mb-md">
-      <div>
+  <q-page class="tournament-competition-page">
+    <div class="text-center q-my-lg">
         <div class="sports-font text-h4">El camerino <q-icon name="sports_soccer" /></div>
       </div>
-    </div>
-    <div class="row items-center justify-between q-col-gutter-md q-mb-md">
-      <div class="col-12 col-md-3">
-        <q-select
-          v-model="selectedTournament"
-          :options="tournaments"
-          option-label="displayName"
-          dense
-          filled
-          label="Seleccione el campeonato"
-          @update:model-value="updateSelection"
-        >
-          <template #prepend>
-            <q-icon name="emoji_events" color="primary" />
-          </template>
-        </q-select>
-        <div class="text-caption text-grey-7 q-mt-sm text-right">ID: {{ tId }}</div>
-      </div>
-        <div class="col-12 col-md-9 text-md-right text-center ad-banner">
-          <!-- <img src="@/assets/display_banner_01.jpg" alt="banner"> -->
-        </div>
-    </div>
-    <q-tabs v-model="tab" class="bg-transparent text-secondary" active-color="primary" indicator-color="primary"
-      align="left" narrow-indicator>
-      <q-tab name="tournament" label="Torneo" icon="shield" />
-      <q-tab name="teams" label="Equipos" icon="groups" />
-      <q-tab name="players" label="Jugadores" icon="sports_soccer" />
-    </q-tabs>
 
-    <q-separator class="q-mb-md" />
+    <div class="tournament-selector-wrapper">
+      <q-card class="tournament-selector-card">
+        <q-card-section class="q-pa-xs">
+          <div v-if="selectedTournament && !showSelector" class="tournament-compact">
+            <div class="tournament-info">
+              <q-icon name="emoji_events" color="primary" size="32px" class="q-mr-md" />
+              <div class="tournament-details">
+                <div class="text-h5 text-weight-bold">{{ selectedTournament.displayName }}</div>
+                <div class="text-caption text-grey-6">{{ selectedTournament.season }} • {{ selectedTournament.city }}</div>
+              </div>
+            </div>
+            <q-btn
+              outline
+              color="primary"
+              label="Cambiar"
+              icon="sync_alt"
+              @click="showSelector = true"
+              class="change-btn"
+            />
+          </div>
+
+          <q-select
+            v-else
+            v-model="selectedTournament"
+            :options="tournaments"
+            option-label="displayName"
+            filled
+            label="Seleccione el campeonato"
+            @update:model-value="onTournamentChange"
+            class="tournament-select"
+            :loading="isLoading"
+            autofocus
+          >
+            <template #prepend>
+              <q-icon name="emoji_events" color="primary" size="28px" />
+            </template>
+            <template #selected>
+              <div v-if="selectedTournament" class="selected-tournament">
+                <div class="text-weight-bold text-h6">{{ selectedTournament.displayName }}</div>
+                <div class="text-caption text-grey-6">{{ selectedTournament.season }} • {{ selectedTournament.city }}</div>
+              </div>
+            </template>
+          </q-select>
+        </q-card-section>
+      </q-card>
+    </div>
+
+    <q-card class="tabs-card">
+      <q-tabs
+        v-model="tab"
+        class="modern-tabs"
+        active-color="primary"
+        indicator-color="primary"
+        align="justify"
+        :breakpoint="0"
+      >
+        <q-tab name="tournament" class="modern-tab">
+          <div class="tab-content">
+            <q-icon name="shield" size="24px" />
+            <span v-if="$q.screen.gt.xs">Torneo</span>
+          </div>
+        </q-tab>
+        <q-tab name="teams" class="modern-tab">
+          <div class="tab-content">
+            <q-icon name="groups" size="24px" />
+            <span v-if="$q.screen.gt.xs">Equipos</span>
+          </div>
+        </q-tab>
+        <q-tab name="players" class="modern-tab">
+          <div class="tab-content">
+            <q-icon name="sports_soccer" size="24px" />
+            <span v-if="$q.screen.gt.xs">Jugadores</span>
+          </div>
+        </q-tab>
+      </q-tabs>
+    </q-card>
 
     <q-tab-panels v-model="tab" animated swipeable>
       <q-tab-panel name="tournament" class="q-pa-none">
@@ -63,7 +109,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
-import { Notify } from 'quasar'
+import { Notify, useQuasar } from 'quasar'
 import { useDatabaseStore } from '@/stores/database'
 import { useTournamentStore } from '@/stores/tournaments'
 import { useUserStore } from '@/stores/user'
@@ -72,8 +118,9 @@ import { useTeamStore } from '@/stores/teams'
 import { useTournamentSelection } from '@/composables/useTournamentSelection'
 import { listTeamsByTournament } from '@/services/teamService'
 import type { Tournament } from '@/types/auth'
-
 import type { Team } from '@/types/auth'
+
+const $q = useQuasar()
 
 /* Lazy components */
 const TournamentInfoPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/TournamentInfoPanel.vue'))
@@ -106,6 +153,17 @@ const role = computed<Role>(() => database.userData?.role)
 const isLoading = ref(false)
 const showPlayerProfile = ref(false)
 const selectedPlayerId = ref<string | null>(null)
+
+// Control para mostrar/ocultar el selector
+const showSelector = ref(false)
+
+// Función para manejar el cambio de torneo
+function onTournamentChange(tournament: Tournament | null) {
+  if (tournament) {
+    updateSelection(tournament)
+    showSelector.value = false
+  }
+}
 
 async function fetchByRole() {
   const currentRole = role.value;
@@ -220,6 +278,11 @@ onMounted(async () => {
     await loadTeams();
   }
 
+  // Mostrar selector si no hay torneo seleccionado
+  if (!selectedTournament.value) {
+    showSelector.value = true
+  }
+
   // Watch role changes and refetch tournaments accordingly
   watch(role, async (newRole, oldRole) => {
     if (newRole !== oldRole && newRole) {
@@ -247,9 +310,7 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.rounded-borders {
-  border-radius: 12px;
-}
+
 .sports-font {
   font-family: 'Arial Black', Impact, sans-serif;
   font-weight: 900;
@@ -259,9 +320,9 @@ onMounted(async () => {
   color: #f2c526;
   -webkit-text-stroke: 2px #013f21;
   text-shadow: 0px 0px 10px #218e61;
-  background-color: #013f21;
   padding: 2px 8px;
   border-radius: 10px;
+  background: linear-gradient(135deg, #064F34, #138A59);
 }
 
 .rounded-borders {
@@ -274,5 +335,301 @@ onMounted(async () => {
   width: 100%;
   max-width: 80%;
   max-height: 150px;
+}
+
+.tournament-competition-page {
+  background: #F5F7FA;
+  min-height: 100vh;
+}
+
+// Hero Header
+.page-hero {
+  background: linear-gradient(135deg, #064F34 0%, #138A59 100%);
+  padding: 40px 24px;
+  margin: -16px -16px 24px -16px;
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: white;
+  margin-bottom: 8px;
+
+  h1 {
+    font-family: 'Arial Black', Impact, sans-serif;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.hero-icon {
+  color: #F2C526;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  padding-left: 58px;
+}
+
+// Tournament Selector Card
+.tournament-selector-wrapper {
+  max-width: 800px;
+  margin: 16px 0;
+  padding: 0 16px;
+  transition: all 0.3s ease;
+}
+
+.tournament-selector-card {
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  border: 2px solid #E0E0E0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  // Estilo compacto cuando está seleccionado
+  &:has(.tournament-compact) {
+    max-width: 600px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #E0E0E0;
+
+    .q-card-section {
+      padding: 12px 16px !important;
+    }
+
+    &:hover {
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.tournament-select {
+  :deep(.q-field__control) {
+    border-radius: 12px;
+    min-height: 70px;
+  }
+
+  :deep(.q-field__label) {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  :deep(.q-field__prepend) {
+    padding-right: 16px;
+  }
+}
+
+.selected-tournament {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+// Modo compacto
+.tournament-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.tournament-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+}
+
+.tournament-details {
+  flex: 1;
+  min-width: 0;
+
+  .text-h5 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #064F34;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .text-caption {
+    font-size: 0.75rem;
+  }
+}
+
+.tournament-info .q-icon {
+  font-size: 24px !important;
+}
+
+.change-btn {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 6px 16px;
+  transition: all 0.2s ease;
+
+  :deep(.q-icon) {
+    font-size: 16px;
+  }
+
+  &:hover {
+    transform: scale(1.03);
+    box-shadow: 0 2px 8px rgba(6, 79, 52, 0.15);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Tabs Card
+.tabs-card {
+  max-width: 1200px;
+  margin: 0 auto 24px auto;
+  margin-left: 16px;
+  margin-right: 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.modern-tabs {
+  background: white;
+}
+
+.modern-tabs :deep(.q-tab) {
+  padding: 16px 24px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(6, 79, 52, 0.05);
+  }
+}
+
+.modern-tabs :deep(.q-tab--active) {
+  background: linear-gradient(135deg, rgba(6, 79, 52, 0.1), rgba(19, 138, 89, 0.1));
+}
+
+.modern-tabs :deep(.q-tabs__indicator) {
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.modern-tab {
+  .tab-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+  }
+}
+
+// Tab Panels
+:deep(.q-tab-panels) {
+  background: transparent;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+:deep(.q-tab-panel) {
+  padding: 0;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .page-hero {
+    padding: 24px 16px;
+    margin: -16px -16px 16px -16px;
+    border-radius: 0 0 16px 16px;
+  }
+
+  .hero-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    h1 {
+      font-size: 1.75rem;
+    }
+  }
+
+  .hero-subtitle {
+    padding-left: 0;
+    font-size: 0.9rem;
+  }
+
+  .tournament-selector-card {
+    .q-card-section {
+      padding: 16px !important;
+    }
+  }
+
+  .tournament-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .tournament-info {
+    width: 100%;
+  }
+
+  .change-btn {
+    width: 100%;
+  }
+
+  .tournament-stats {
+    margin-top: 16px;
+    justify-content: space-between;
+  }
+
+  .stat-item {
+    padding: 4px 8px;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+  }
+
+  .modern-tab {
+    .tab-content {
+      font-size: 0.75rem;
+    }
+  }
 }
 </style>

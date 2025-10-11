@@ -1,41 +1,20 @@
 <template>
   <div class="q-pa-none">
-    <!-- Loading State -->
     <div v-if="isLoading" class="q-my-xl">
       <q-skeleton type="rect" class="q-mb-md" height="180px" />
       <q-skeleton type="rect" class="q-mb-md" height="120px" />
       <q-skeleton type="rect" class="q-mb-md" height="120px" />
     </div>
 
-    <!-- Empty State -->
     <div v-else-if="!tournament" class="q-my-xl text-grey-6 text-center">
       <q-icon name="info" size="48px" class="q-mb-md text-grey-4" />
       <div class="text-subtitle2">No hay torneo seleccionado</div>
       <div class="text-caption">Selecciona un torneo en el menú superior.</div>
     </div>
 
-    <!-- Tournament Info -->
     <div v-else class="container-info">
-      <!-- Header Card -->
-      <q-card class="info-card header-card q-mb-md" flat bordered>
-        <div class="header-overlay">
-          <div class="header-content">
-            <div class="row items-center q-gutter-sm q-mb-sm">
-              <q-icon name="emoji_events" size="40px" class="text-white" />
-              <div>
-                <div class="text-h4 text-white text-weight-bold">{{ tournament.displayName }}</div>
-                <div class="text-subtitle1 text-white text-weight-regular">
-                  {{ tournament.city }} · {{ getTournamentType(tournament.type) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </q-card>
 
-      <!-- Info Grid -->
       <div class="row q-col-gutter-md">
-        <!-- General Info Card -->
         <div class="col-12 col-md-6">
           <q-card class="info-card" flat bordered>
             <q-card-section>
@@ -43,6 +22,15 @@
                 <q-icon name="info" class="q-mr-xs" />
                 Información General
               </div>
+              <div class="info-row">
+                <div class="info-label">
+                  <q-icon name="account_box" size="20px" class="q-mr-xs" />
+                  Nombre:
+                </div>
+                <div class="info-value">{{ tournament.displayName }}</div>
+              </div>
+
+              <q-separator class="q-my-sm" />
 
               <div class="info-row">
                 <div class="info-label">
@@ -95,7 +83,6 @@
           </q-card>
         </div>
 
-        <!-- Teams Info Card -->
         <div class="col-12 col-md-6">
           <q-card class="info-card" flat bordered>
             <q-card-section>
@@ -136,7 +123,6 @@
             </q-card-section>
           </q-card>
 
-          <!-- Status Card -->
           <q-card class="info-card q-mt-md" flat bordered>
             <q-card-section>
               <div class="text-h6 text-primary q-mb-md">
@@ -158,7 +144,6 @@
           </q-card>
         </div>
 
-        <!-- Description Card (if available) -->
         <div v-if="tournament.description" class="col-12">
           <q-card class="info-card" flat bordered>
             <q-card-section>
@@ -173,7 +158,6 @@
           </q-card>
         </div>
 
-        <!-- Awards Card -->
         <div v-if="tournament.award" class="col-12">
           <q-card class="info-card awards-card" flat bordered>
             <q-card-section>
@@ -183,7 +167,6 @@
               </div>
 
               <div class="row q-col-gutter-md">
-                <!-- First Place -->
                 <div v-if="tournament.award.first_place" class="col-12 col-sm-6 col-md-3">
                   <div class="award-item first-place">
                     <div class="award-icon">
@@ -194,7 +177,6 @@
                   </div>
                 </div>
 
-                <!-- Second Place -->
                 <div v-if="tournament.award.second_place" class="col-12 col-sm-6 col-md-3">
                   <div class="award-item second-place">
                     <div class="award-icon">
@@ -205,7 +187,6 @@
                   </div>
                 </div>
 
-                <!-- Top Scorer -->
                 <div v-if="tournament.award.top_scorer" class="col-12 col-sm-6 col-md-3">
                   <div class="award-item top-scorer">
                     <div class="award-icon">
@@ -216,7 +197,6 @@
                   </div>
                 </div>
 
-                <!-- Defeat Net -->
                 <div v-if="tournament.award.defeat_net" class="col-12 col-sm-6 col-md-3">
                   <div class="award-item defeat-net">
                     <div class="award-icon">
@@ -231,7 +211,6 @@
           </q-card>
         </div>
 
-        <!-- Manager Info (if available) -->
         <div v-if="tournament.managerName" class="col-12">
           <q-card class="info-card" flat bordered>
             <q-card-section>

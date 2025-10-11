@@ -77,20 +77,19 @@ const initials = computed(() => {
 })
 
 const rolePermissions: Record<Role, string[]> = {
-  admin: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact', 'scraping'],
-  manager: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
-  team: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
-  player: ['dashboard', 'competition', 'schedule', 'analytics', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  admin: ['dashboard', 'competition', 'schedule', 'stats', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  manager: ['dashboard', 'competition', 'schedule', 'stats', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  team: ['dashboard', 'competition', 'schedule', 'stats', 'videos', 'calendar', 'store', 'profile', 'contact'],
+  player: ['dashboard', 'competition', 'schedule', 'stats', 'videos', 'calendar', 'store', 'profile', 'contact'],
 }
 
 const baseLinks: Omit<NavLink, 'url'>[] = [
   { id: 'dashboard', icon: 'home', title: 'Inicio' },
   { id: 'profile', icon: 'account_circle', title: 'Perfil' },
-  { id: 'competition', icon: 'sports_soccer', title: 'Competencia' },
-  { id: 'schedule', icon: 'calendar_month', title: 'Programación' },
-  { id: 'analytics', icon: 'analytics', title: 'Estadísticas' },
-  { id: 'videos', icon: 'video_library', title: 'Videos' },
-  { id: 'scraping', icon: 'cloud_download', title: 'Scraping Veo' },
+  { id: 'competition', icon: 'sports_soccer', title: 'El Camerino' },
+  { id: 'schedule', icon: 'calendar_month', title: 'La Jornada' },
+  { id: 'stats', icon: 'analytics', title: 'La Pizarra' },
+  { id: 'videos', icon: 'video_library', title: 'Encuentros' },
   { id: 'store', icon: 'store', title: 'Tienda' },
   { id: 'contact', icon: 'mail', title: 'Contacto' },
 ]
@@ -103,6 +102,7 @@ const allLinks = computed(() => {
          link.id === 'scraping' ? `${rolePrefix}/scraping` :
          link.id === 'competition' ? `${rolePrefix}/tournaments/competition` :
          link.id === 'schedule' ? `${rolePrefix}/tournaments/schedule` :
+         link.id === 'stats' ? `${rolePrefix}/tournaments/stats` :
          `${rolePrefix}/${link.id}`
   }));
 })
