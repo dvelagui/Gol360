@@ -86,37 +86,36 @@
       </q-tabs>
     </q-card>
 
-    <!-- Tab Panels - Placeholders for now -->
+    <!-- Tab Panels -->
     <q-tab-panels v-model="tab" animated swipeable>
       <q-tab-panel name="analytics" class="q-pa-none">
-        <div class="panel-placeholder">
-          <q-icon name="bar_chart" size="64px" color="grey-5" />
-          <p class="text-h6 text-grey-6">Panel de Analytics</p>
-          <p class="text-caption text-grey-5">Aquí se mostrarán los heatmaps, pass networks y estadísticas</p>
-        </div>
+        <AnalyticsPanel
+          :analytics-data="analyticsData"
+          :loading="isLoadingAnalytics"
+        />
       </q-tab-panel>
 
       <q-tab-panel name="clips" class="q-pa-none">
-        <div class="panel-placeholder">
-          <q-icon name="movie" size="64px" color="grey-5" />
-          <p class="text-h6 text-grey-6">Panel de Clips</p>
-          <p class="text-caption text-grey-5">Aquí se mostrarán los clips del partido</p>
-        </div>
+        <ClipsPanel
+          :highlights-data="analyticsData?.data?.highlights"
+          youtube-video-id="DtD7GNuF3xQ"
+          :loading="isLoadingAnalytics"
+        />
       </q-tab-panel>
 
       <q-tab-panel name="destacados" class="q-pa-none">
-        <div class="panel-placeholder">
-          <q-icon name="star" size="64px" color="grey-5" />
-          <p class="text-h6 text-grey-6">Panel de Destacados</p>
-          <p class="text-caption text-grey-5">Aquí se mostrarán los highlights y mejores jugadas</p>
-        </div>
+        <DestacadosPanel
+          :player-moments-data="analyticsData?.data?.playerMoments"
+          youtube-video-id="DtD7GNuF3xQ"
+          :loading="isLoadingAnalytics"
+        />
       </q-tab-panel>
     </q-tab-panels>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { useQuasar, Notify } from 'quasar'
 import { useTournamentSelection } from '@/composables/useTournamentSelection'
 import { useTournamentStore } from '@/stores/tournaments'
@@ -125,6 +124,11 @@ import analyticsService from '@/services/analyticsService'
 import type { Tournament } from '@/types/auth'
 import type { Match } from '@/types/competition'
 import type { AnalyticsResponse } from '@/types/analytics'
+
+// Lazy load panels
+const AnalyticsPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/AnalyticsPanel.vue'))
+const ClipsPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/ClipsPanel.vue'))
+const DestacadosPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/DestacadosPanel.vue'))
 
 const $q = useQuasar()
 

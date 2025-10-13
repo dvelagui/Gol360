@@ -75,6 +75,17 @@
         </h5>
         <q-card class="data-card">
           <q-card-section>
+            <!-- Period Selector -->
+            <div class="period-selector">
+              <q-btn-toggle
+                v-model="selectedLocationMapPeriod"
+                :options="periodOptions"
+                toggle-color="primary"
+                size="sm"
+                unelevated
+              />
+            </div>
+
             <div class="location-grid">
               <div class="location-item">
                 <div class="location-header">
@@ -139,6 +150,17 @@
         </h5>
         <q-card class="data-card">
           <q-card-section>
+            <!-- Period Selector -->
+            <div class="period-selector">
+              <q-btn-toggle
+                v-model="selectedShotMapPeriod"
+                :options="periodOptions"
+                toggle-color="primary"
+                size="sm"
+                unelevated
+              />
+            </div>
+
             <div class="shot-map-grid">
               <div class="shot-map-stat">
                 <q-icon name="sports_soccer" size="32px" color="positive" />
@@ -165,17 +187,24 @@
               </div>
             </div>
 
-            <!-- Shot Map Image (when available) -->
+            <!-- Shot Map Image -->
             <div v-if="currentShotMap.screenshot" class="shot-map-image">
+              <div class="debug-info">
+                <small>URL: {{ currentShotMap.screenshot }}</small>
+              </div>
               <q-img
                 :src="currentShotMap.screenshot"
                 ratio="16/9"
                 fit="contain"
                 class="rounded-borders"
+                @error="(err) => console.error('Shot map image error:', err, currentShotMap.screenshot)"
+                @load="() => console.log('Shot map image loaded:', currentShotMap.screenshot)"
               >
                 <template #error>
-                  <div class="absolute-full flex flex-center bg-grey-3">
+                  <div class="absolute-full flex flex-center bg-grey-3 flex-column">
                     <q-icon name="broken_image" size="64px" color="grey-5" />
+                    <p class="text-grey-6 q-mt-md">Error al cargar la imagen</p>
+                    <small class="text-grey-5">{{ currentShotMap.screenshot }}</small>
                   </div>
                 </template>
                 <template #loading>
@@ -184,6 +213,10 @@
                   </div>
                 </template>
               </q-img>
+            </div>
+            <div v-else class="shot-map-placeholder">
+              <q-icon name="image" size="64px" color="grey-4" />
+              <p class="text-grey-6">Mapa de tiros no disponible</p>
             </div>
           </q-card-section>
         </q-card>
@@ -208,15 +241,22 @@
             </div>
 
             <div v-if="currentHeatMap.screenshot" class="heat-map-image">
+              <div class="debug-info">
+                <small>URL: {{ currentHeatMap.screenshot }}</small>
+              </div>
               <q-img
                 :src="currentHeatMap.screenshot"
                 ratio="16/9"
                 fit="contain"
                 class="rounded-borders"
+                @error="(err) => console.error('Heat map image error:', err, currentHeatMap.screenshot)"
+                @load="() => console.log('Heat map image loaded:', currentHeatMap.screenshot)"
               >
                 <template #error>
-                  <div class="absolute-full flex flex-center bg-grey-3">
+                  <div class="absolute-full flex flex-center bg-grey-3 flex-column">
                     <q-icon name="broken_image" size="64px" color="grey-5" />
+                    <p class="text-grey-6 q-mt-md">Error al cargar la imagen</p>
+                    <small class="text-grey-5">{{ currentHeatMap.screenshot }}</small>
                   </div>
                 </template>
                 <template #loading>
@@ -242,6 +282,17 @@
         </h5>
         <q-card class="data-card">
           <q-card-section>
+            <!-- Period Selector -->
+            <div class="period-selector">
+              <q-btn-toggle
+                v-model="selectedPassesPeriod"
+                :options="periodOptions"
+                toggle-color="primary"
+                size="sm"
+                unelevated
+              />
+            </div>
+
             <div class="passes-stats-grid">
               <div class="passes-stat-card">
                 <div class="passes-stat-value">{{ currentPassesStrings.stat_3to5 }}</div>
@@ -285,7 +336,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import storageService from '@/services/storageService'
 
 // Props
 interface Props {
@@ -297,6 +349,47 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false
 })
 
+// State para URLs de imágenes convertidas
+const imageUrls = ref<{
+  heatMap: {
+    [team: string]: {
+      [period: string]: string | null
+    }
+  }
+  shotMap: {
+    [team: string]: {
+      [period: string]: string | null
+    }
+  }
+}>({
+  heatMap: {
+    ColoColo: {
+      'Full recording': null,
+      '1st period': null,
+      '2nd period': null
+    },
+    IndValle: {
+      'Full recording': null,
+      '1st period': null,
+      '2nd period': null
+    }
+  },
+  shotMap: {
+    ColoColo: {
+      'Full recording': null,
+      '1st period': null,
+      '2nd period': null
+    },
+    IndValle: {
+      'Full recording': null,
+      '1st period': null,
+      '2nd period': null
+    }
+  }
+})
+
+const loadingImages = ref(false)
+
 // DATOS MOCK - Estos se reemplazarán con datos reales de la API
 const mockData = {
   ColoColo: {
@@ -307,39 +400,93 @@ const mockData = {
       conversionRate: '17%'
     },
     locationMap: {
-      defensive_passes: '2%',
-      middle_passes: '92%',
-      attacking_passes: '6%',
-      defensive_possession: '31%',
-      middle_possession: '53%',
-      attacking_possession: '15%'
+      'Full recording': {
+        defensive_passes: '2%',
+        middle_passes: '92%',
+        attacking_passes: '6%',
+        defensive_possession: '31%',
+        middle_possession: '53%',
+        attacking_possession: '15%'
+      },
+      '1st period': {
+        defensive_passes: '3%',
+        middle_passes: '86%',
+        attacking_passes: '11%',
+        defensive_possession: '42%',
+        middle_possession: '42%',
+        attacking_possession: '15%'
+      },
+      '2nd period': {
+        defensive_passes: '2%',
+        middle_passes: '96%',
+        attacking_passes: '2%',
+        defensive_possession: '22%',
+        middle_possession: '63%',
+        attacking_possession: '15%'
+      }
     },
     shotMap: {
-      goals: '3',
-      shots: '15',
-      total: '18',
-      insideBox: '39%',
-      outsideBox: '61%',
-      conversionRate: '17%',
-      screenshot: null // URL de imagen cuando esté disponible
+      'Full recording': {
+        goals: '3',
+        shots: '15',
+        total: '18',
+        insideBox: '39%',
+        outsideBox: '61%',
+        conversionRate: '17%',
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/shot_map_Full_recording.png'
+      },
+      '1st period': {
+        goals: '1',
+        shots: '5',
+        total: '6',
+        insideBox: '33%',
+        outsideBox: '67%',
+        conversionRate: '17%',
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/shot_map_1st_period.png'
+      },
+      '2nd period': {
+        goals: '2',
+        shots: '10',
+        total: '12',
+        insideBox: '42%',
+        outsideBox: '58%',
+        conversionRate: '17%',
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/shot_map_2nd_period.png'
+      }
     },
     heatMap: {
       '1st period': {
-        screenshot: null // URL cuando esté disponible
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_1st_period.png'
       },
       '2nd period': {
-        screenshot: null
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_2nd_period.png'
       },
       'Full recording': {
-        screenshot: null
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_Full_recording.png'
       }
     },
     passesStrings: {
-      xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-      bars: [19, 14, 5, 2, 2, 0, 0, 0],
-      stat_3to5: '38',
-      stat_6ormore: '4',
-      stat_longest: '7'
+      'Full recording': {
+        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
+        bars: [19, 14, 5, 2, 2, 0, 0, 0],
+        stat_3to5: '38',
+        stat_6ormore: '4',
+        stat_longest: '7'
+      },
+      '1st period': {
+        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
+        bars: [9, 7, 1, 1, 0, 0, 0, 0],
+        stat_3to5: '17',
+        stat_6ormore: '1',
+        stat_longest: '6'
+      },
+      '2nd period': {
+        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
+        bars: [10, 7, 4, 1, 2, 0, 0, 0],
+        stat_3to5: '21',
+        stat_6ormore: '3',
+        stat_longest: '7'
+      }
     }
   },
   IndValle: {
@@ -350,39 +497,93 @@ const mockData = {
       conversionRate: '21%'
     },
     locationMap: {
-      defensive_passes: '3%',
-      middle_passes: '91%',
-      attacking_passes: '6%',
-      defensive_possession: '22%',
-      middle_possession: '54%',
-      attacking_possession: '25%'
+      'Full recording': {
+        defensive_passes: '3%',
+        middle_passes: '91%',
+        attacking_passes: '6%',
+        defensive_possession: '22%',
+        middle_possession: '54%',
+        attacking_possession: '25%'
+      },
+      '1st period': {
+        defensive_passes: '3%',
+        middle_passes: '91%',
+        attacking_passes: '7%',
+        defensive_possession: '15%',
+        middle_possession: '60%',
+        attacking_possession: '26%'
+      },
+      '2nd period': {
+        defensive_passes: '4%',
+        middle_passes: '92%',
+        attacking_passes: '5%',
+        defensive_possession: '30%',
+        middle_possession: '46%',
+        attacking_possession: '24%'
+      }
     },
     shotMap: {
-      goals: '4',
-      shots: '15',
-      total: '19',
-      insideBox: '24%',
-      outsideBox: '76%',
-      conversionRate: '21%',
-      screenshot: null
+      'Full recording': {
+        goals: '4',
+        shots: '15',
+        total: '19',
+        insideBox: '24%',
+        outsideBox: '76%',
+        conversionRate: '21%',
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/shot_map_Full_recording.png'
+      },
+      '1st period': {
+        goals: '3',
+        shots: '11',
+        total: '14',
+        insideBox: '17%',
+        outsideBox: '83%',
+        conversionRate: '21%',
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/shot_map_1st_period.png'
+      },
+      '2nd period': {
+        goals: '1',
+        shots: '4',
+        total: '5',
+        insideBox: '40%',
+        outsideBox: '60%',
+        conversionRate: '20%',
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/shot_map_2nd_period.png'
+      }
     },
     heatMap: {
       '1st period': {
-        screenshot: null
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/heat_map_1st_period.png'
       },
       '2nd period': {
-        screenshot: null
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/heat_map_2nd_period.png'
       },
       'Full recording': {
-        screenshot: null
+        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/heat_map_Full_recording.png'
       }
     },
     passesStrings: {
-      xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-      bars: [16, 11, 7, 3, 1, 1, 0, 0],
-      stat_3to5: '34',
-      stat_6ormore: '5',
-      stat_longest: '8'
+      'Full recording': {
+        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
+        bars: [16, 11, 7, 3, 1, 1, 0, 0],
+        stat_3to5: '34',
+        stat_6ormore: '5',
+        stat_longest: '8'
+      },
+      '1st period': {
+        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
+        bars: [8, 6, 4, 2, 1, 0, 0, 0],
+        stat_3to5: '18',
+        stat_6ormore: '3',
+        stat_longest: '7'
+      },
+      '2nd period': {
+        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
+        bars: [8, 5, 3, 1, 0, 1, 0, 0],
+        stat_3to5: '16',
+        stat_6ormore: '2',
+        stat_longest: '8'
+      }
     }
   }
 }
@@ -390,6 +591,9 @@ const mockData = {
 // State
 const selectedTeam = ref<'ColoColo' | 'IndValle'>('ColoColo')
 const selectedPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
+const selectedLocationMapPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
+const selectedShotMapPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
+const selectedPassesPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
 
 // Team options for toggle
 const teamOptions = [
@@ -406,13 +610,94 @@ const periodOptions = [
 
 // Computed properties para datos actuales
 const currentStats = computed(() => mockData[selectedTeam.value].stats)
-const currentLocationMap = computed(() => mockData[selectedTeam.value].locationMap)
-const currentShotMap = computed(() => mockData[selectedTeam.value].shotMap)
-const currentHeatMap = computed(() => mockData[selectedTeam.value].heatMap[selectedPeriod.value])
-const currentPassesStrings = computed(() => mockData[selectedTeam.value].passesStrings)
+const currentLocationMap = computed(() => mockData[selectedTeam.value].locationMap[selectedLocationMapPeriod.value])
+const currentShotMap = computed(() => {
+  const shotMap = mockData[selectedTeam.value].shotMap[selectedShotMapPeriod.value]
+  // Usar URL convertida si existe
+  const convertedScreenshot = imageUrls.value.shotMap[selectedTeam.value]?.[selectedShotMapPeriod.value]
+  return {
+    ...shotMap,
+    screenshot: convertedScreenshot || shotMap.screenshot
+  }
+})
+const currentHeatMap = computed(() => {
+  const heatMap = mockData[selectedTeam.value].heatMap[selectedPeriod.value]
+  // Usar URL convertida si existe
+  const convertedScreenshot = imageUrls.value.heatMap[selectedTeam.value]?.[selectedPeriod.value]
+  return {
+    ...heatMap,
+    screenshot: convertedScreenshot || heatMap.screenshot
+  }
+})
+const currentPassesStrings = computed(() => mockData[selectedTeam.value].passesStrings[selectedPassesPeriod.value])
 
 // Max bar value for chart scaling
 const maxBarValue = computed(() => Math.max(...currentPassesStrings.value.bars))
+
+// Función para convertir URLs gs:// a HTTPS
+async function convertImageUrls() {
+  loadingImages.value = true
+  console.log('🔄 Starting image URL conversion...')
+  try {
+    // Convertir heat maps
+    for (const team of ['ColoColo', 'IndValle']) {
+      for (const period of ['Full recording', '1st period', '2nd period']) {
+        const gsUrl = mockData[team as keyof typeof mockData].heatMap[period as keyof typeof mockData.ColoColo.heatMap]?.screenshot
+        console.log(`📍 Processing heat map: ${team} - ${period}`, gsUrl)
+        if (gsUrl && storageService.isGsUrl(gsUrl)) {
+          try {
+            const httpsUrl = await storageService.convertGsUrlToHttps(gsUrl)
+            if (!imageUrls.value.heatMap[team]) {
+              imageUrls.value.heatMap[team] = {}
+            }
+            imageUrls.value.heatMap[team][period] = httpsUrl
+            console.log(`✅ Converted heat map URL for ${team} ${period}:`, httpsUrl)
+          } catch (error) {
+            console.error(`❌ Failed to convert heat map URL for ${team} ${period}:`, error)
+            if (!imageUrls.value.heatMap[team]) {
+              imageUrls.value.heatMap[team] = {}
+            }
+            imageUrls.value.heatMap[team][period] = null
+          }
+        }
+      }
+    }
+
+    // Convertir shot maps
+    for (const team of ['ColoColo', 'IndValle']) {
+      for (const period of ['Full recording', '1st period', '2nd period']) {
+        const gsUrl = mockData[team as keyof typeof mockData].shotMap[period as keyof typeof mockData.ColoColo.shotMap]?.screenshot
+        console.log(`📍 Processing shot map: ${team} - ${period}`, gsUrl)
+        if (gsUrl && storageService.isGsUrl(gsUrl)) {
+          try {
+            const httpsUrl = await storageService.convertGsUrlToHttps(gsUrl)
+            if (!imageUrls.value.shotMap[team]) {
+              imageUrls.value.shotMap[team] = {}
+            }
+            imageUrls.value.shotMap[team][period] = httpsUrl
+            console.log(`✅ Converted shot map URL for ${team} ${period}:`, httpsUrl)
+          } catch (error) {
+            console.error(`❌ Failed to convert shot map URL for ${team} ${period}:`, error)
+            if (!imageUrls.value.shotMap[team]) {
+              imageUrls.value.shotMap[team] = {}
+            }
+            imageUrls.value.shotMap[team][period] = null
+          }
+        }
+      }
+    }
+    console.log('✨ Image URL conversion complete!')
+    console.log('Heat Map URLs:', imageUrls.value.heatMap)
+    console.log('Shot Map URLs:', imageUrls.value.shotMap)
+  } finally {
+    loadingImages.value = false
+  }
+}
+
+// Cargar URLs convertidas al montar
+onMounted(() => {
+  void convertImageUrls()
+})
 
 // Watch para cuando lleguen datos reales
 watch(() => props.analyticsData, (newData) => {
@@ -618,13 +903,25 @@ watch(() => props.analyticsData, (newData) => {
   overflow: hidden;
 }
 
-// Heat Map
-.heat-map-selector {
+.debug-info {
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  word-break: break-all;
+  color: #666;
+}
+
+// Period Selector (common for all sections)
+.period-selector {
   margin-bottom: 24px;
   display: flex;
   justify-content: center;
 }
 
+// Heat Map
 .heat-map-placeholder {
   display: flex;
   flex-direction: column;
@@ -634,6 +931,19 @@ watch(() => props.analyticsData, (newData) => {
   background: #F5F7FA;
   border-radius: 12px;
   gap: 16px;
+}
+
+// Shot Map Placeholder
+.shot-map-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  background: #F5F7FA;
+  border-radius: 12px;
+  gap: 16px;
+  margin-top: 16px;
 }
 
 // Passes Strings
