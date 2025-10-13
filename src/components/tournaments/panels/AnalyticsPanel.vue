@@ -341,7 +341,7 @@ import storageService from '@/services/storageService'
 
 // Props
 interface Props {
-  analyticsData: any // TODO: Usar tipo AnalyticsResponse cuando llegue la data real
+  analyticsData?: Record<string, unknown> | null // TODO: Usar tipo AnalyticsResponse cuando llegue la data real
   loading?: boolean
 }
 
@@ -635,7 +635,7 @@ const currentPassesStrings = computed(() => mockData[selectedTeam.value].passesS
 const maxBarValue = computed(() => Math.max(...currentPassesStrings.value.bars))
 
 // Función para convertir URLs gs:// a HTTPS
-async function convertImageUrls() {
+function convertImageUrls() {
   loadingImages.value = true
   console.log('🔄 Starting image URL conversion...')
   try {
@@ -646,7 +646,7 @@ async function convertImageUrls() {
         console.log(`📍 Processing heat map: ${team} - ${period}`, gsUrl)
         if (gsUrl && storageService.isGsUrl(gsUrl)) {
           try {
-            const httpsUrl = await storageService.convertGsUrlToHttps(gsUrl)
+            const httpsUrl = storageService.convertGsUrlToHttps(gsUrl)
             if (!imageUrls.value.heatMap[team]) {
               imageUrls.value.heatMap[team] = {}
             }
@@ -670,7 +670,7 @@ async function convertImageUrls() {
         console.log(`📍 Processing shot map: ${team} - ${period}`, gsUrl)
         if (gsUrl && storageService.isGsUrl(gsUrl)) {
           try {
-            const httpsUrl = await storageService.convertGsUrlToHttps(gsUrl)
+            const httpsUrl = storageService.convertGsUrlToHttps(gsUrl)
             if (!imageUrls.value.shotMap[team]) {
               imageUrls.value.shotMap[team] = {}
             }
@@ -696,7 +696,7 @@ async function convertImageUrls() {
 
 // Cargar URLs convertidas al montar
 onMounted(() => {
-  void convertImageUrls()
+  convertImageUrls()
 })
 
 // Watch para cuando lleguen datos reales

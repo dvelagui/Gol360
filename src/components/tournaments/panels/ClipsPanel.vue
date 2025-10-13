@@ -122,8 +122,8 @@
                 class="clip-video-preview"
                 preload="metadata"
                 muted
-                @mouseenter="(e) => e.target.play()"
-                @mouseleave="(e) => { e.target.pause(); e.target.currentTime = 0; }"
+                @mouseenter="(e) => (e.target as HTMLVideoElement)?.play()"
+                @mouseleave="(e) => { const video = e.target as HTMLVideoElement; if (video) { video.pause(); video.currentTime = 0; } }"
               ></video>
             </q-card-section>
           </q-card>
@@ -134,14 +134,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { openURL, scroll } from 'quasar'
-
-const { getScrollTarget, setVerticalScrollPosition } = scroll
+import { ref, computed } from 'vue'
+import { openURL } from 'quasar'
 
 // Props
 interface Props {
-  highlightsData: any // TODO: Usar tipo HighlightsEntry[] cuando llegue la data real
+  highlightsData?: unknown // TODO: Usar tipo HighlightsEntry[] cuando llegue la data real
   youtubeVideoId: string // El ID del video de YouTube (ej: "DtD7GNuF3xQ")
   loading?: boolean
 }

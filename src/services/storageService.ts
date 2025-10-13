@@ -11,7 +11,7 @@ class StorageService {
    * // Input: gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_1st_period.png
    * // Output: https://storage.googleapis.com/gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_1st_period.png
    */
-  async convertGsUrlToHttps(gsUrl: string): Promise<string> {
+  convertGsUrlToHttps(gsUrl: string): string {
     // Validar que sea una URL de gs://
     if (!gsUrl.startsWith('gs://')) {
       throw new Error('Invalid gs:// URL format')
@@ -48,7 +48,7 @@ class StorageService {
    * @param url - URL a procesar
    * @returns URL HTTPS
    */
-  async ensureHttpsUrl(url: string): Promise<string> {
+  ensureHttpsUrl(url: string): string {
     if (this.isGsUrl(url)) {
       return this.convertGsUrlToHttps(url)
     }

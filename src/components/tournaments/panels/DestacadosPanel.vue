@@ -170,7 +170,7 @@ import { ref, computed, watch, onBeforeUnmount } from 'vue'
 
 // Props
 interface Props {
-  playerMomentsData: any // TODO: Usar tipo PlayerMomentsEntry[] cuando llegue la data real
+  playerMomentsData?: unknown // TODO: Usar tipo PlayerMomentsEntry[] cuando llegue la data real
   youtubeVideoId: string
   loading?: boolean
 }
