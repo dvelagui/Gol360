@@ -189,16 +189,12 @@
 
             <!-- Shot Map Image -->
             <div v-if="currentShotMap.screenshot" class="shot-map-image">
-              <div class="debug-info">
-                <small>URL: {{ currentShotMap.screenshot }}</small>
-              </div>
               <q-img
                 :src="currentShotMap.screenshot"
-                ratio="16/9"
+                :ratio="16/9"
                 fit="contain"
                 class="rounded-borders"
-                @error="(err) => console.error('Shot map image error:', err, currentShotMap.screenshot)"
-                @load="() => console.log('Shot map image loaded:', currentShotMap.screenshot)"
+                style="min-height: 100px; max-height: 200px;"
               >
                 <template #error>
                   <div class="absolute-full flex flex-center bg-grey-3 flex-column">
@@ -208,8 +204,9 @@
                   </div>
                 </template>
                 <template #loading>
-                  <div class="absolute-full flex flex-center">
+                  <div class="absolute-full flex flex-center bg-grey-2">
                     <q-spinner color="primary" size="50px" />
+                    <p class="q-ml-md text-grey-7">Cargando imagen...</p>
                   </div>
                 </template>
               </q-img>
@@ -241,16 +238,12 @@
             </div>
 
             <div v-if="currentHeatMap.screenshot" class="heat-map-image">
-              <div class="debug-info">
-                <small>URL: {{ currentHeatMap.screenshot }}</small>
-              </div>
               <q-img
                 :src="currentHeatMap.screenshot"
-                ratio="16/9"
+                :ratio="16/9"
                 fit="contain"
                 class="rounded-borders"
-                @error="(err) => console.error('Heat map image error:', err, currentHeatMap.screenshot)"
-                @load="() => console.log('Heat map image loaded:', currentHeatMap.screenshot)"
+                style="min-height: 100px; max-height: 200px;"
               >
                 <template #error>
                   <div class="absolute-full flex flex-center bg-grey-3 flex-column">
@@ -260,8 +253,9 @@
                   </div>
                 </template>
                 <template #loading>
-                  <div class="absolute-full flex flex-center">
+                  <div class="absolute-full flex flex-center bg-grey-2">
                     <q-spinner color="primary" size="50px" />
+                    <p class="q-ml-md text-grey-7">Cargando imagen...</p>
                   </div>
                 </template>
               </q-img>
@@ -615,6 +609,7 @@ const currentShotMap = computed(() => {
   const shotMap = mockData[selectedTeam.value].shotMap[selectedShotMapPeriod.value]
   // Usar URL convertida si existe
   const convertedScreenshot = imageUrls.value.shotMap[selectedTeam.value]?.[selectedShotMapPeriod.value]
+
   return {
     ...shotMap,
     screenshot: convertedScreenshot || shotMap.screenshot
@@ -624,6 +619,7 @@ const currentHeatMap = computed(() => {
   const heatMap = mockData[selectedTeam.value].heatMap[selectedPeriod.value]
   // Usar URL convertida si existe
   const convertedScreenshot = imageUrls.value.heatMap[selectedTeam.value]?.[selectedPeriod.value]
+
   return {
     ...heatMap,
     screenshot: convertedScreenshot || heatMap.screenshot
@@ -637,13 +633,11 @@ const maxBarValue = computed(() => Math.max(...currentPassesStrings.value.bars))
 // Función para convertir URLs gs:// a HTTPS
 function convertImageUrls() {
   loadingImages.value = true
-  console.log('🔄 Starting image URL conversion...')
   try {
     // Convertir heat maps
     for (const team of ['ColoColo', 'IndValle']) {
       for (const period of ['Full recording', '1st period', '2nd period']) {
         const gsUrl = mockData[team as keyof typeof mockData].heatMap[period as keyof typeof mockData.ColoColo.heatMap]?.screenshot
-        console.log(`📍 Processing heat map: ${team} - ${period}`, gsUrl)
         if (gsUrl && storageService.isGsUrl(gsUrl)) {
           try {
             const httpsUrl = storageService.convertGsUrlToHttps(gsUrl)
@@ -651,9 +645,8 @@ function convertImageUrls() {
               imageUrls.value.heatMap[team] = {}
             }
             imageUrls.value.heatMap[team][period] = httpsUrl
-            console.log(`✅ Converted heat map URL for ${team} ${period}:`, httpsUrl)
           } catch (error) {
-            console.error(`❌ Failed to convert heat map URL for ${team} ${period}:`, error)
+            console.error(`Failed to convert heat map URL for ${team} ${period}:`, error)
             if (!imageUrls.value.heatMap[team]) {
               imageUrls.value.heatMap[team] = {}
             }
@@ -667,7 +660,6 @@ function convertImageUrls() {
     for (const team of ['ColoColo', 'IndValle']) {
       for (const period of ['Full recording', '1st period', '2nd period']) {
         const gsUrl = mockData[team as keyof typeof mockData].shotMap[period as keyof typeof mockData.ColoColo.shotMap]?.screenshot
-        console.log(`📍 Processing shot map: ${team} - ${period}`, gsUrl)
         if (gsUrl && storageService.isGsUrl(gsUrl)) {
           try {
             const httpsUrl = storageService.convertGsUrlToHttps(gsUrl)
@@ -675,9 +667,8 @@ function convertImageUrls() {
               imageUrls.value.shotMap[team] = {}
             }
             imageUrls.value.shotMap[team][period] = httpsUrl
-            console.log(`✅ Converted shot map URL for ${team} ${period}:`, httpsUrl)
           } catch (error) {
-            console.error(`❌ Failed to convert shot map URL for ${team} ${period}:`, error)
+            console.error(`Failed to convert shot map URL for ${team} ${period}:`, error)
             if (!imageUrls.value.shotMap[team]) {
               imageUrls.value.shotMap[team] = {}
             }
@@ -686,9 +677,6 @@ function convertImageUrls() {
         }
       }
     }
-    console.log('✨ Image URL conversion complete!')
-    console.log('Heat Map URLs:', imageUrls.value.heatMap)
-    console.log('Shot Map URLs:', imageUrls.value.shotMap)
   } finally {
     loadingImages.value = false
   }
@@ -903,17 +891,6 @@ watch(() => props.analyticsData, (newData) => {
   overflow: hidden;
 }
 
-.debug-info {
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 8px;
-  font-family: monospace;
-  font-size: 0.75rem;
-  word-break: break-all;
-  color: #666;
-}
-
 // Period Selector (common for all sections)
 .period-selector {
   margin-bottom: 24px;
@@ -992,7 +969,7 @@ watch(() => props.analyticsData, (newData) => {
   display: flex;
   justify-content: space-around;
   align-items: flex-end;
-  height: 250px;
+  height: 150px;
   padding: 0 16px;
   gap: 8px;
 }
