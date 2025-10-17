@@ -42,7 +42,7 @@ export async function createAuthUserAndUserDoc(params: {
 }): Promise<string> {
   const { email, displayName, role } = params;
   const photoURL = params.photoURL ?? DEFAULT_AVATAR;
-  const password = params.password ?? '123456';
+  const password = params.password ?? 'demoHoy2025';
 
   const secondaryAuth = getSecondaryAuth();
   let cred: any = null;
