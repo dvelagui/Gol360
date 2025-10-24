@@ -1,7 +1,6 @@
 <template>
   <q-card flat bordered class="rounded-2xl overflow-hidden">
 
-    <!-- Header estilo mock -->
     <q-card-section class="bg-primary text-white q-py-md">
       <div class="row items-center">
         <div class="col">
@@ -16,18 +15,14 @@
 
     <q-form @submit.prevent="submit" class="q-gutter-md q-pa-md">
 
-      <!-- Nombre, ciudad -->
       <q-input v-model="form.displayName" label="Nombre del torneo" :rules="[req]" filled dense />
       <q-input v-model="form.city" label="Ciudad" :rules="[req]" filled dense />
 
-      <!-- Tipo de campeonato (con valores normalizados) -->
       <q-select v-model="form.type" :options="championshipOptions" option-label="label" option-value="value"
         label="Tipo de campeonato" emit-value map-options :rules="[req]" filled dense />
 
-      <!-- Category opcional -->
       <q-input v-model="form.category" label="Categoría (opcional)" filled dense />
 
-      <!-- Reglamento (archivo) opcional -->
       <div>
         <div class="text-caption q-mb-xs">Reglamento (opcional)</div>
         <div class="row items-center q-col-gutter-sm">
@@ -58,17 +53,13 @@
         </div>
       </div>
 
-      <!-- Descripción breve opcional -->
       <q-input v-model="form.description" label="Descripción breve (opcional)" type="textarea" autogrow filled dense />
 
-      <!-- Número de equipos -->
       <q-input v-model.number="form.numTeams" type="number" label="Número de equipos" :rules="[positiveInt]" filled
         dense />
 
-      <!-- Fecha de inicio (opcional; déjalo si lo necesitas en tu flujo) -->
       <q-input v-model="form.startDate" label="Fecha de inicio (opcional)" type="date" filled dense />
 
-      <!-- Manager -->
       <q-select v-model="form.managerId" :options="managerOptions" label="Manager (organizador)" emit-value map-options
         :rules="[req]" filled dense>
         <template #after>
@@ -77,14 +68,12 @@
         </template>
       </q-select>
 
-      <!-- Acciones -->
       <div class="row justify-end q-gutter-sm q-mt-sm">
         <q-btn flat label="Cancelar" v-close-popup />
         <q-btn color="accent" text-color="secondary" label="Guardar" type="submit" :loading="saving" />
       </div>
     </q-form>
 
-    <!-- Dialog: crear manager al vuelo -->
     <ManagerFormDialog v-model="showOrgDialog" @created="onManagerCreated" />
 
   </q-card>

@@ -1,6 +1,5 @@
 <template>
   <div class="analytics-panel">
-    <!-- Team Selector (solo si hay más de un equipo y no está filtrado por teamId) -->
     <div v-if="showTeamSelector" class="team-selector-wrapper">
       <q-card class="team-selector-card">
         <q-card-section class="q-pa-md">
@@ -18,13 +17,11 @@
       </q-card>
     </div>
 
-    <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <q-spinner-dots color="primary" size="50px" />
       <p class="text-grey-6">Cargando analytics...</p>
     </div>
 
-    <!-- No Data State -->
     <div v-else-if="!hasRealData" class="no-data-container">
       <q-card class="no-data-card">
         <q-card-section class="text-center q-pa-xl">
@@ -42,9 +39,7 @@
       </q-card>
     </div>
 
-    <!-- Content -->
     <div v-else class="analytics-content">
-      <!-- Stats Cards -->
       <div class="stats-section">
         <h5 class="section-title">
           <q-icon name="bar_chart" size="24px" />
@@ -117,7 +112,6 @@
         </div>
       </div>
 
-      <!-- Location Map -->
       <div class="location-section">
         <h5 class="section-title">
           <q-icon name="place" size="24px" />
@@ -125,7 +119,6 @@
         </h5>
         <q-card class="data-card">
           <q-card-section>
-            <!-- Period Selector -->
             <div class="period-selector">
               <q-btn-toggle
                 v-model="selectedLocationMapPeriod"
@@ -192,7 +185,6 @@
         </q-card>
       </div>
 
-      <!-- Shot Map -->
       <div class="shot-map-section">
         <h5 class="section-title">
           <q-icon name="gps_fixed" size="24px" />
@@ -200,7 +192,6 @@
         </h5>
         <q-card class="data-card">
           <q-card-section>
-            <!-- Period Selector -->
             <div class="period-selector">
               <q-btn-toggle
                 v-model="selectedShotMapPeriod"
@@ -237,7 +228,6 @@
               </div>
             </div>
 
-            <!-- Shot Map Image -->
             <div v-if="currentShotMap.screenshot" class="shot-map-image">
               <q-img
                 :src="currentShotMap.screenshot"
@@ -269,7 +259,6 @@
         </q-card>
       </div>
 
-      <!-- Heat Map -->
       <div class="heat-map-section">
         <h5 class="section-title">
           <q-icon name="thermostat" size="24px" />
@@ -318,7 +307,6 @@
         </q-card>
       </div>
 
-      <!-- Passes Strings -->
       <div class="passes-section">
         <h5 class="section-title">
           <q-icon name="timeline" size="24px" />
@@ -326,7 +314,6 @@
         </h5>
         <q-card class="data-card">
           <q-card-section>
-            <!-- Period Selector -->
             <div class="period-selector">
               <q-btn-toggle
                 v-model="selectedPassesPeriod"
@@ -352,7 +339,6 @@
               </div>
             </div>
 
-            <!-- Simple bar chart visualization -->
             <div class="passes-chart">
               <div class="passes-chart-title">Distribución de secuencias</div>
               <div class="passes-bars">
@@ -512,9 +498,7 @@ interface PassesStringsDataType {
   stat_longest: string
 }
 
-// Computed properties para datos actuales desde Firestore
 const currentStats = computed<StatsData>(() => {
-  // SOLO usar datos reales de Firestore
   if (hasRealData.value && props.analyticsData) {
     const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
 
@@ -522,11 +506,9 @@ const currentStats = computed<StatsData>(() => {
       const statsData = sideData.stats as { data?: Array<{ name: string; home: string | number; away: string | number }> }
 
       if (statsData.data) {
-        // Extraer solo los valores del lado seleccionado
         const side = selectedTeam.value
 
-        // Los nombres están en español: 'Gol', 'Tiro', 'Ocasiones totales', 'Saque de esquina', 'Tiro libre', 'Porcentaje de posesión', 'Penalti'
-        const goalsData = statsData.data.find(s => s.name.toLowerCase().includes('gol'))
+         const goalsData = statsData.data.find(s => s.name.toLowerCase().includes('gol'))
         const shotsData = statsData.data.find(s => s.name.toLowerCase().includes('tiro') && !s.name.toLowerCase().includes('libre'))
         const occasionsData = statsData.data.find(s => s.name.toLowerCase().includes('ocasiones'))
         const cornersData = statsData.data.find(s => s.name.toLowerCase().includes('esquina'))
@@ -549,7 +531,6 @@ const currentStats = computed<StatsData>(() => {
     }
   }
 
-  // Si no hay datos, retornar valores vacíos
   return {
     goals: '-',
     shots: '-',
@@ -563,7 +544,6 @@ const currentStats = computed<StatsData>(() => {
 })
 
 const currentLocationMap = computed<LocationMapDataType>(() => {
-  // SOLO usar datos reales de Firestore
   if (hasRealData.value && props.analyticsData) {
     const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
 

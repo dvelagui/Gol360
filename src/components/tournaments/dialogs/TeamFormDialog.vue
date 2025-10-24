@@ -1,7 +1,6 @@
 <template>
   <q-dialog v-model="model" persistent transition-show="slide-up" transition-hide="slide-down" maximized>
     <q-card class="team-dialog-card">
-      <!-- Header with gradient -->
       <div class="dialog-header">
         <div class="header-overlay">
           <div class="row items-center full-width">
@@ -186,6 +185,7 @@ async function onSave(payload: TeamFormPayload) {
   .subtitle-text {
     font-size: 0.75rem;
     display: -webkit-box;
+    line-clamp: 1;
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;

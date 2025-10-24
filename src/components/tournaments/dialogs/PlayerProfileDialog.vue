@@ -33,7 +33,6 @@
 
       <q-separator />
 
-      <!-- Estadísticas -->
       <q-card-section v-if="!loading">
         <div class="text-subtitle1 text-weight-bold q-mb-md">
           <q-icon name="analytics" color="primary" class="q-mr-xs" />
@@ -41,7 +40,7 @@
         </div>
 
         <div v-if="stats" class="row q-col-gutter-md">
-          <!-- Goles -->
+
           <div class="col-6 col-sm-3">
             <q-card flat bordered class="kpi stat-card-goals">
               <q-card-section class="text-center">
@@ -52,7 +51,7 @@
             </q-card>
           </div>
 
-          <!-- Asistencias -->
+
           <div class="col-6 col-sm-3">
             <q-card flat bordered class="kpi stat-card-assists">
               <q-card-section class="text-center">
@@ -63,7 +62,7 @@
             </q-card>
           </div>
 
-          <!-- Partidos jugados -->
+
           <div class="col-6 col-sm-3">
             <q-card flat bordered class="kpi stat-card-matches">
               <q-card-section class="text-center">
@@ -74,7 +73,7 @@
             </q-card>
           </div>
 
-          <!-- Tarjetas -->
+
           <div class="col-6 col-sm-3">
             <q-card flat bordered class="kpi stat-card-cards">
               <q-card-section class="text-center">
@@ -93,7 +92,6 @@
           </div>
         </div>
 
-        <!-- Sin estadísticas -->
         <div v-else class="text-center q-pa-lg">
           <q-icon name="analytics" size="64px" color="grey-4" />
           <div class="text-body1 text-grey-6 q-mt-md">
@@ -105,7 +103,7 @@
         </div>
       </q-card-section>
 
-      <!-- Loading state -->
+
       <q-card-section v-else>
         <div class="text-center q-pa-lg">
           <q-spinner-dots size="48px" color="primary" />

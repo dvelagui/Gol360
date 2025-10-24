@@ -14,7 +14,6 @@
 
     <div v-else class="container-info">
 
-      <!-- Botón de Reglamento - Primera sección destacada -->
       <div v-if="tournament.rulesUrl" class="row q-col-gutter-md q-mb-md">
         <div class="col-12">
           <q-card class="rules-card" flat bordered>
@@ -250,7 +249,6 @@
       </div>
     </div>
 
-    <!-- Dialog para mostrar el reglamento (PDF) -->
     <q-dialog v-model="showRulesDialog" maximized>
       <q-card>
         <q-bar class="bg-primary text-white">

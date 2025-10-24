@@ -1,6 +1,5 @@
 <template>
   <div class="destacados-panel">
-    <!-- Player Selector -->
     <div class="player-selector-wrapper">
       <q-card class="player-selector-card">
         <q-card-section class="q-pa-md">
@@ -30,15 +29,12 @@
       </q-card>
     </div>
 
-    <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <q-spinner-dots color="primary" size="50px" />
       <p class="text-grey-6">Cargando momentos...</p>
     </div>
 
-    <!-- Content -->
     <div v-else-if="selectedPlayer" class="destacados-content">
-      <!-- YouTube Video Player -->
       <div class="video-section">
         <div class="video-header">
           <h5 class="section-title">
@@ -46,7 +42,6 @@
             Video - {{ selectedPlayerData?.label }}
           </h5>
 
-          <!-- Auto-play Controls -->
           <div class="autoplay-controls">
             <q-btn
               v-if="!isAutoPlaying"
@@ -93,7 +88,6 @@
         </q-card>
       </div>
 
-      <!-- Moments List -->
       <div class="moments-section">
         <h5 class="section-title">
           <q-icon name="video_library" size="24px" />
@@ -157,7 +151,6 @@
       </div>
     </div>
 
-    <!-- No Player Selected -->
     <div v-else class="no-player-selected">
       <q-icon name="person_search" size="64px" color="grey-4" />
       <p class="text-grey-6">Selecciona un jugador para ver sus momentos destacados</p>

@@ -1,6 +1,5 @@
 <template>
   <q-form @submit.prevent="submit" class="event-form">
-    <!-- Sección de información básica -->
     <div class="form-section">
       <div class="section-title">
         <q-icon name="info" color="primary" size="sm" class="q-mr-xs" />
@@ -8,7 +7,6 @@
       </div>
 
       <div class="row q-col-gutter-md">
-        <!-- Tipo de evento -->
         <div class="col-12">
           <q-select
             v-model="form.type"
@@ -44,7 +42,6 @@
           </q-select>
         </div>
 
-        <!-- Equipo -->
         <div class="col-12 col-sm-6">
           <q-select
             v-model="form.teamId"
@@ -61,7 +58,6 @@
           </q-select>
         </div>
 
-        <!-- Jugador -->
         <div class="col-12 col-sm-6">
           <q-select
             v-model="form.playerId"
@@ -92,7 +88,6 @@
       </div>
     </div>
 
-    <!-- Sección de tiempo -->
     <div class="form-section">
       <div class="section-title">
         <q-icon name="schedule" color="primary" size="sm" class="q-mr-xs" />
@@ -146,7 +141,6 @@
       </div>
     </div>
 
-    <!-- Sección de descripción -->
     <div class="form-section">
       <div class="section-title">
         <q-icon name="notes" color="primary" size="sm" class="q-mr-xs" />
@@ -171,7 +165,6 @@
       </q-input>
     </div>
 
-    <!-- Toggle de aprobación (solo admin/manager) -->
     <div v-if="canSetApproved" class="form-section approval-section">
       <q-toggle
         v-model="form.status"
@@ -201,7 +194,6 @@
       </q-toggle>
     </div>
 
-    <!-- Botones de acción -->
     <div class="action-buttons">
       <q-btn
         flat

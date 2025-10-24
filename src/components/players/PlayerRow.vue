@@ -1,6 +1,5 @@
 <template>
   <div class="row items-center q-py-sm player-row">
-    <!-- Jugador -->
     <div class="col-6 col-md-4 row items-center">
       <q-avatar size="32px" class="q-mr-sm">
         <img :src="avatarUrl || fallbackAvatar" alt="avatar" />
@@ -17,31 +16,23 @@
       </q-badge>
     </div>
 
-    <!-- G -->
     <div class="col-1 col-md-1 text-center">{{ stats.goals ?? 0 }}</div>
-    <!-- J (partidos jugados) -->
     <div class="col-1 col-md-1 text-center">{{ stats.played ?? 0 }}</div>
-    <!-- T.AM -->
     <div class="col-1 col-md-1 text-center">
       <q-icon name="square" size="10px" class="q-mr-xs text-yellow-8" />
       {{ stats.yellow ?? 0 }}
     </div>
-    <!-- T.R -->
     <div class="col-1 col-md-1 text-center">
       <q-icon name="square" size="10px" class="q-mr-xs text-red" />
       {{ stats.red ?? 0 }}
     </div>
-    <!-- T.AZ (azul como “faltas graves” u otro evento configurable) -->
     <div class="col-1 col-md-1 text-center">
       <q-icon name="square" size="10px" class="q-mr-xs text-primary" />
       {{ stats.blue ?? 0 }}
     </div>
-    <!-- FAL -->
     <div class="col-1 col-md-1 text-center">{{ stats.fouls ?? 0 }}</div>
-    <!-- ASS -->
     <div class="col-1 col-md-1 text-center">{{ stats.assists ?? 0 }}</div>
 
-    <!-- Acciones (solo si se permiten) -->
     <div v-if="canEdit" class="col-12 col-md-1 text-right q-mt-xs q-mt-md-none">
       <q-btn flat dense icon="edit" @click="$emit('edit')" />
     </div>

@@ -1,15 +1,12 @@
 <template>
   <q-page class="tournament-schedule-page">
-    <!-- Hero Header -->
      <div class="text-center q-my-lg">
         <div class="sports-font text-h4">La jornada <q-icon name="sports" /></div>
       </div>
 
-    <!-- Tournament Selector Card -->
     <div class="tournament-selector-wrapper">
       <q-card class="tournament-selector-card">
         <q-card-section class="q-pa-xs">
-          <!-- Modo compacto: Mostrar nombre del torneo con botón cambiar -->
           <div v-if="selectedTournament && !showSelector" class="tournament-compact">
             <div class="tournament-info">
               <q-icon name="emoji_events" color="primary" />
@@ -28,8 +25,6 @@
               class="change-btn"
             />
           </div>
-
-          <!-- Modo selector: Mostrar dropdown completo -->
           <q-select
             v-else
             v-model="selectedTournament"
@@ -56,7 +51,6 @@
       </q-card>
     </div>
 
-    <!-- Navigation Tabs -->
     <q-card class="tabs-card">
       <q-tabs
         v-model="tab"

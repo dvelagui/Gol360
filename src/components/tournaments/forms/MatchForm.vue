@@ -3,7 +3,7 @@
   <div class="match-form-container">
     <q-form @submit.prevent="onSave" class="q-gutter-lg">
 
-      <!-- SECCIÓN 1: Equipos -->
+
       <div class="form-section">
         <div class="section-header">
           <q-icon name="sports_soccer" color="primary" size="sm" class="q-mr-sm" />
@@ -50,7 +50,6 @@
           </div>
         </div>
 
-        <!-- Alerta si equipos son iguales -->
         <div v-if="form.homeTeamId && form.homeTeamId === form.awayTeamId" class="q-mt-sm">
           <q-banner class="bg-negative text-white" dense>
             <template #avatar>
@@ -61,7 +60,6 @@
         </div>
       </div>
 
-      <!-- SECCIÓN 2: Programación -->
       <div class="form-section">
         <div class="section-header">
           <q-icon name="schedule" color="primary" size="sm" class="q-mr-sm" />
@@ -133,7 +131,6 @@
         </div>
       </div>
 
-      <!-- SECCIÓN 3: Detalles Opcionales -->
       <q-expansion-item
         icon="settings"
         label="Detalles adicionales (opcional)"
@@ -175,7 +172,6 @@
         </div>
       </q-expansion-item>
 
-      <!-- Errores de validación -->
       <div v-if="validationErrors.length > 0" class="q-mt-md">
         <q-banner class="bg-negative text-white" dense>
           <template #avatar>
@@ -188,7 +184,6 @@
         </q-banner>
       </div>
 
-      <!-- Botones de acción -->
       <div class="row justify-end q-gutter-sm q-mt-lg">
         <q-btn
           flat

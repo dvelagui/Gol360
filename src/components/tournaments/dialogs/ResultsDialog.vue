@@ -1,7 +1,7 @@
 <template>
   <q-dialog v-model="model" persistent maximized>
     <q-card flat bordered class="results-dialog-card">
-      <!-- Header estilo moderno -->
+
       <q-card-section class="bg-gradient text-white q-py-md">
         <div class="row items-center">
           <div class="col">
@@ -55,7 +55,6 @@
         />
       </q-card-section>
 
-      <!-- Estado de carga si no hay match -->
       <q-card-section v-else class="text-center q-pa-xl">
         <q-spinner-dots size="xl" color="primary" />
         <div class="text-subtitle2 q-mt-md text-grey-6">Cargando datos del partido...</div>

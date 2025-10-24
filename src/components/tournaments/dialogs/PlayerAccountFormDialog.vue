@@ -278,7 +278,6 @@ async function createNewPlayer() {
       playerData.jersey = form.jersey
     }
 
-    // Crear jugador con cuenta de Authentication y participación
     const result = await playerStore.addWithAccountAndParticipation(playerData)
 
     Notify.create({

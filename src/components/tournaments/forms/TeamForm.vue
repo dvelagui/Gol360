@@ -1,6 +1,5 @@
 <template>
   <q-form @submit.prevent="onSubmit" class="team-form">
-    <!-- Avatar Section - Destacado arriba -->
     <div class="avatar-section q-mb-lg">
       <div class="text-subtitle2 text-grey-8 q-mb-md">
         <q-icon name="shield" class="q-mr-xs" />
@@ -45,7 +44,6 @@
 
     <q-separator class="q-mb-lg" />
 
-    <!-- Form Fields -->
     <div class="form-section">
       <div class="text-subtitle2 text-grey-8 q-mb-md">
         <q-icon name="info" class="q-mr-xs" />
@@ -53,7 +51,6 @@
       </div>
 
       <div class="row q-col-gutter-md">
-        <!-- Nombre del equipo -->
         <div class="col-12 col-md-6">
           <q-input
             v-model="form.displayName"
@@ -70,7 +67,6 @@
           </q-input>
         </div>
 
-        <!-- Ciudad -->
         <div class="col-12 col-md-6">
           <q-input
             v-model="form.city"
@@ -85,7 +81,6 @@
           </q-input>
         </div>
 
-        <!-- Grupo (opcional) -->
         <div class="col-12 col-md-6">
           <q-input
             v-model="form.group"
@@ -100,7 +95,6 @@
           </q-input>
         </div>
 
-        <!-- Color primario -->
         <div class="col-12 col-md-6">
           <q-input
             v-model="form.colors"
@@ -119,7 +113,6 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
     <div class="action-buttons">
       <q-btn
         flat

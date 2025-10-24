@@ -1,6 +1,5 @@
 <template>
   <div class="results-form-container">
-    <!-- SECCIÓN 1: Marcador -->
     <div class="form-section score-section">
       <div class="section-header">
         <q-icon name="sports_score" color="primary" size="sm" class="q-mr-sm" />
@@ -74,7 +73,6 @@
         </div>
       </div>
 
-      <!-- Comparación con eventos aprobados -->
       <div class="score-comparison">
         <q-banner
           v-if="hasScoreDiscrepancy"
@@ -94,7 +92,6 @@
         </div>
       </div>
 
-      <!-- Botones de acción -->
       <div class="action-buttons">
         <q-btn
           flat
@@ -118,7 +115,6 @@
 
     <q-separator class="q-my-lg" />
 
-    <!-- SECCIÓN 3: Análisis de Veo.co -->
     <div class="form-section analysis-section">
       <div class="section-header">
         <q-icon name="analytics" color="primary" size="sm" class="q-mr-sm" />
@@ -135,7 +131,6 @@
         </q-chip>
       </div>
 
-      <!-- Input para URL de Veo -->
       <div class="veo-url-section q-mb-md">
         <div class="text-subtitle2 q-mb-sm">
           <q-icon name="link" class="q-mr-xs" />
@@ -184,7 +179,6 @@
         </div>
       </div>
 
-      <!-- Estados del análisis -->
       <div v-if="!analysisJob.jobId" class="analysis-actions q-mt-md">
         <div class="text-body2 text-grey-7 q-mb-md">
           Genera análisis avanzado del partido usando datos de Veo.co (estadísticas, mapas de calor, momentos destacados)
@@ -299,7 +293,6 @@
 
     <q-separator class="q-my-lg" />
 
-    <!-- SECCIÓN 2: Eventos del Partido -->
     <div class="form-section events-section">
       <div class="section-header">
         <q-icon name="event_note" color="primary" size="sm" class="q-mr-sm" />
@@ -316,7 +309,6 @@
         </q-chip>
       </div>
 
-      <!-- Estado de carga -->
       <div v-if="eStore.loading" class="loading-events">
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6" v-for="i in 3" :key="i">
@@ -329,14 +321,12 @@
         </div>
       </div>
 
-      <!-- Sin eventos -->
       <div v-else-if="eStore.items.length === 0" class="no-events">
         <q-icon name="event_busy" size="64px" color="grey-4" />
         <div class="text-subtitle2 text-grey-6 q-mt-md">No hay eventos registrados</div>
         <div class="text-caption text-grey-5">Los eventos aparecerán aquí cuando se agreguen</div>
       </div>
 
-      <!-- Timeline de eventos mejorado -->
       <div v-else class="events-timeline">
         <q-timeline color="primary">
           <q-timeline-entry
@@ -346,7 +336,6 @@
             :icon="getEventIcon(ev.type)"
             class="event-entry"
           >
-            <!-- Header del evento -->
             <template #title>
               <div class="event-header">
                 <div class="event-team">
@@ -370,7 +359,6 @@
               </div>
             </template>
 
-            <!-- Subtítulo -->
             <template #subtitle>
               <div class="event-time">
                 <q-icon name="schedule" size="xs" class="q-mr-xs" />
@@ -378,7 +366,6 @@
               </div>
             </template>
 
-            <!-- Contenido del evento -->
             <div class="event-content">
               <div class="event-details">
                 <div class="event-type">
@@ -395,7 +382,6 @@
                 </div>
               </div>
 
-              <!-- Botones de acción -->
               <div v-if="canEdit" class="event-actions q-mt-sm">
                 <q-btn
                   v-if="ev.status !== 'aprobado'"

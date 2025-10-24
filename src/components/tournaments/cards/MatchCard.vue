@@ -1,7 +1,6 @@
 <template>
   <div class="match-card">
     <div class="match-content">
-      <!-- Home Team -->
       <div class="team home-team">
         <div class="team-avatar">
           <q-avatar v-if="homeCrest" size="48px" class="team-crest">
@@ -16,7 +15,6 @@
         </div>
       </div>
 
-      <!-- Score Section -->
       <div class="score-section">
         <div class="score-container">
           <div class="score-box home-score">
@@ -38,7 +36,6 @@
         </div>
       </div>
 
-      <!-- Away Team -->
       <div class="team away-team">
         <div class="team-avatar">
           <q-avatar v-if="awayCrest" size="48px" class="team-crest">

@@ -1,6 +1,5 @@
 <template>
   <q-page class="manager-dashboard">
-    <!-- Hero Header -->
     <div class="dashboard-hero">
       <div class="hero-content">
         <div class="welcome-section">
@@ -14,7 +13,6 @@
       </div>
     </div>
 
-    <!-- Main Navigation Actions -->
     <div class="main-actions-section">
       <div class="main-actions-grid">
         <q-card class="main-action-card" @click="goToTournaments">
@@ -55,7 +53,6 @@
       </div>
     </div>
 
-    <!-- Quick Stats Cards -->
     <div class="stats-section">
       <h5 class="section-title">
         <q-icon name="dashboard" size="24px" />
@@ -104,7 +101,6 @@
       </div>
     </div>
 
-    <!-- My Tournaments -->
     <div class="tournaments-section">
       <div class="section-header">
         <h5 class="section-title">
@@ -160,7 +156,6 @@
       </div>
     </div>
 
-    <!-- Upcoming Matches -->
     <div class="matches-section">
       <div class="section-header">
         <h5 class="section-title">
@@ -235,7 +230,6 @@
       </div>
     </div>
 
-    <!-- Recent Activity -->
     <div class="activity-section">
       <h5 class="section-title">
         <q-icon name="history" size="24px" />

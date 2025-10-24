@@ -1,7 +1,7 @@
 <template>
   <q-dialog v-model="model">
     <q-card flat bordered class="rounded-2xl overflow-hidden" style="min-width: 720px; max-width: 95vw;">
-      <!-- Header estilo moderno -->
+
       <q-card-section class="bg-primary text-white q-py-md">
         <div class="row items-center">
           <div class="col">

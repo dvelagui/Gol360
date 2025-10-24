@@ -1,7 +1,6 @@
 <template>
   <q-dialog v-model="model" persistent maximized transition-show="slide-up" transition-hide="slide-down">
     <q-card flat class="event-dialog-card">
-      <!-- Header con gradiente GOL360 -->
       <q-card-section class="dialog-header">
         <div class="header-content">
           <div class="header-title">
@@ -28,7 +27,6 @@
 
       <q-separator />
 
-      <!-- Contenido scrollable -->
       <q-card-section class="dialog-content">
         <div v-if="match" class="form-container">
           <MatchEventForm

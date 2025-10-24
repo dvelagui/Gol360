@@ -1,6 +1,5 @@
 <template>
   <div class="clips-panel">
-    <!-- Team Selector (solo si hay más de un equipo) -->
     <div v-if="showTeamSelector" class="team-selector-wrapper">
       <q-card class="team-selector-card">
         <q-card-section class="q-pa-md">
@@ -18,13 +17,11 @@
       </q-card>
     </div>
 
-    <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <q-spinner-dots color="primary" size="50px" />
       <p class="text-grey-6">Cargando clips...</p>
     </div>
 
-    <!-- No Data State -->
     <div v-else-if="!hasRealData" class="no-data-container">
       <q-card class="no-data-card">
         <q-card-section class="text-center q-pa-xl">
@@ -42,9 +39,7 @@
       </q-card>
     </div>
 
-    <!-- Content -->
     <div v-else class="clips-content">
-      <!-- YouTube Video Player -->
       <div class="video-section">
         <h5 class="section-title">
           <q-icon name="play_circle" size="24px" />
@@ -66,7 +61,6 @@
         </q-card>
       </div>
 
-      <!-- Clips List -->
       <div class="clips-section">
         <h5 class="section-title">
           <q-icon name="movie" size="24px" />

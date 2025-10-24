@@ -10,7 +10,6 @@
       class="standings-table"
       :class="{ 'mobile-table': $q.screen.lt.md }"
     >
-      <!-- Posición -->
       <template #body-cell-pos="props">
         <q-td :props="props">
           <div class="position-cell" :class="getPositionClass(props.row.pos)">
@@ -19,7 +18,6 @@
         </q-td>
       </template>
 
-      <!-- Equipo -->
       <template #body-cell-team="props">
         <q-td :props="props">
           <div class="team-cell">
@@ -32,7 +30,6 @@
         </q-td>
       </template>
 
-      <!-- Puntos (destacado) -->
       <template #body-cell-pts="props">
         <q-td :props="props">
           <div class="points-cell">

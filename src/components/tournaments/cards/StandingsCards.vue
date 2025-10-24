@@ -6,7 +6,6 @@
       class="standing-card"
       :class="getCardClass(r.pos)"
     >
-      <!-- Header con posición y puntos -->
       <div class="card-header">
         <div class="position-badge" :class="getPositionBadgeClass(r.pos)">
           <div class="position-number">#{{ r.pos }}</div>
@@ -17,7 +16,6 @@
         </div>
       </div>
 
-      <!-- Team info -->
       <div class="team-info">
         <q-avatar size="56px" class="team-crest">
           <img v-if="r.crestUrl" :src="r.crestUrl" alt="crest" />
@@ -28,7 +26,6 @@
 
       <q-separator class="q-my-md" />
 
-      <!-- Stats grid -->
       <div class="stats-grid">
         <div class="stat-item">
           <div class="stat-label">PJ</div>

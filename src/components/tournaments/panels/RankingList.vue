@@ -1,12 +1,10 @@
 <template>
   <div class="ranking-list">
-    <!-- Header opcional -->
     <div v-if="title" class="list-header">
       <q-icon v-if="icon" :name="icon" :color="iconColor" size="24px" class="q-mr-sm" />
       <span class="text-subtitle1 text-weight-bold">{{ title }}</span>
     </div>
 
-    <!-- Items -->
     <div v-if="items.length > 0" class="list-items">
       <slot
         v-for="(item, index) in items"
@@ -17,7 +15,6 @@
       />
     </div>
 
-    <!-- Empty state -->
     <div v-else class="empty-state">
       <q-icon name="leaderboard" size="64px" color="grey-4" />
       <div class="text-body1 text-grey-6 q-mt-md">{{ emptyMessage }}</div>

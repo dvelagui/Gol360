@@ -1,7 +1,6 @@
 <template>
   <q-page class="dashboard q-pa-lg">
     <div class="row items-start q-col-gutter-lg">
-      <!-- Top actions -->
       <div class="col-12">
         <div class="row items-center justify-between q-gutter-sm">
           <div class="row items-center q-gutter-sm">
@@ -24,7 +23,6 @@
         </div>
       </div>
 
-      <!-- KPIs -->
       <div class="col-12">
         <div class="row q-col-gutter-lg">
           <div v-for="k in kpis" :key="k.key" class="col-12 col-sm-6 col-md-3">
@@ -44,7 +42,6 @@
         </div>
       </div>
 
-      <!-- Próximo partido -->
       <div class="col-12 col-md-7">
         <q-card class="next-match">
           <q-card-section>
@@ -72,7 +69,6 @@
         </q-card>
       </div>
 
-      <!-- Analítica rápida -->
       <div class="col-12 col-md-5">
         <q-card>
           <q-card-section>
@@ -95,7 +91,6 @@
         </q-card>
       </div>
 
-      <!-- Últimos videos -->
       <div class="col-12">
         <q-card>
           <q-card-section class="row items-center justify-between">
@@ -123,7 +118,6 @@
       </div>
     </div>
 
-    <!-- Acciones rápidas -->
     <q-fab position="bottom-right" color="brand" icon="add" direction="up">
       <q-fab-action icon="sports" label="Nuevo partido" />
       <q-fab-action icon="videocam" label="Nuevo video" />

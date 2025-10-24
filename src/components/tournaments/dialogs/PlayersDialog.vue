@@ -58,7 +58,6 @@
       </q-card-section>
     </q-card>
 
-    <!-- Diálogo de edición de jugador -->
     <q-dialog v-model="showForm" persistent>
       <q-card class="subdlg-card">
         <q-card-section class="row items-center bg-primary text-white">
@@ -71,7 +70,6 @@
         <q-card-section>
           <q-form @submit.prevent="saveEdit" class="q-gutter-md">
             <div class="row q-col-gutter-md">
-              <!-- Nombre -->
               <div class="col-12">
                 <q-input
                   v-model="playerModel.displayName"
@@ -86,7 +84,6 @@
                 </q-input>
               </div>
 
-              <!-- Posición -->
               <div class="col-12 col-sm-6">
                 <q-input
                   v-model="playerModel.position"
@@ -101,7 +98,6 @@
                 </q-input>
               </div>
 
-              <!-- Dorsal -->
               <div class="col-12 col-sm-6">
                 <q-input
                   v-model.number="playerModel.jersey"
@@ -118,7 +114,6 @@
                 </q-input>
               </div>
 
-              <!-- Capitán toggle -->
               <div class="col-12">
                 <div class="row items-center q-py-sm">
                   <q-toggle

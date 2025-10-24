@@ -1,6 +1,5 @@
 <template>
   <q-page class="admin-dashboard">
-    <!-- Hero Header -->
     <div class="dashboard-hero">
       <div class="hero-content">
         <div class="welcome-section">
@@ -14,7 +13,6 @@
       </div>
     </div>
 
-    <!-- Main Navigation Actions -->
     <div class="main-actions-section">
       <div class="main-actions-grid">
         <q-card class="main-action-card" @click="goToUsers">
@@ -55,7 +53,6 @@
       </div>
     </div>
 
-    <!-- System Stats -->
     <div class="stats-section">
       <h5 class="section-title">
         <q-icon name="dashboard" size="24px" />
@@ -124,7 +121,6 @@
       </div>
     </div>
 
-    <!-- Quick Actions Grid -->
     <div class="quick-actions-section">
       <h5 class="section-title">
         <q-icon name="speed" size="24px" />
@@ -166,9 +162,7 @@
       </div>
     </div>
 
-    <!-- Two Column Layout -->
     <div class="two-column-layout">
-      <!-- Recent Users -->
       <div class="users-section">
         <div class="section-header">
           <h5 class="section-title">
@@ -212,7 +206,6 @@
         </q-card>
       </div>
 
-      <!-- Active Tournaments -->
       <div class="tournaments-section">
         <div class="section-header">
           <h5 class="section-title">
@@ -258,7 +251,6 @@
       </div>
     </div>
 
-    <!-- Scraping Jobs -->
     <div class="scraping-section">
       <div class="section-header">
         <h5 class="section-title">
@@ -304,7 +296,6 @@
       </q-card>
     </div>
 
-    <!-- System Activity Log -->
     <div class="activity-section">
       <h5 class="section-title">
         <q-icon name="history" size="24px" />

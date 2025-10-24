@@ -13,7 +13,6 @@
     </div>
 
     <div v-else class="container-match q-gutter-y-md">
-      <!-- Filtro para mostrar fechas completadas -->
       <div v-if="hasCompletedRounds" class="filter-section q-mb-md">
         <q-card flat bordered class="filter-card">
           <q-card-section class="q-pa-sm">

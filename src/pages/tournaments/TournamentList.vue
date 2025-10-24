@@ -1,6 +1,5 @@
 <template>
   <q-page class="q-pa-lg">
-    <!-- Header + Filtros -->
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col-12 col-md-3">
         <div class="text-h5">Torneos</div>
@@ -50,9 +49,7 @@
       </div>
     </div>
 
-    <!-- Grid -->
     <div class="row q-col-gutter-lg">
-      <!-- Card para CREAR torneo (solo si puede) -->
       <div v-if="canCreate" class="col-12 col-sm-6 col-md-4 col-lg-3">
         <q-card
           class="add-card cursor-pointer column items-center justify-center q-pa-lg"
@@ -66,7 +63,6 @@
         </q-card>
       </div>
 
-      <!-- Tarjetas de torneos -->
       <div
         v-for="t in filtered"
         :key="t.tournamentId"
@@ -78,7 +74,6 @@
         />
       </div>
 
-      <!-- Vacío -->
       <div
         v-if="!filtered.length"
         class="col-12 text-grey-6 q-mt-xl flex flex-center"
@@ -87,7 +82,6 @@
       </div>
     </div>
 
-    <!-- Dialog de creación -->
     <q-dialog v-model="showForm" persistent>
       <q-card class="q-pa-md" style="min-width: 420px; max-width: 95vw;">
         <TournamentForm @submit="create" />

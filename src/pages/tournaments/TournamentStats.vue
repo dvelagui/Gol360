@@ -4,11 +4,9 @@
         <div class="sports-font text-h4">La pizarra <q-icon name="analytics" /></div>
       </div>
 
-    <!-- Match Selector Card -->
     <div class="match-selector-wrapper">
       <q-card class="match-selector-card">
         <q-card-section class="q-pa-xs">
-          <!-- Modo compacto: Mostrar nombre del partido con botón cambiar -->
           <div v-if="selectedMatch && !showMatchSelector" class="match-compact">
             <div class="match-info">
               <q-icon name="sports_soccer" color="primary" />
@@ -28,7 +26,6 @@
             />
           </div>
 
-          <!-- Modo selector: Mostrar dropdown completo -->
           <q-select
             v-else
             v-model="selectedMatch"
@@ -55,7 +52,6 @@
       </q-card>
     </div>
 
-    <!-- Navigation Tabs -->
     <q-card class="tabs-card">
       <q-tabs
         v-model="tab"
@@ -86,7 +82,6 @@
       </q-tabs>
     </q-card>
 
-    <!-- Tab Panels -->
     <q-tab-panels v-model="tab" animated swipeable>
       <q-tab-panel name="analytics" class="q-pa-none">
         <AnalyticsPanel

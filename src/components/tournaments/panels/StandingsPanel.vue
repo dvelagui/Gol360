@@ -1,6 +1,5 @@
 <template>
   <div class="standings-panel">
-    <!-- Header -->
     <div class="panel-header">
       <div class="header-content">
         <q-icon name="emoji_events" size="28px" color="primary" class="q-mr-sm" />
@@ -19,13 +18,11 @@
       />
     </div>
 
-    <!-- Loading state -->
     <div v-if="store.loading" class="loading-state">
       <q-spinner-dots color="primary" size="48px" />
       <div class="text-body2 text-grey-7 q-mt-md">Cargando posiciones...</div>
     </div>
 
-    <!-- Content -->
     <template v-else>
       <StandingsTable
         v-if="viewMode === 'table'"
@@ -36,7 +33,6 @@
         :rows="rowsView"
       />
 
-      <!-- Empty state -->
       <div v-if="!rowsView.length" class="empty-state">
         <q-icon name="sports_score" size="64px" color="grey-4" />
         <div class="text-h6 text-grey-6 q-mt-md">Sin posiciones aún</div>
