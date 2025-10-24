@@ -136,6 +136,7 @@ export async function createManagerWithAccount(payload: {
 export async function createPlayerWithAccount(payload: {
   fullName: string;
   email: string;
+  password?: string;
   teamId: string;
   tournamentId: string;
   jersey?: number;
@@ -144,6 +145,7 @@ export async function createPlayerWithAccount(payload: {
 }): Promise<string> {
   const uid = await createAuthUserAndUserDoc({
     email: payload.email,
+    ...(payload.password ? { password: payload.password } : {}),
     displayName: payload.fullName,
     role: 'player',
     ...(payload.photoURL !== undefined ? { photoURL: payload.photoURL } : {}),

@@ -8,8 +8,8 @@ class StorageService {
    * @param gsUrl - URL en formato gs://bucket/path/to/file.png
    * @returns URL HTTPS pública para descargar/mostrar el archivo
    * @example
-   * // Input: gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_1st_period.png
-   * // Output: https://storage.googleapis.com/gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_1st_period.png
+   * // Input: gs://gol360-app.firebasestorage.app/raw/T97S5C/Arsenal/shot_map.png
+   * // Output: https://firebasestorage.googleapis.com/v0/b/gol360-app.firebasestorage.app/o/raw%2FT97S5C%2FArsenal%2Fshot_map.png?alt=media
    */
   convertGsUrlToHttps(gsUrl: string): string {
     // Validar que sea una URL de gs://
@@ -17,8 +17,22 @@ class StorageService {
       throw new Error('Invalid gs:// URL format')
     }
 
-    // Conversión simple: reemplazar gs:// por https://storage.googleapis.com/
-    const httpsUrl = gsUrl.replace('gs://', 'https://storage.googleapis.com/')
+    // Extraer bucket y path: gs://bucket/path/to/file.png
+    const withoutProtocol = gsUrl.replace('gs://', '')
+    const firstSlashIndex = withoutProtocol.indexOf('/')
+
+    if (firstSlashIndex === -1) {
+      throw new Error('Invalid gs:// URL: no path after bucket')
+    }
+
+    const bucket = withoutProtocol.substring(0, firstSlashIndex)
+    const path = withoutProtocol.substring(firstSlashIndex + 1)
+
+    // Encode el path para la URL
+    const encodedPath = encodeURIComponent(path)
+
+    // Formato de Firebase Storage API
+    const httpsUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}?alt=media`
 
     return httpsUrl
   }

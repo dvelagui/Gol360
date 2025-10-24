@@ -13,8 +13,22 @@
     </div>
 
     <div v-else class="container-match q-gutter-y-md">
+      <!-- Filtro para mostrar fechas completadas -->
+      <div v-if="hasCompletedRounds" class="filter-section q-mb-md">
+        <q-card flat bordered class="filter-card">
+          <q-card-section class="q-pa-sm">
+            <q-toggle
+              v-model="showCompletedRounds"
+              color="primary"
+              label="Mostrar fechas completadas"
+              left-label
+              size="sm"
+            />
+          </q-card-section>
+        </q-card>
+      </div>
       <div
-        v-for="roundKey in sortedRoundKeys"
+        v-for="roundKey in filteredRoundKeys"
         :key="roundKey"
         class="round-container"
       >
@@ -114,6 +128,7 @@ const mStore = useMatchStore()
 const teams = ref<TeamMin[]>([])
 const isLoadingTeams = ref(false)
 const teamsMap = ref(new Map<string, TeamMin>())
+const showCompletedRounds = ref(false)
 
 // Computed properties
 const canEdit = computed(() => {
@@ -168,6 +183,28 @@ const sortedRoundKeys = computed(() => {
     // Si ninguno es número, ordenar alfabéticamente
     return a.localeCompare(b)
   })
+})
+
+// Verifica si una fecha (round) está completada (todos los partidos finalizados)
+function isRoundCompleted(roundKey: string): boolean {
+  const matches = groupedMatches.value[roundKey]
+  if (!matches || matches.length === 0) return false
+
+  return matches.every(match => match.status === 'terminado')
+}
+
+// Computed para saber si hay fechas completadas
+const hasCompletedRounds = computed(() => {
+  return sortedRoundKeys.value.some(roundKey => isRoundCompleted(roundKey))
+})
+
+// Computed para filtrar las fechas según el toggle
+const filteredRoundKeys = computed(() => {
+  if (showCompletedRounds.value) {
+    return sortedRoundKeys.value
+  }
+
+  return sortedRoundKeys.value.filter(roundKey => !isRoundCompleted(roundKey))
 })
 
 // Round title cache for performance
@@ -298,6 +335,24 @@ watch(
   max-width: 900px;
   margin: 0 auto;
   padding: 0 4px;
+}
+
+.filter-section {
+  display: flex;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.filter-card {
+  background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+  border: 1px solid #E3F2FD;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .round-container {

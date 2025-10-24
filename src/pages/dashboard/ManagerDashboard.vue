@@ -225,7 +225,7 @@
                 color="primary"
                 icon="edit"
                 size="sm"
-                @click.stop="editMatch(match.id)"
+                @click.stop="editMatch()"
               >
                 <q-tooltip>Editar</q-tooltip>
               </q-btn>
@@ -404,7 +404,7 @@ function scheduleMatch() {
   void router.push('/manager/tournaments/schedule')
 }
 
-function editMatch(_id: string) {
+function editMatch(/* id: string */) {
   // TODO: Open edit match dialog
   console.log('Edit match')
 }

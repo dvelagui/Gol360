@@ -218,3 +218,56 @@ export async function getTeamIdsByPlayer(playerId: string): Promise<string[]> {
     .forEach(p => teamIds.add(p.teamId))
   return Array.from(teamIds)
 }
+
+/**
+ * Obtiene la participación activa de un jugador en un torneo específico
+ * Útil para determinar en qué equipo juega el jugador en ese torneo
+ */
+export async function getPlayerParticipation(
+  playerId: string,
+  tournamentId: string
+): Promise<PlayerParticipation | null> {
+  try {
+    console.log('[getPlayerParticipation] Searching for:', { playerId, tournamentId })
+
+    // Primero buscar TODAS las participaciones del jugador (sin filtros)
+    const qAll = query(colParticipations, where('playerId', '==', playerId))
+    const allSnapshot = await getDocs(qAll)
+    console.log('[getPlayerParticipation] Total participations for player:', allSnapshot.size)
+    allSnapshot.docs.forEach(doc => {
+      console.log('  - Participation:', doc.id, doc.data())
+    })
+
+    // Ahora buscar las activas en el torneo específico
+    const q = query(
+      colParticipations,
+      where('playerId', '==', playerId),
+      where('tournamentId', '==', tournamentId),
+      where('active', '==', true)
+    )
+
+    const snapshot = await getDocs(q)
+    console.log('[getPlayerParticipation] Active participations in tournament:', snapshot.size)
+
+    if (snapshot.empty) {
+      console.warn(`[getPlayerParticipation] No active participation found for player=${playerId} in tournament=${tournamentId}`)
+      return null
+    }
+
+    // Si hay múltiples participaciones (jugador en varios equipos del mismo torneo),
+    // retornar la primera
+    const doc = snapshot.docs[0]
+    if (!doc) return null
+
+    const participation = {
+      id: doc.id,
+      ...doc.data()
+    } as PlayerParticipation
+
+    console.log('[getPlayerParticipation] Found participation:', participation)
+    return participation
+  } catch (error) {
+    console.error('[getPlayerParticipation] Error:', error)
+    throw error
+  }
+}

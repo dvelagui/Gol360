@@ -1,7 +1,7 @@
 <template>
   <div class="analytics-panel">
-    <!-- Team Selector -->
-    <div class="team-selector-wrapper">
+    <!-- Team Selector (solo si hay más de un equipo y no está filtrado por teamId) -->
+    <div v-if="showTeamSelector" class="team-selector-wrapper">
       <q-card class="team-selector-card">
         <q-card-section class="q-pa-md">
           <div class="selector-content">
@@ -22,6 +22,24 @@
     <div v-if="loading" class="loading-container">
       <q-spinner-dots color="primary" size="50px" />
       <p class="text-grey-6">Cargando analytics...</p>
+    </div>
+
+    <!-- No Data State -->
+    <div v-else-if="!hasRealData" class="no-data-container">
+      <q-card class="no-data-card">
+        <q-card-section class="text-center q-pa-xl">
+          <q-icon name="analytics" size="120px" color="grey-4" class="q-mb-lg" />
+          <h5 class="text-h5 text-weight-bold q-mb-md text-grey-7">
+            No hay datos disponibles
+          </h5>
+          <p class="text-body1 text-grey-6 q-mb-md">
+            Aún no se han procesado las analíticas para este partido.
+          </p>
+          <p class="text-body2 text-grey-5">
+            Los datos de analytics estarán disponibles una vez que el partido haya sido procesado.
+          </p>
+        </q-card-section>
+      </q-card>
     </div>
 
     <!-- Content -->
@@ -62,6 +80,38 @@
               <q-icon name="percent" size="32px" color="info" class="q-mb-sm" />
               <div class="stat-value">{{ currentStats.conversionRate }}</div>
               <div class="stat-label">Conversión</div>
+            </q-card-section>
+          </q-card>
+
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <q-icon name="flag" size="32px" color="orange" class="q-mb-sm" />
+              <div class="stat-value">{{ currentStats.corners }}</div>
+              <div class="stat-label">Saque de esquina</div>
+            </q-card-section>
+          </q-card>
+
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <q-icon name="sports" size="32px" color="deep-orange" class="q-mb-sm" />
+              <div class="stat-value">{{ currentStats.freeKicks }}</div>
+              <div class="stat-label">Tiro libre</div>
+            </q-card-section>
+          </q-card>
+
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <q-icon name="timer" size="32px" color="teal" class="q-mb-sm" />
+              <div class="stat-value">{{ currentStats.possession }}</div>
+              <div class="stat-label">Posesión</div>
+            </q-card-section>
+          </q-card>
+
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <q-icon name="outlined_flag" size="32px" color="red" class="q-mb-sm" />
+              <div class="stat-value">{{ currentStats.penalties }}</div>
+              <div class="stat-label">Penalti</div>
             </q-card-section>
           </q-card>
         </div>
@@ -330,370 +380,399 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import storageService from '@/services/storageService'
 
 // Props
 interface Props {
-  analyticsData?: Record<string, unknown> | null // TODO: Usar tipo AnalyticsResponse cuando llegue la data real
+  analyticsData?: Record<string, unknown> | null
   loading?: boolean
+  teamId?: string // ID del equipo actual (para filtrar datos)
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false
 })
 
-// State para URLs de imágenes convertidas
-const imageUrls = ref<{
-  heatMap: {
-    [team: string]: {
-      [period: string]: string | null
-    }
-  }
-  shotMap: {
-    [team: string]: {
-      [period: string]: string | null
-    }
-  }
-}>({
-  heatMap: {
-    ColoColo: {
-      'Full recording': null,
-      '1st period': null,
-      '2nd period': null
-    },
-    IndValle: {
-      'Full recording': null,
-      '1st period': null,
-      '2nd period': null
-    }
-  },
-  shotMap: {
-    ColoColo: {
-      'Full recording': null,
-      '1st period': null,
-      '2nd period': null
-    },
-    IndValle: {
-      'Full recording': null,
-      '1st period': null,
-      '2nd period': null
-    }
-  }
+// Computed: Extraer equipos y datos desde analyticsData REAL de Firestore
+const hasRealData = computed(() => {
+  return props.analyticsData &&
+         typeof props.analyticsData === 'object' &&
+         ('home' in props.analyticsData || 'away' in props.analyticsData)
 })
 
-const loadingImages = ref(false)
+// Función helper para extraer nombre de equipo
+function getTeamName(side: 'home' | 'away'): string {
+  if (!props.analyticsData || typeof props.analyticsData !== 'object') return side === 'home' ? 'Local' : 'Visitante'
 
-// DATOS MOCK - Estos se reemplazarán con datos reales de la API
-const mockData = {
-  ColoColo: {
-    stats: {
-      goals: 3,
-      shots: 15,
-      shotsOnTarget: 8,
-      conversionRate: '17%'
-    },
-    locationMap: {
-      'Full recording': {
-        defensive_passes: '2%',
-        middle_passes: '92%',
-        attacking_passes: '6%',
-        defensive_possession: '31%',
-        middle_possession: '53%',
-        attacking_possession: '15%'
-      },
-      '1st period': {
-        defensive_passes: '3%',
-        middle_passes: '86%',
-        attacking_passes: '11%',
-        defensive_possession: '42%',
-        middle_possession: '42%',
-        attacking_possession: '15%'
-      },
-      '2nd period': {
-        defensive_passes: '2%',
-        middle_passes: '96%',
-        attacking_passes: '2%',
-        defensive_possession: '22%',
-        middle_possession: '63%',
-        attacking_possession: '15%'
-      }
-    },
-    shotMap: {
-      'Full recording': {
-        goals: '3',
-        shots: '15',
-        total: '18',
-        insideBox: '39%',
-        outsideBox: '61%',
-        conversionRate: '17%',
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/shot_map_Full_recording.png'
-      },
-      '1st period': {
-        goals: '1',
-        shots: '5',
-        total: '6',
-        insideBox: '33%',
-        outsideBox: '67%',
-        conversionRate: '17%',
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/shot_map_1st_period.png'
-      },
-      '2nd period': {
-        goals: '2',
-        shots: '10',
-        total: '12',
-        insideBox: '42%',
-        outsideBox: '58%',
-        conversionRate: '17%',
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/shot_map_2nd_period.png'
-      }
-    },
-    heatMap: {
-      '1st period': {
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_1st_period.png'
-      },
-      '2nd period': {
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_2nd_period.png'
-      },
-      'Full recording': {
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/ColoColo/heat_map_Full_recording.png'
-      }
-    },
-    passesStrings: {
-      'Full recording': {
-        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-        bars: [19, 14, 5, 2, 2, 0, 0, 0],
-        stat_3to5: '38',
-        stat_6ormore: '4',
-        stat_longest: '7'
-      },
-      '1st period': {
-        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-        bars: [9, 7, 1, 1, 0, 0, 0, 0],
-        stat_3to5: '17',
-        stat_6ormore: '1',
-        stat_longest: '6'
-      },
-      '2nd period': {
-        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-        bars: [10, 7, 4, 1, 2, 0, 0, 0],
-        stat_3to5: '21',
-        stat_6ormore: '3',
-        stat_longest: '7'
-      }
-    }
-  },
-  IndValle: {
-    stats: {
-      goals: 4,
-      shots: 15,
-      shotsOnTarget: 9,
-      conversionRate: '21%'
-    },
-    locationMap: {
-      'Full recording': {
-        defensive_passes: '3%',
-        middle_passes: '91%',
-        attacking_passes: '6%',
-        defensive_possession: '22%',
-        middle_possession: '54%',
-        attacking_possession: '25%'
-      },
-      '1st period': {
-        defensive_passes: '3%',
-        middle_passes: '91%',
-        attacking_passes: '7%',
-        defensive_possession: '15%',
-        middle_possession: '60%',
-        attacking_possession: '26%'
-      },
-      '2nd period': {
-        defensive_passes: '4%',
-        middle_passes: '92%',
-        attacking_passes: '5%',
-        defensive_possession: '30%',
-        middle_possession: '46%',
-        attacking_possession: '24%'
-      }
-    },
-    shotMap: {
-      'Full recording': {
-        goals: '4',
-        shots: '15',
-        total: '19',
-        insideBox: '24%',
-        outsideBox: '76%',
-        conversionRate: '21%',
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/shot_map_Full_recording.png'
-      },
-      '1st period': {
-        goals: '3',
-        shots: '11',
-        total: '14',
-        insideBox: '17%',
-        outsideBox: '83%',
-        conversionRate: '21%',
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/shot_map_1st_period.png'
-      },
-      '2nd period': {
-        goals: '1',
-        shots: '4',
-        total: '5',
-        insideBox: '40%',
-        outsideBox: '60%',
-        conversionRate: '20%',
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/shot_map_2nd_period.png'
-      }
-    },
-    heatMap: {
-      '1st period': {
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/heat_map_1st_period.png'
-      },
-      '2nd period': {
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/heat_map_2nd_period.png'
-      },
-      'Full recording': {
-        screenshot: 'gs://gol360-scrape-raw-prod/raw/VeteranosTunja2025/LibVsColo/IndValle/heat_map_Full_recording.png'
-      }
-    },
-    passesStrings: {
-      'Full recording': {
-        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-        bars: [16, 11, 7, 3, 1, 1, 0, 0],
-        stat_3to5: '34',
-        stat_6ormore: '5',
-        stat_longest: '8'
-      },
-      '1st period': {
-        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-        bars: [8, 6, 4, 2, 1, 0, 0, 0],
-        stat_3to5: '18',
-        stat_6ormore: '3',
-        stat_longest: '7'
-      },
-      '2nd period': {
-        xAxisLabels: ['3', '4', '5', '6', '7', '8', '9', '+10'],
-        bars: [8, 5, 3, 1, 0, 1, 0, 0],
-        stat_3to5: '16',
-        stat_6ormore: '2',
-        stat_longest: '8'
-      }
-    }
-  }
+  const sideData = props.analyticsData[side] as Record<string, unknown>
+  if (!sideData) return side === 'home' ? 'Local' : 'Visitante'
+
+  // Intentar obtener el nombre del equipo desde stats
+  const stats = sideData.stats as { team?: string } | null
+  if (stats?.team) return stats.team
+
+  // Intentar desde shotMap
+  const shotMap = sideData.shotMap as { team?: string } | null
+  if (shotMap?.team) return shotMap.team
+
+  // Intentar desde heatMap
+  const heatMap = sideData.heatMap as { team?: string } | null
+  if (heatMap?.team) return heatMap.team
+
+  return side === 'home' ? 'Local' : 'Visitante'
 }
 
 // State
-const selectedTeam = ref<'ColoColo' | 'IndValle'>('ColoColo')
-const selectedPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
+const selectedTeam = ref<'home' | 'away'>('home')
+const selectedPeriod = ref<'Full recording' | '1st period' | '2nd period'>('1st period')
 const selectedLocationMapPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
 const selectedShotMapPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
 const selectedPassesPeriod = ref<'Full recording' | '1st period' | '2nd period'>('Full recording')
 
-// Team options for toggle
-const teamOptions = [
-  { label: 'Colo Colo', value: 'ColoColo' },
-  { label: 'Ind. Valle', value: 'IndValle' }
-]
+// Computed: Extraer equipos disponibles desde datos reales de Firestore
+const availableTeams = computed(() => {
+  if (!hasRealData.value) {
+    // NO mostrar datos mockeados si no hay datos reales
+    return []
+  }
 
-// Period options for heat map
+  const teams: Array<{ label: string; value: 'home' | 'away' }> = []
+
+  // Extraer equipo home
+  if (props.analyticsData && 'home' in props.analyticsData) {
+    const homeName = getTeamName('home')
+    teams.push({ label: homeName, value: 'home' })
+  }
+
+  // Extraer equipo away
+  if (props.analyticsData && 'away' in props.analyticsData) {
+    const awayName = getTeamName('away')
+    teams.push({ label: awayName, value: 'away' })
+  }
+
+  return teams
+})
+
+// Team options for toggle
+const teamOptions = computed(() => availableTeams.value)
+
+// Computed: Mostrar selector solo si hay más de un equipo Y no hay teamId filtrado
+const showTeamSelector = computed(() => {
+  return !props.teamId && availableTeams.value.length > 1
+})
+
+// Period options for all sections
 const periodOptions = [
   { label: 'Completo', value: 'Full recording' },
   { label: '1er Tiempo', value: '1st period' },
   { label: '2do Tiempo', value: '2nd period' }
 ]
 
-// Computed properties para datos actuales
-const currentStats = computed(() => mockData[selectedTeam.value].stats)
-const currentLocationMap = computed(() => mockData[selectedTeam.value].locationMap[selectedLocationMapPeriod.value])
-const currentShotMap = computed(() => {
-  const shotMap = mockData[selectedTeam.value].shotMap[selectedShotMapPeriod.value]
-  // Usar URL convertida si existe
-  const convertedScreenshot = imageUrls.value.shotMap[selectedTeam.value]?.[selectedShotMapPeriod.value]
-
-  return {
-    ...shotMap,
-    screenshot: convertedScreenshot || shotMap.screenshot
-  }
-})
-const currentHeatMap = computed(() => {
-  const heatMap = mockData[selectedTeam.value].heatMap[selectedPeriod.value]
-  // Usar URL convertida si existe
-  const convertedScreenshot = imageUrls.value.heatMap[selectedTeam.value]?.[selectedPeriod.value]
-
-  return {
-    ...heatMap,
-    screenshot: convertedScreenshot || heatMap.screenshot
-  }
-})
-const currentPassesStrings = computed(() => mockData[selectedTeam.value].passesStrings[selectedPassesPeriod.value])
-
-// Max bar value for chart scaling
-const maxBarValue = computed(() => Math.max(...currentPassesStrings.value.bars))
-
-// Función para convertir URLs gs:// a HTTPS
-function convertImageUrls() {
-  loadingImages.value = true
-  try {
-    // Convertir heat maps
-    for (const team of ['ColoColo', 'IndValle']) {
-      for (const period of ['Full recording', '1st period', '2nd period']) {
-        const gsUrl = mockData[team as keyof typeof mockData].heatMap[period as keyof typeof mockData.ColoColo.heatMap]?.screenshot
-        if (gsUrl && storageService.isGsUrl(gsUrl)) {
-          try {
-            const httpsUrl = storageService.convertGsUrlToHttps(gsUrl)
-            if (!imageUrls.value.heatMap[team]) {
-              imageUrls.value.heatMap[team] = {}
-            }
-            imageUrls.value.heatMap[team][period] = httpsUrl
-          } catch (error) {
-            console.error(`Failed to convert heat map URL for ${team} ${period}:`, error)
-            if (!imageUrls.value.heatMap[team]) {
-              imageUrls.value.heatMap[team] = {}
-            }
-            imageUrls.value.heatMap[team][period] = null
-          }
-        }
-      }
-    }
-
-    // Convertir shot maps
-    for (const team of ['ColoColo', 'IndValle']) {
-      for (const period of ['Full recording', '1st period', '2nd period']) {
-        const gsUrl = mockData[team as keyof typeof mockData].shotMap[period as keyof typeof mockData.ColoColo.shotMap]?.screenshot
-        if (gsUrl && storageService.isGsUrl(gsUrl)) {
-          try {
-            const httpsUrl = storageService.convertGsUrlToHttps(gsUrl)
-            if (!imageUrls.value.shotMap[team]) {
-              imageUrls.value.shotMap[team] = {}
-            }
-            imageUrls.value.shotMap[team][period] = httpsUrl
-          } catch (error) {
-            console.error(`Failed to convert shot map URL for ${team} ${period}:`, error)
-            if (!imageUrls.value.shotMap[team]) {
-              imageUrls.value.shotMap[team] = {}
-            }
-            imageUrls.value.shotMap[team][period] = null
-          }
-        }
-      }
-    }
-  } finally {
-    loadingImages.value = false
-  }
+// Tipos para las computed properties
+interface StatsData {
+  goals: string | number
+  shots: string | number
+  shotsOnTarget: string | number
+  conversionRate: string
+  corners: string | number
+  freeKicks: string | number
+  possession: string | number
+  penalties: string | number
 }
 
-// Cargar URLs convertidas al montar
-onMounted(() => {
-  convertImageUrls()
+interface LocationMapDataType {
+  defensive_passes: string
+  middle_passes: string
+  attacking_passes: string
+  defensive_possession: string
+  middle_possession: string
+  attacking_possession: string
+}
+
+interface ShotMapDataType {
+  goals?: string
+  shots?: string
+  total?: string
+  insideBox?: string
+  outsideBox?: string
+  conversionRate?: string
+  screenshot?: string
+}
+
+interface HeatMapDataType {
+  screenshot?: string
+}
+
+interface PassesStringsDataType {
+  xAxisLabels: string[]
+  bars: number[]
+  stat_3to5: string
+  stat_6ormore: string
+  stat_longest: string
+}
+
+// Computed properties para datos actuales desde Firestore
+const currentStats = computed<StatsData>(() => {
+  // SOLO usar datos reales de Firestore
+  if (hasRealData.value && props.analyticsData) {
+    const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
+
+    if (sideData?.stats) {
+      const statsData = sideData.stats as { data?: Array<{ name: string; home: string | number; away: string | number }> }
+
+      if (statsData.data) {
+        // Extraer solo los valores del lado seleccionado
+        const side = selectedTeam.value
+
+        // Los nombres están en español: 'Gol', 'Tiro', 'Ocasiones totales', 'Saque de esquina', 'Tiro libre', 'Porcentaje de posesión', 'Penalti'
+        const goalsData = statsData.data.find(s => s.name.toLowerCase().includes('gol'))
+        const shotsData = statsData.data.find(s => s.name.toLowerCase().includes('tiro') && !s.name.toLowerCase().includes('libre'))
+        const occasionsData = statsData.data.find(s => s.name.toLowerCase().includes('ocasiones'))
+        const cornersData = statsData.data.find(s => s.name.toLowerCase().includes('esquina'))
+        const freeKicksData = statsData.data.find(s => s.name.toLowerCase().includes('libre'))
+        const possessionData = statsData.data.find(s => s.name.toLowerCase().includes('posesión'))
+        const penaltiesData = statsData.data.find(s => s.name.toLowerCase().includes('penalti'))
+
+        const result = {
+          goals: goalsData?.[side] || 0,
+          shots: shotsData?.[side] || 0,
+          shotsOnTarget: occasionsData?.[side] || 0,
+          conversionRate: '0%',
+          corners: cornersData?.[side] || 0,
+          freeKicks: freeKicksData?.[side] || 0,
+          possession: possessionData?.[side] || '-',
+          penalties: penaltiesData?.[side] || 0
+        }
+        return result
+      }
+    }
+  }
+
+  // Si no hay datos, retornar valores vacíos
+  return {
+    goals: '-',
+    shots: '-',
+    shotsOnTarget: '-',
+    conversionRate: '-',
+    corners: '-',
+    freeKicks: '-',
+    possession: '-',
+    penalties: '-'
+  }
 })
 
-// Watch para cuando lleguen datos reales
+const currentLocationMap = computed<LocationMapDataType>(() => {
+  // SOLO usar datos reales de Firestore
+  if (hasRealData.value && props.analyticsData) {
+    const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
+
+    if (sideData?.locationMap) {
+      const locationMapArray = sideData.locationMap as unknown[]
+
+      // Mapear período a índice: 0 = Full recording, 1 = 1st period, 2 = 2nd period
+      const periodIndex = selectedLocationMapPeriod.value === 'Full recording' ? 0 :
+                         selectedLocationMapPeriod.value === '1st period' ? 1 : 2
+
+      if (Array.isArray(locationMapArray) && locationMapArray[periodIndex]) {
+        const result = locationMapArray[periodIndex] as LocationMapDataType
+        return result
+      }
+    }
+  }
+
+  // Si no hay datos, retornar valores vacíos
+  return {
+    defensive_passes: '-',
+    middle_passes: '-',
+    attacking_passes: '-',
+    defensive_possession: '-',
+    middle_possession: '-',
+    attacking_possession: '-'
+  }
+})
+
+const currentShotMap = computed<ShotMapDataType>(() => {
+  // SOLO usar datos reales de Firestore
+  if (hasRealData.value && props.analyticsData) {
+    const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
+
+    if (sideData?.shotMap) {
+      const shotMapData = sideData.shotMap as { data?: unknown[] }
+
+      if (Array.isArray(shotMapData.data)) {
+        // Mapear período a índice: 0 = Full recording, 1 = 1st period, 2 = 2nd period
+        const periodIndex = selectedShotMapPeriod.value === 'Full recording' ? 0 :
+                           selectedShotMapPeriod.value === '1st period' ? 1 : 2
+
+        const periodData = shotMapData.data[periodIndex] as ShotMapDataType | undefined
+
+        if (periodData) {
+          const rawData = periodData as Record<string, unknown>
+
+          // Extraer valores
+          const goals = rawData.goals as string || '-'
+          const shots = rawData.shots as string || '-'
+          const total = rawData.total as string || '-'
+          const conversionRate = rawData.conversionRate as string || '-'
+
+          // Calcular insideBox y outsideBox desde los porcentajes
+          let insideBox = '-'
+          let outsideBox = '-'
+
+          const insideBoxText = rawData.insideBox3 as string
+          const outsideBoxText = rawData.insideBox4 as string
+
+          if (insideBoxText && outsideBoxText && total !== '-') {
+            // Extraer porcentaje de "43% of total attempts inside box."
+            const insideMatch = insideBoxText.match(/(\d+)%/)
+            const outsideMatch = outsideBoxText.match(/(\d+)%/)
+
+            if (insideMatch?.[1] && outsideMatch?.[1]) {
+              const totalNum = parseInt(total)
+              const insidePercent = parseInt(insideMatch[1])
+              const outsidePercent = parseInt(outsideMatch[1])
+
+              insideBox = Math.round(totalNum * insidePercent / 100).toString()
+              outsideBox = Math.round(totalNum * outsidePercent / 100).toString()
+            }
+          }
+
+          // Convert screenshot if exists
+          let screenshot: string | undefined
+          if (rawData.screenshot && typeof rawData.screenshot === 'string') {
+            screenshot = storageService.isGsUrl(rawData.screenshot)
+              ? storageService.convertGsUrlToHttps(rawData.screenshot)
+              : rawData.screenshot
+          }
+
+          // Build result without adding screenshot: undefined property (only add when defined)
+          const result: ShotMapDataType = {
+            goals,
+            shots,
+            total,
+            insideBox,
+            outsideBox,
+            conversionRate
+          }
+
+          if (screenshot) {
+            result.screenshot = screenshot
+          }
+
+          return result
+        }
+      }
+    }
+  }
+
+  // Si no hay datos, retornar valores vacíos (omitir screenshot para cumplir con exactOptionalPropertyTypes)
+  return {
+    goals: '-',
+    shots: '-',
+    total: '-',
+    insideBox: '-',
+    outsideBox: '-',
+    conversionRate: '-'
+  }
+})
+
+const currentHeatMap = computed<HeatMapDataType>(() => {
+  // SOLO usar datos reales de Firestore
+  if (hasRealData.value && props.analyticsData) {
+    const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
+    if (sideData?.heatMap) {
+      const heatMapData = sideData.heatMap as { data?: unknown[] }
+
+      if (Array.isArray(heatMapData.data)) {
+        // Mapear período a índice: 0 = Full recording, 1 = 1st period, 2 = 2nd period
+        const periodIndex = selectedPeriod.value === 'Full recording' ? 2 :
+                           selectedPeriod.value === '1st period' ? 0 : 1
+
+        const periodData = heatMapData.data[periodIndex] as HeatMapDataType | undefined
+
+        if (periodData) {
+          // Always convert screenshot if it exists
+          if (periodData.screenshot && typeof periodData.screenshot === 'string') {
+            const convertedScreenshot = storageService.isGsUrl(periodData.screenshot)
+              ? storageService.convertGsUrlToHttps(periodData.screenshot)
+              : periodData.screenshot
+
+            return {
+              screenshot: convertedScreenshot
+            }
+          }
+
+          return periodData
+        }
+      }
+    }
+  }
+
+  // Si no hay datos, retornar objeto vacío (omitir screenshot para cumplir con exactOptionalPropertyTypes)
+  return {}
+})
+
+const currentPassesStrings = computed<PassesStringsDataType>(() => {
+  // SOLO usar datos reales de Firestore
+  if (hasRealData.value && props.analyticsData) {
+    const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
+    if (sideData?.passesStrings) {
+      const passesData = sideData.passesStrings as { data?: unknown[] }
+
+      if (Array.isArray(passesData.data)) {
+        // Mapear período a índice: 0 = Full recording, 1 = 1st period, 2 = 2nd period
+        const periodIndex = selectedPassesPeriod.value === 'Full recording' ? 0 :
+                           selectedPassesPeriod.value === '1st period' ? 1 : 2
+
+        const periodData = passesData.data[periodIndex] as PassesStringsDataType | undefined
+
+        if (periodData) {
+          return periodData
+        }
+      }
+    }
+  }
+
+  // Si no hay datos, retornar valores vacíos
+  return {
+    xAxisLabels: [],
+    bars: [],
+    stat_3to5: '-',
+    stat_6ormore: '-',
+    stat_longest: '-'
+  }
+})
+
+// Max bar value for chart scaling
+const maxBarValue = computed(() => {
+  if (currentPassesStrings.value.bars.length === 0) return 1
+  return Math.max(...currentPassesStrings.value.bars)
+})
+
+// Watch para cuando lleguen datos reales desde Firestore
 watch(() => props.analyticsData, (newData) => {
   if (newData) {
-    console.log('Analytics data received:', newData)
-    // TODO: Procesar datos reales aquí
+    // Auto-seleccionar primer equipo disponible si hay datos
+    if (availableTeams.value.length > 0 && availableTeams.value[0]) {
+      const firstTeam = availableTeams.value[0].value
+      if (firstTeam === 'home' || firstTeam === 'away') {
+        selectedTeam.value = firstTeam
+      }
+    }
   }
-}, { deep: true })
+}, { deep: true, immediate: true })
+
+// Watch para filtrar por teamId si se proporciona
+watch(() => props.teamId, (newTeamId) => {
+  if (newTeamId) {
+    // Convertir teamId a 'home' o 'away' si es necesario
+    // Por ahora asumimos que teamId ya viene como 'home' o 'away'
+    if (newTeamId === 'home' || newTeamId === 'away') {
+      selectedTeam.value = newTeamId
+    }
+  }
+}, { immediate: true })
 </script>
 
 <style scoped lang="scss">
@@ -739,6 +818,35 @@ watch(() => props.analyticsData, (newData) => {
   gap: 16px;
 }
 
+// No Data State
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 32px 16px;
+}
+
+.no-data-card {
+  max-width: 600px;
+  width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px dashed #E0E0E0;
+
+  .q-icon {
+    opacity: 0.6;
+  }
+
+  h5 {
+    margin: 0;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
 // Content
 .analytics-content {
   display: flex;
@@ -761,14 +869,16 @@ watch(() => props.analyticsData, (newData) => {
 // Stats Cards
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 200px);
   gap: 16px;
+  justify-content: center;
 }
 
 .stat-card {
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
+  width: 200px;
 
   &:hover {
     transform: translateY(-4px);
@@ -1034,17 +1144,48 @@ watch(() => props.analyticsData, (newData) => {
     }
   }
 
+  .no-data-container {
+    min-height: 50vh;
+    padding: 24px 12px;
+  }
+
+  .no-data-card {
+    .q-icon {
+      font-size: 80px !important;
+    }
+
+    h5 {
+      font-size: 1.25rem;
+    }
+
+    p {
+      font-size: 0.9rem;
+    }
+  }
+
   .section-title {
     font-size: 1.1rem;
   }
 
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(3, 100px);
+    gap: 8px;
+  }
+
+  .stat-card {
+    width: 100px;
+
+    .q-icon {
+      font-size: 24px !important;
+    }
   }
 
   .stat-value {
-    font-size: 2rem;
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
   }
 
   .location-grid {

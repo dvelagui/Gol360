@@ -97,7 +97,7 @@
 
       <q-tab-panel name="clips" class="q-pa-none">
         <ClipsPanel
-          :highlights-data="analyticsData?.data?.highlights"
+          :highlights-data="highlightsData"
           youtube-video-id="DtD7GNuF3xQ"
           :loading="isLoadingAnalytics"
         />
@@ -105,7 +105,7 @@
 
       <q-tab-panel name="destacados" class="q-pa-none">
         <DestacadosPanel
-          :player-moments-data="analyticsData?.data?.playerMoments"
+          :player-moments-data="playerMomentsData"
           youtube-video-id="DtD7GNuF3xQ"
           :loading="isLoadingAnalytics"
         />
@@ -120,10 +120,13 @@ import { useQuasar, Notify } from 'quasar'
 import { useTournamentSelection } from '@/composables/useTournamentSelection'
 import { useTournamentStore } from '@/stores/tournaments'
 import { useMatchStore } from '@/stores/matches'
-import analyticsService from '@/services/analyticsService'
+import { useDatabaseStore } from '@/stores/database'
+import { useUserStore } from '@/stores/user'
+import { getAllMatchAnalytics, type PlayerMoment, type Highlight } from '@/services/matchAnalyticsService'
+import { getMatchMetadata, determineTeamSide } from '@/services/matchMetadataService'
+import { getPlayerParticipation } from '@/services/playerParticipationService'
 import type { Tournament } from '@/types/auth'
 import type { Match } from '@/types/competition'
-import type { AnalyticsResponse } from '@/types/analytics'
 
 // Lazy load panels
 const AnalyticsPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/AnalyticsPanel.vue'))
@@ -141,7 +144,7 @@ const tournaments = ref<Tournament[]>([])
 const tab = ref<'analytics' | 'clips' | 'destacados'>('analytics')
 const isLoadingMatches = ref(false)
 const isLoadingAnalytics = ref(false)
-const analyticsData = ref<AnalyticsResponse | null>(null)
+const analyticsData = ref<Record<string, unknown> | null>(null)
 
 // Match selection
 interface MatchOption {
@@ -162,6 +165,16 @@ const { selectedTournament } = useTournamentSelection(tournaments)
 
 // Computed
 const tId = computed<string>(() => selectedTournament.value?.tournamentId || '')
+
+const highlightsData = computed(() => {
+  if (!analyticsData.value?.data) return undefined
+  return (analyticsData.value.data as Record<string, unknown>).highlights
+})
+
+const playerMomentsData = computed(() => {
+  if (!analyticsData.value?.data) return undefined
+  return (analyticsData.value.data as Record<string, unknown>).playerMoments
+})
 
 // Functions
 async function loadMatches() {
@@ -225,14 +238,97 @@ async function loadMatches() {
 async function loadAnalytics() {
   if (!selectedMatch.value) return
 
-  isLoadingAnalytics.value = true
-  try {
-    analyticsData.value = await analyticsService.getMatchAnalytics(
+  const databaseStore = useDatabaseStore()
+  const userStore = useUserStore()
+  const userRole = databaseStore.userData?.role
+  let playerSide: 'home' | 'away' | null = null
+
+  // Determinar el lado del jugador si es rol 'player' o 'team'
+  if (userRole === 'player' || userRole === 'team') {
+    const playerId = userStore.user?.uid
+
+    if (!playerId) {
+      analyticsData.value = null
+      Notify.create({
+        type: 'warning',
+        message: 'No se pudo identificar tu usuario',
+        position: 'top'
+      })
+      return
+    }
+
+    const participation = await getPlayerParticipation(playerId, tId.value)
+
+    if (!participation) {
+      analyticsData.value = null
+      Notify.create({
+        type: 'warning',
+        message: 'No estás registrado en este torneo',
+        position: 'top'
+      })
+      return
+    }
+
+    const matchMetadata = await getMatchMetadata(
       selectedMatch.value.tournamentId,
       selectedMatch.value.matchId
     )
 
-    console.log('Analytics data loaded:', analyticsData.value)
+    if (!matchMetadata) {
+      analyticsData.value = null
+      Notify.create({
+        type: 'warning',
+        message: 'No se encontró información del partido',
+        position: 'top'
+      })
+      return
+    }
+
+    playerSide = await determineTeamSide(matchMetadata, participation.teamId)
+
+    if (!playerSide) {
+      analyticsData.value = null
+      Notify.create({
+        type: 'info',
+        message: 'Tu equipo no participó en este partido',
+        position: 'top'
+      })
+      return
+    }
+  }
+
+  isLoadingAnalytics.value = true
+  try {
+    const data = await getAllMatchAnalytics(
+      selectedMatch.value.tournamentId,
+      selectedMatch.value.matchId
+    )
+
+    // Filtrar según el rol
+    if (playerSide) {
+      // SOLO mostrar datos del equipo del jugador
+      analyticsData.value = {
+        tournamentId: selectedMatch.value.tournamentId,
+        matchId: selectedMatch.value.matchId,
+        [playerSide]: data[playerSide],  // Solo un equipo
+        data: {
+          playerMoments: data.playerMoments.filter((pm: PlayerMoment) => pm.side === playerSide),
+          highlights: data.highlights.filter((h: Highlight) => h.side === playerSide)
+        }
+      }
+    } else {
+      // Admins/Managers ven TODOS los equipos
+      analyticsData.value = {
+        tournamentId: selectedMatch.value.tournamentId,
+        matchId: selectedMatch.value.matchId,
+        home: data.home,
+        away: data.away,
+        data: {
+          playerMoments: data.playerMoments,
+          highlights: data.highlights
+        }
+      }
+    }
   } catch (error) {
     console.error('Error loading analytics:', error)
     Notify.create({
@@ -240,6 +336,7 @@ async function loadAnalytics() {
       message: 'No hay datos de analytics disponibles para este partido',
       position: 'top'
     })
+    analyticsData.value = null
   } finally {
     isLoadingAnalytics.value = false
   }

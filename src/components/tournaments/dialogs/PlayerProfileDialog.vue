@@ -1,6 +1,6 @@
 <template>
   <q-dialog v-model="model">
-    <q-card style="min-width: 600px; max-width: 95vw;">
+    <q-card>
       <!-- Header con gradiente -->
       <div class="profile-header">
         <q-btn

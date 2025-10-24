@@ -43,6 +43,14 @@
             dense filled
             class="q-mb-md"
           />
+          <q-input
+            v-model="form.password"
+            label="Contraseña"
+            type="password"
+            dense filled
+            :rules="[req, passwordRule]"
+            hint="Mínimo 6 caracteres"
+          />
 
           <q-select
             v-model="form.docType"
@@ -87,7 +95,7 @@
           />
         </div>
         <q-banner class="bg-grey-2 text-grey-8 q-mt-md">
-          Se creará una cuenta en Authentication con la contraseña <b>12345</b>.
+          Se creará una cuenta en Authentication con la contraseña especificada.
           Luego podrás forzar cambio de contraseña.
         </q-banner>
       </div>
@@ -110,7 +118,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { Notify, Dialog } from 'quasar'
-import { req, emailRule } from '@/utils/formValidators'
+import { req, emailRule, passwordRule } from '@/utils/formValidators'
 import { usePlayerStore } from '@/stores/players'
 import { useUserStore } from '@/stores/user'
 import type { Team, Player } from '@/types/auth'
@@ -148,6 +156,7 @@ const docTypeOpts = [
 type Form = {
   fullName: string
   email: string
+  password: string
   docType: 'CC'|'TI'|'TE'|''
   docNumber: string
   phone?: string | undefined
@@ -159,6 +168,7 @@ type Form = {
 const form = reactive<Form>({
   fullName: '',
   email: '',
+  password: '',
   docType: '' as Form['docType'],
   docNumber: '',
   phone: '',
@@ -247,10 +257,12 @@ async function createNewPlayer() {
   try {
     saving.value = true
 
-    // Preparar datos del jugador
-    const playerData: Parameters<typeof playerStore.addWithParticipation>[0] = {
+    // Preparar datos del jugador CON cuenta de autenticación
+    const trimmedPassword = form.password.trim()
+    const playerData: Parameters<typeof playerStore.addWithAccountAndParticipation>[0] = {
       displayName: form.fullName.trim(),
       email: form.email.trim(),
+      ...(trimmedPassword ? { password: trimmedPassword } : {}),
       photoURL: form.photoURL?.trim() || DEFAULT_PLAYER_AVATAR,
       tournamentId: props.tournamentId,
       teamId: props.team.id,
@@ -266,13 +278,13 @@ async function createNewPlayer() {
       playerData.jersey = form.jersey
     }
 
-    // Usar el nuevo sistema de participaciones
-    const result = await playerStore.addWithParticipation(playerData)
+    // Crear jugador con cuenta de Authentication y participación
+    const result = await playerStore.addWithAccountAndParticipation(playerData)
 
     Notify.create({
       type: 'positive',
       message: `Jugador creado: ${form.fullName}`,
-      caption: result.isExisting ? 'Participación agregada' : 'Nuevo jugador creado'
+      caption: result.isExisting ? 'Participación agregada' : 'Nuevo jugador con cuenta creado'
     })
 
     emit('created', result.playerId)
@@ -341,6 +353,7 @@ async function addExistingPlayerToTeam(player: Player) {
 function resetForm() {
   form.fullName = ''
   form.email = ''
+  form.password = ''
   form.docType = ''
   form.docNumber = ''
   form.phone = ''

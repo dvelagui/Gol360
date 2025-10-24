@@ -285,3 +285,105 @@ export async function listPlayersWithParticipationsByTeam(teamId: string): Promi
   // Filtrar nulls
   return players.filter(p => p !== null) as Array<Player & { participation: PlayerParticipation }>
 }
+
+/**
+ * Crea un jugador CON cuenta de Authentication y participación
+ * - Crea usuario en Firebase Authentication
+ * - Crea documento en users/
+ * - Crea documento básico en players/
+ * - Crea participación en PlayerParticipations/
+ */
+export async function createPlayerWithAccountAndParticipation(data: {
+  // Datos del jugador
+  displayName: string
+  email: string
+  password?: string
+  photoURL?: string | null
+  createdBy: string
+
+  // Datos de la participación
+  tournamentId: string
+  teamId: string
+  jersey?: number
+  position?: string
+  role?: 'player' | 'team'
+}): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
+  // Import dinámico para evitar dependencias circulares
+  const { createAuthUserAndUserDoc } = await import('./accountService')
+
+  let playerId: string
+  let isExisting = false
+
+  // 1) Buscar si existe jugador con ese email
+  const existingPlayer = await getPlayerByEmail(data.email)
+
+  if (existingPlayer) {
+    playerId = existingPlayer.id
+    isExisting = true
+    console.log(`✅ Jugador existente encontrado: ${existingPlayer.displayName} (${playerId})`)
+  } else {
+    // 2) Crear usuario en Authentication y users/
+    const uid = await createAuthUserAndUserDoc({
+      email: data.email,
+      ...(data.password ? { password: data.password } : {}),
+      displayName: data.displayName,
+      role: 'player',
+      ...(data.photoURL !== null && data.photoURL !== undefined ? { photoURL: data.photoURL } : {})
+    })
+
+    // 3) Crear documento básico en players/
+    const playerData: Partial<Player> = {
+      displayName: data.displayName,
+      email: data.email,
+      createdBy: data.createdBy
+    }
+
+    if (data.photoURL !== undefined) {
+      playerData.photoURL = data.photoURL
+    }
+
+    // Usar el uid como id del jugador
+    const ref = doc(colPlayers, uid)
+    const dataWithId = {
+      ...playerData,
+      id: uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }
+    await setDoc(ref, dataWithId)
+    playerId = uid
+    console.log(`✨ Nuevo jugador con cuenta creado: ${data.displayName} (${playerId})`)
+  }
+
+  // 4) Verificar si ya tiene participación en este equipo/torneo
+  const existingParticipation = await getParticipationByPlayerTeam(
+    playerId,
+    data.teamId,
+    data.tournamentId
+  )
+
+  if (existingParticipation) {
+    console.log(`⚠️  El jugador ya participa en este equipo/torneo`)
+    return {
+      playerId,
+      participationId: existingParticipation.id,
+      isExisting: true
+    }
+  }
+
+  // 5) Crear participación
+  const participationId = await createParticipation({
+    playerId,
+    tournamentId: data.tournamentId,
+    teamId: data.teamId,
+    jersey: data.jersey,
+    position: data.position,
+    role: data.role || 'player',
+    active: true,
+    createdBy: data.createdBy
+  } as any)
+
+  console.log(`✅ Participación creada: ${participationId}`)
+
+  return { playerId, participationId, isExisting }
+}

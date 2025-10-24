@@ -14,6 +14,28 @@
 
     <div v-else class="container-info">
 
+      <!-- Botón de Reglamento - Primera sección destacada -->
+      <div v-if="tournament.rulesUrl" class="row q-col-gutter-md q-mb-md">
+        <div class="col-12">
+          <q-card class="rules-card" flat bordered>
+            <q-card-section class="q-pa-md">
+              <q-btn
+                unelevated
+                color="primary"
+                icon="gavel"
+                label="Ver Reglamento del Torneo"
+                @click="showRulesDialog = true"
+                class="full-width"
+                size="lg"
+                style="font-weight: 600;"
+              >
+                <q-icon name="open_in_new" size="20px" class="q-ml-sm" />
+              </q-btn>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-6">
           <q-card class="info-card" flat bordered>
@@ -227,11 +249,44 @@
         </div>
       </div>
     </div>
+
+    <!-- Dialog para mostrar el reglamento (PDF) -->
+    <q-dialog v-model="showRulesDialog" maximized>
+      <q-card>
+        <q-bar class="bg-primary text-white">
+          <q-icon name="gavel" />
+          <div class="text-weight-bold q-ml-sm">Reglamento del Torneo</div>
+          <q-space />
+          <q-btn
+            dense
+            flat
+            icon="open_in_new"
+            @click="openRulesInNewTab"
+          >
+            <q-tooltip>Abrir en nueva pestaña</q-tooltip>
+          </q-btn>
+          <q-btn dense flat icon="close" v-close-popup />
+        </q-bar>
+
+        <q-card-section class="q-pa-none" style="height: calc(100vh - 50px);">
+          <iframe
+            v-if="tournament?.rulesUrl"
+            :src="tournament.rulesUrl"
+            style="width: 100%; height: 100%; border: none;"
+            title="Reglamento del Torneo"
+          />
+          <div v-else class="q-pa-xl text-center text-grey-6">
+            <q-icon name="error_outline" size="64px" class="q-mb-md" />
+            <div class="text-h6">No hay reglamento disponible</div>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Tournament } from '@/types/auth'
 
 interface Props {
@@ -244,6 +299,9 @@ const props = withDefaults(defineProps<Props>(), {
   registeredTeams: 0,
   isLoading: false
 })
+
+// Estado del diálogo de reglamento
+const showRulesDialog = ref(false)
 
 // Computed properties
 const remainingTeams = computed(() =>
@@ -302,12 +360,18 @@ function getStatusColor(status: string): string {
 
 function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
-    active: 'En Curso',
-    upcoming: 'Próximamente',
-    finished: 'Finalizado',
-    cancelled: 'Cancelado'
+    active: 'EN CURSO',
+    upcoming: 'PRÓXIMAMENTE',
+    finished: 'FINALIZADO',
+    cancelled: 'CANCELADO'
   }
-  return labels[status?.toLowerCase()] || status || 'Sin definir'
+  return labels[status?.toLowerCase()]?.toUpperCase() || status?.toUpperCase() || 'SIN DEFINIR'
+}
+
+function openRulesInNewTab() {
+  if (props.tournament?.rulesUrl) {
+    window.open(props.tournament.rulesUrl, '_blank')
+  }
 }
 </script>
 
@@ -327,6 +391,19 @@ function getStatusLabel(status: string): string {
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, .10);
+  }
+}
+
+.rules-card {
+  border-radius: 16px;
+  background: linear-gradient(135deg, #F0F9FF 0%, #FFFFFF 100%);
+  border: 2px solid #064F34;
+  box-shadow: 0 4px 20px rgba(6, 79, 52, 0.15);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(6, 79, 52, 0.25);
   }
 }
 

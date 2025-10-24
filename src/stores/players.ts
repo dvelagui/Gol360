@@ -13,6 +13,7 @@ import {
   // Nuevas funciones
   getPlayerByEmail,
   createPlayerWithParticipation,
+  createPlayerWithAccountAndParticipation,
   listPlayersWithParticipationsByTeam
 } from '@/services/playerService'
 import {
@@ -220,6 +221,36 @@ export const usePlayerStore = defineStore('players', {
         return result
       } catch (e: any) {
         this.error = e?.message ?? 'No se pudo crear el jugador'
+        throw e
+      }
+    },
+
+    /**
+     * Crea jugador CON cuenta de Authentication y participación (nuevo sistema)
+     * Crea usuario en Firebase Auth, documento en users/, players/ y PlayerParticipations/
+     */
+    async addWithAccountAndParticipation(data: {
+      displayName: string
+      email: string
+      password?: string
+      photoURL?: string | null
+      tournamentId: string
+      teamId: string
+      jersey?: number
+      position?: string
+      role?: 'player' | 'team'
+      createdBy: string
+    }): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
+      this.error = null
+      try {
+        const result = await createPlayerWithAccountAndParticipation(data)
+
+        // Refrescar lista de jugadores del equipo
+        await this.fetchByTeamWithParticipations(data.teamId)
+
+        return result
+      } catch (e: any) {
+        this.error = e?.message ?? 'No se pudo crear el jugador con cuenta'
         throw e
       }
     },
