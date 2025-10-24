@@ -1,7 +1,7 @@
 <template>
   <div class="clips-panel">
-    <!-- Team Selector -->
-    <div class="team-selector-wrapper">
+    <!-- Team Selector (solo si hay más de un equipo) -->
+    <div v-if="showTeamSelector" class="team-selector-wrapper">
       <q-card class="team-selector-card">
         <q-card-section class="q-pa-md">
           <div class="selector-content">
@@ -22,6 +22,24 @@
     <div v-if="loading" class="loading-container">
       <q-spinner-dots color="primary" size="50px" />
       <p class="text-grey-6">Cargando clips...</p>
+    </div>
+
+    <!-- No Data State -->
+    <div v-else-if="!hasRealData" class="no-data-container">
+      <q-card class="no-data-card">
+        <q-card-section class="text-center q-pa-xl">
+          <q-icon name="movie" size="120px" color="grey-4" class="q-mb-lg" />
+          <h5 class="text-h5 text-weight-bold q-mb-md text-grey-7">
+            No hay clips disponibles
+          </h5>
+          <p class="text-body1 text-grey-6 q-mb-md">
+            Aún no se han procesado los clips para este partido.
+          </p>
+          <p class="text-body2 text-grey-5">
+            Los clips estarán disponibles una vez que el partido haya sido procesado.
+          </p>
+        </q-card-section>
+      </q-card>
     </div>
 
     <!-- Content -->
@@ -65,10 +83,8 @@
             v-for="(clip, index) in currentClips"
             :key="index"
             class="clip-card"
-            @click="goToYouTubeTimestamp(clip.timeInSeconds)"
           >
             <q-card-section class="clip-header">
-              <div class="clip-index">#{{ clip.index }}</div>
               <q-chip
                 :color="getTagColor(clip.tag)"
                 text-color="white"
@@ -77,54 +93,32 @@
               >
                 {{ clip.tag }}
               </q-chip>
-            </q-card-section>
-
-            <q-card-section class="clip-body">
               <div class="clip-time">
-                <q-icon name="schedule" size="20px" />
                 <span class="timecode">{{ clip.timecode }}</span>
               </div>
-
-              <div class="clip-team">
-                <q-icon name="shield" size="18px" color="primary" />
-                <span>{{ clip.team }}</span>
-              </div>
             </q-card-section>
 
-            <q-card-section class="clip-footer">
+            <q-card-section class="clip-actions">
               <q-btn
                 outline
                 color="primary"
                 icon="play_arrow"
-                label="Ver momento"
+                label="Ver"
                 size="sm"
-                class="full-width"
-                @click.stop="goToYouTubeTimestamp(clip.timeInSeconds)"
+                class="action-btn"
+                @click="goToYouTubeTimestamp(clip.timeInSeconds)"
               />
 
               <q-btn
                 v-if="clip.videoUrl"
-                flat
-                dense
-                color="grey-7"
+                outline
+                color="positive"
                 icon="download"
+                label="Descargar"
                 size="sm"
-                class="download-btn q-mt-sm"
-                @click.stop="downloadClip(clip.videoUrl, clip.tag, clip.timecode)"
-              >
-                <q-tooltip>Descargar clip</q-tooltip>
-              </q-btn>
-            </q-card-section>
-
-            <q-card-section v-if="clip.videoUrl" class="clip-thumbnail">
-              <video
-                :src="clip.videoUrl"
-                class="clip-video-preview"
-                preload="metadata"
-                muted
-                @mouseenter="(e) => (e.target as HTMLVideoElement)?.play()"
-                @mouseleave="(e) => { const video = e.target as HTMLVideoElement; if (video) { video.pause(); video.currentTime = 0; } }"
-              ></video>
+                class="action-btn"
+                @click="downloadClip(clip.videoUrl, clip.tag, clip.timecode)"
+              />
             </q-card-section>
           </q-card>
         </div>
@@ -134,106 +128,126 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { openURL } from 'quasar'
 
 // Props
+interface Highlight {
+  team: string
+  side: 'home' | 'away'
+  index: number
+  tag: string
+  timecode: string
+  json: string // URL del video
+  updatedAt?: Date
+}
+
+interface ProcessedHighlight {
+  team: string
+  side: 'home' | 'away'
+  index: number
+  tag: string
+  timecode: string
+  timeInSeconds: number
+  videoUrl: string | null
+}
+
 interface Props {
-  highlightsData?: unknown // TODO: Usar tipo HighlightsEntry[] cuando llegue la data real
+  highlightsData?: Highlight[] // Array de highlights desde Firestore
   youtubeVideoId: string // El ID del video de YouTube (ej: "DtD7GNuF3xQ")
+  varTime?: number // Segundos a restar de cada timecode para sincronizar con el video
   loading?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
-  youtubeVideoId: 'DtD7GNuF3xQ' // Video por defecto
+  youtubeVideoId: 'DtD7GNuF3xQ', // Video por defecto
+  varTime: 0 // Por defecto no se resta nada
 })
 
-// DATOS MOCK - Basados en exampleApiAnalytics.json
-const mockHighlights = {
-  ColoColo: [
-    {
-      team: 'ColoColo',
-      index: 1,
-      tag: 'Tiro directo a portería',
-      timecode: '04:07',
-      timeInSeconds: 247,
-      videoUrl: 'https://download.veocdn.com/bd7121e4-4378-4227-a2a7-60036cf5fb22/highlight-v2/ce631023-2764-46e6-89f5-4c03096e396e_1756678475.097234/video.mp4?name=000342-shot-on-goal.mp4'
-    },
-    {
-      team: 'ColoColo',
-      index: 2,
-      tag: 'Tiro directo a portería',
-      timecode: '05:39',
-      timeInSeconds: 339,
-      videoUrl: 'https://download.veocdn.com/bd7121e4-4378-4227-a2a7-60036cf5fb22/highlight-v2/55e80fff-92fa-4226-972c-7a330b2cbd3a_1756678475.097234/video.mp4?name=000407-shot-on-goal.mp4'
-    },
-    {
-      team: 'ColoColo',
-      index: 3,
-      tag: 'Gol',
-      timecode: '10:44',
-      timeInSeconds: 644,
-      videoUrl: 'https://download.veocdn.com/bd7121e4-4378-4227-a2a7-60036cf5fb22/highlight-v2/fb92bbee-ea00-4056-8d07-2aaadbc0f1a4_1756678475.097234/video.mp4?name=000539-shot-on-goal.mp4'
-    },
-    {
-      team: 'ColoColo',
-      index: 4,
-      tag: 'Tiro directo a portería',
-      timecode: '12:15',
-      timeInSeconds: 735,
-      videoUrl: null
-    },
-    {
-      team: 'ColoColo',
-      index: 5,
-      tag: 'Tiro de esquina',
-      timecode: '15:23',
-      timeInSeconds: 923,
-      videoUrl: null
-    }
-  ],
-  IndValle: [
-    {
-      team: 'IndValle',
-      index: 1,
-      tag: 'Gol',
-      timecode: '08:12',
-      timeInSeconds: 492,
-      videoUrl: null
-    },
-    {
-      team: 'IndValle',
-      index: 2,
-      tag: 'Tiro directo a portería',
-      timecode: '14:30',
-      timeInSeconds: 870,
-      videoUrl: null
-    },
-    {
-      team: 'IndValle',
-      index: 3,
-      tag: 'Gol',
-      timecode: '22:45',
-      timeInSeconds: 1365,
-      videoUrl: null
-    }
-  ]
-}
-
 // State
-const selectedTeam = ref<'ColoColo' | 'IndValle'>('ColoColo')
+const selectedTeam = ref<'home' | 'away'>('home')
 const youtubePlayer = ref<HTMLIFrameElement | null>(null)
 const isVideoHighlighted = ref(false)
 
-// Team options for toggle
-const teamOptions = [
-  { label: 'Colo Colo', value: 'ColoColo' },
-  { label: 'Ind. Valle', value: 'IndValle' }
-]
+// Helper function: Convertir timecode MM:SS a segundos
+function timecodeToSeconds(timecode: string): number {
+  const parts = timecode.split(':')
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0] || '0')
+    const seconds = parseInt(parts[1] || '0')
+    return minutes * 60 + seconds
+  }
+  return 0
+}
 
-// Computed
-const currentClips = computed(() => mockHighlights[selectedTeam.value] || [])
+// Computed: Verificar si hay datos reales
+const hasRealData = computed(() => {
+  return props.highlightsData && Array.isArray(props.highlightsData) && props.highlightsData.length > 0
+})
+
+// Computed: Extraer equipos disponibles desde datos reales de Firestore
+const availableTeams = computed(() => {
+  if (!hasRealData.value || !props.highlightsData) return []
+
+  const teams: Array<{ label: string; value: 'home' | 'away' }> = []
+  const uniqueSides = new Set<'home' | 'away'>()
+
+  // Encontrar todos los sides únicos en los highlights
+  props.highlightsData.forEach((highlight) => {
+    uniqueSides.add(highlight.side)
+  })
+
+  // Convertir a opciones del toggle
+  uniqueSides.forEach((side) => {
+    const firstHighlight = props.highlightsData?.find((h) => h.side === side)
+    if (firstHighlight) {
+      teams.push({
+        label: firstHighlight.team,
+        value: side
+      })
+    }
+  })
+
+  return teams
+})
+
+// Team options for toggle
+const teamOptions = computed(() => availableTeams.value)
+
+// Computed: Mostrar selector solo si hay más de un equipo
+const showTeamSelector = computed(() => {
+  return availableTeams.value.length > 1
+})
+
+// Computed: Clips actuales filtrados por equipo seleccionado y procesados
+const currentClips = computed<ProcessedHighlight[]>(() => {
+  if (!hasRealData.value || !props.highlightsData) return []
+
+  // Filtrar clips por el lado seleccionado y procesarlos
+  return props.highlightsData
+    .filter((highlight) => highlight.side === selectedTeam.value)
+    .map((highlight) => {
+      // Convertir timecode a segundos
+      const rawSeconds = timecodeToSeconds(highlight.timecode)
+
+      // Aplicar VAR_TIME: restar los segundos de ajuste
+      const adjustedSeconds = Math.max(0, rawSeconds - (props.varTime || 0))
+
+      console.log(`🎯 Highlight #${highlight.index}: ${highlight.timecode} (${rawSeconds}s) - ${props.varTime}s = ${adjustedSeconds}s`)
+
+      return {
+        team: highlight.team,
+        side: highlight.side,
+        index: highlight.index,
+        tag: highlight.tag,
+        timecode: highlight.timecode,
+        timeInSeconds: adjustedSeconds,
+        videoUrl: highlight.json || null // El campo json contiene la URL del video
+      }
+    })
+    .sort((a, b) => a.index - b.index) // Ordenar por índice ascendente
+})
 
 // YouTube embed URL con autoplay habilitado
 const youtubeEmbedUrl = computed(() => {
@@ -316,6 +330,19 @@ function getTagColor(tag: string): string {
 
   return tagColors[tag] || 'grey-6'
 }
+
+// Watch para cuando lleguen datos reales desde Firestore
+watch(() => props.highlightsData, (newData) => {
+  if (newData && newData.length > 0) {
+    // Auto-seleccionar primer equipo disponible si hay datos
+    if (availableTeams.value.length > 0 && availableTeams.value[0]) {
+      const firstTeam = availableTeams.value[0].value
+      if (firstTeam === 'home' || firstTeam === 'away') {
+        selectedTeam.value = firstTeam
+      }
+    }
+  }
+}, { deep: true, immediate: true })
 </script>
 
 <style scoped lang="scss">
@@ -359,6 +386,35 @@ function getTagColor(tag: string): string {
   justify-content: center;
   padding: 64px 32px;
   gap: 16px;
+}
+
+// No Data State
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 32px 16px;
+}
+
+.no-data-card {
+  max-width: 600px;
+  width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px dashed #E0E0E0;
+
+  .q-icon {
+    opacity: 0.6;
+  }
+
+  h5 {
+    margin: 0;
+  }
+
+  p {
+    margin: 0;
+  }
 }
 
 // Content
@@ -434,24 +490,20 @@ function getTagColor(tag: string): string {
 // Clips Grid
 .clips-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
 }
 
 .clip-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
-  cursor: pointer;
   overflow: hidden;
+  font-size: 0.85rem; // Reducir tamaño de fuente general
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-
-    .clip-video-preview {
-      transform: scale(1.05);
-    }
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   }
 }
 
@@ -459,78 +511,48 @@ function getTagColor(tag: string): string {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: linear-gradient(135deg, #F5F7FA 0%, #FFFFFF 100%);
-}
-
-.clip-index {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #064F34;
+  border-bottom: 1px solid #E0E0E0;
 }
 
 .clip-tag {
   font-weight: 600;
-  font-size: 0.75rem;
-}
+  font-size: 0.65rem;
 
-.clip-body {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  :deep(.q-chip__content) {
+    padding: 2px 8px;
+  }
 }
 
 .clip-time {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
 
   .timecode {
     font-family: 'Courier New', monospace;
-    background: #F5F7FA;
-    padding: 4px 12px;
-    border-radius: 6px;
+    font-weight: 900 !important;
+    color: var(--q-accent);
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
   }
 }
 
-.clip-team {
+.clip-actions {
+  padding: 10px 12px;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.clip-footer {
-  padding: 12px 16px;
-  background: #F5F7FA;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 8px;
 }
 
-.download-btn {
-  width: 100%;
-}
+.action-btn {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.7rem;
+  padding: 6px 8px;
 
-.clip-thumbnail {
-  padding: 0;
-  height: 180px;
-  overflow: hidden;
-  position: relative;
-  background: #000;
-}
-
-.clip-video-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  :deep(.q-icon) {
+    font-size: 16px;
+  }
 }
 
 // Responsive
@@ -546,17 +568,59 @@ function getTagColor(tag: string): string {
     }
   }
 
+  .no-data-container {
+    min-height: 50vh;
+    padding: 24px 12px;
+  }
+
+  .no-data-card {
+    .q-icon {
+      font-size: 80px !important;
+    }
+
+    h5 {
+      font-size: 1.25rem;
+    }
+
+    p {
+      font-size: 0.9rem;
+    }
+  }
+
   .section-title {
     font-size: 1.1rem;
   }
 
   .clips-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 
-  .clip-thumbnail {
-    height: 160px;
+  .clip-header {
+    padding: 6px 10px;
+  }
+
+  .clip-tag {
+    font-size: 0.6rem;
+
+    :deep(.q-chip__content) {
+      padding: 2px 6px;
+    }
+  }
+
+  .clip-time {
+    .timecode {
+      font-size: 0.7rem;
+    }
+  }
+
+  .clip-actions {
+    flex-direction: column;
+    gap: 8px;
+
+    .action-btn {
+      width: 100%;
+    }
   }
 }
 </style>

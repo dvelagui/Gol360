@@ -98,7 +98,8 @@
       <q-tab-panel name="clips" class="q-pa-none">
         <ClipsPanel
           :highlights-data="highlightsData"
-          youtube-video-id="DtD7GNuF3xQ"
+          :youtube-video-id="youtubeVideoId"
+          :var-time="varTime"
           :loading="isLoadingAnalytics"
         />
       </q-tab-panel>
@@ -106,7 +107,8 @@
       <q-tab-panel name="destacados" class="q-pa-none">
         <DestacadosPanel
           :player-moments-data="playerMomentsData"
-          youtube-video-id="DtD7GNuF3xQ"
+          :youtube-video-id="youtubeVideoId"
+          :match-start="matchStart"
           :loading="isLoadingAnalytics"
         />
       </q-tab-panel>
@@ -145,6 +147,9 @@ const tab = ref<'analytics' | 'clips' | 'destacados'>('analytics')
 const isLoadingMatches = ref(false)
 const isLoadingAnalytics = ref(false)
 const analyticsData = ref<Record<string, unknown> | null>(null)
+const youtubeVideoId = ref<string>('DtD7GNuF3xQ') // Default fallback
+const matchStart = ref<string>('') // Tiempo de inicio del partido en el video
+const varTime = ref<number>(0) // Segundos a restar de cada timecode
 
 // Match selection
 interface MatchOption {
@@ -242,6 +247,41 @@ async function loadAnalytics() {
   const userStore = useUserStore()
   const userRole = databaseStore.userData?.role
   let playerSide: 'home' | 'away' | null = null
+  let matchMetadata = null
+
+  // Obtener metadata del partido (necesario para todos los roles)
+  matchMetadata = await getMatchMetadata(
+    selectedMatch.value.tournamentId,
+    selectedMatch.value.matchId
+  )
+
+  // Extraer VIDEO_ID si existe
+  if (matchMetadata?.VIDEO_ID) {
+    youtubeVideoId.value = matchMetadata.VIDEO_ID
+    console.log('📹 VIDEO_ID encontrado:', matchMetadata.VIDEO_ID)
+  } else {
+    // Fallback al valor por defecto
+    youtubeVideoId.value = 'DtD7GNuF3xQ'
+    console.warn('⚠️ VIDEO_ID no encontrado, usando valor por defecto')
+  }
+
+  // Extraer MATCH_START si existe
+  if (matchMetadata?.MATCH_START) {
+    matchStart.value = matchMetadata.MATCH_START
+    console.log('⏱️ MATCH_START encontrado:', matchMetadata.MATCH_START)
+  } else {
+    matchStart.value = ''
+    console.warn('⚠️ MATCH_START no encontrado')
+  }
+
+  // Extraer VAR_TIME si existe
+  if (matchMetadata?.VAR_TIME !== undefined) {
+    varTime.value = matchMetadata.VAR_TIME
+    console.log('🔧 VAR_TIME encontrado:', matchMetadata.VAR_TIME, 'segundos')
+  } else {
+    varTime.value = 0
+    console.warn('⚠️ VAR_TIME no encontrado, usando 0')
+  }
 
   // Determinar el lado del jugador si es rol 'player' o 'team'
   if (userRole === 'player' || userRole === 'team') {
@@ -268,11 +308,6 @@ async function loadAnalytics() {
       })
       return
     }
-
-    const matchMetadata = await getMatchMetadata(
-      selectedMatch.value.tournamentId,
-      selectedMatch.value.matchId
-    )
 
     if (!matchMetadata) {
       analyticsData.value = null

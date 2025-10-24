@@ -11,6 +11,9 @@ export interface MatchMetadata {
   tournamentId: string
   HOME_TEAM: string  // Nombre del equipo local
   AWAY_TEAM: string  // Nombre del equipo visitante
+  VIDEO_ID?: string  // ID del video de YouTube
+  MATCH_START?: string  // Tiempo de inicio del partido en el video (formato: "MM:SS")
+  VAR_TIME?: number  // Segundos a restar de cada timecode para sincronizar con el video
   date?: number
   status?: string
   score?: {
