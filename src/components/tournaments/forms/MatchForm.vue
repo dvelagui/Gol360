@@ -10,6 +10,17 @@
           <span class="text-subtitle2 text-primary text-weight-bold">Equipos</span>
         </div>
 
+        <!-- Warning if no teams available -->
+        <div v-if="teamOptions.length === 0" class="q-mt-sm q-mb-md">
+          <q-banner class="bg-warning text-white" dense rounded>
+            <template #avatar>
+              <q-icon name="warning" />
+            </template>
+            <div class="text-weight-bold">No hay equipos disponibles</div>
+            <div class="text-caption">Debes crear equipos en el torneo antes de poder programar partidos.</div>
+          </q-banner>
+        </div>
+
         <div class="row q-col-gutter-md q-mt-sm">
           <div class="col-12 col-sm-6">
             <q-select
@@ -21,11 +32,19 @@
               map-options
               label="Equipo Local"
               :rules="[val => !!val || 'Selecciona el equipo local']"
+              :disable="teamOptions.length === 0"
               filled
               dense
             >
               <template #prepend>
                 <q-icon name="home" color="green" />
+              </template>
+              <template v-if="teamOptions.length === 0" #no-option>
+                <q-item>
+                  <q-item-section class="text-grey-6">
+                    No hay equipos disponibles
+                  </q-item-section>
+                </q-item>
               </template>
             </q-select>
           </div>
@@ -40,11 +59,19 @@
               map-options
               label="Equipo Visitante"
               :rules="[val => !!val || 'Selecciona el equipo visitante', val => val !== form.homeTeamId || 'Los equipos deben ser diferentes']"
+              :disable="teamOptions.length === 0"
               filled
               dense
             >
               <template #prepend>
                 <q-icon name="flight_takeoff" color="orange" />
+              </template>
+              <template v-if="teamOptions.length === 0" #no-option>
+                <q-item>
+                  <q-item-section class="text-grey-6">
+                    No hay equipos disponibles
+                  </q-item-section>
+                </q-item>
               </template>
             </q-select>
           </div>
@@ -83,18 +110,35 @@
           </div>
 
           <div class="col-12 col-sm-6">
-            <q-input
+            <q-select
               v-model="form.round"
+              :options="roundOptions"
               label="Jornada/Fecha"
-              :rules="[val => !!val || 'Ingresa la jornada']"
+              :rules="[val => !!val || 'Selecciona la jornada']"
               filled
               dense
-              placeholder="ej: 1, 2, Fecha 1"
+              use-input
+              hide-selected
+              fill-input
+              input-debounce="0"
+              new-value-mode="add-unique"
+              @filter="filterRounds"
             >
               <template #prepend>
                 <q-icon name="format_list_numbered" color="purple" />
               </template>
-            </q-input>
+              <template #no-option>
+                <q-item>
+                  <q-item-section class="text-grey-6">
+                    <div class="text-caption">Escribe para crear una nueva jornada</div>
+                    <div class="text-caption text-primary">Ej: Fecha 1, Fecha 2, etc.</div>
+                  </q-item-section>
+                </q-item>
+              </template>
+              <template #hint>
+                Selecciona una fecha existente o escribe una nueva
+              </template>
+            </q-select>
           </div>
 
           <div class="col-12 col-sm-6">
@@ -210,29 +254,79 @@
     </q-form>
   </div>
 </template>
-<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { MatchPhase } from '@/types/competition'
 
+interface MatchFormData {
+  tournamentId: string
+  round: string
+  phase: MatchPhase
+  dateISO: string
+  field?: string
+  referee?: string
+  homeTeamId: string
+  awayTeamId: string
+  notes?: string
+}
+
 const props = defineProps<{
-  modelValue?: any
+  modelValue?: MatchFormData
   tournamentId: string
   teams: { id: string; name: string }[]
   editId?: string
+  existingRounds?: string[] // Rounds that already exist in the tournament
 }>()
 const emit = defineEmits<{
-  (e: 'save', payload: any): void
+  (e: 'save', payload: MatchFormData): void
   (e: 'cancel'): void
 }>()
 
 // Normalizar opciones de equipos para evitar problemas de IDs vs nombres
-const teamOptions = computed(() =>
-  props.teams.map(team => ({
+const teamOptions = computed(() => {
+  const options = props.teams.map(team => ({
     id: team.id,
     name: team.name
   }))
-)
+  console.log('[MatchForm] Team options:', options.length, options)
+  return options
+})
+
+// Generate default round options (Fecha 1 - Fecha 20)
+const defaultRoundOptions = Array.from({ length: 20 }, (_, i) => `Fecha ${i + 1}`)
+
+// Combine existing rounds with default options
+const allRoundOptions = ref<string[]>([
+  ...new Set([
+    ...(props.existingRounds || []),
+    ...defaultRoundOptions
+  ])
+].sort((a, b) => {
+  // Sort by number if both start with "Fecha"
+  const aMatch = a.match(/Fecha\s+(\d+)/)
+  const bMatch = b.match(/Fecha\s+(\d+)/)
+  if (aMatch?.[1] && bMatch?.[1]) {
+    return parseInt(aMatch[1], 10) - parseInt(bMatch[1], 10)
+  }
+  return a.localeCompare(b)
+}))
+
+// Filtered round options for search
+const roundOptions = ref<string[]>([...allRoundOptions.value])
+
+// Filter function for round search
+function filterRounds(val: string, update: (cb: () => void) => void) {
+  update(() => {
+    if (val === '') {
+      roundOptions.value = [...allRoundOptions.value]
+    } else {
+      const needle = val.toLowerCase()
+      roundOptions.value = allRoundOptions.value.filter(
+        v => v.toLowerCase().indexOf(needle) > -1
+      )
+    }
+  })
+}
 
 // Opciones de fase con labels mejorados
 const phaseOptions = computed(() => [

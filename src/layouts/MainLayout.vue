@@ -5,6 +5,23 @@
         <q-btn class="menu" dense flat round icon="menu" @click="toggleLeftDrawer" v-if="isLoggedIn" />
         <q-toolbar-title class="text-weight-bold text-center text-bold">Tu partido, como en la TV</q-toolbar-title>
         <div v-if="isLoggedIn" class="row items-center q-gutter-sm">
+          <!-- PWA Install Button -->
+          <InstallPWA
+            icon="install_mobile"
+            label=""
+            dense
+            flat
+            :show-tooltip="true"
+            class="gt-sm"
+          />
+          <InstallPWA
+            icon="install_mobile"
+            label=""
+            dense
+            flat
+            :show-tooltip="false"
+            class="lt-md"
+          />
           <q-btn dense flat round icon="info" label="Info" @click="handleLogout" />
         </div>
       </q-toolbar>
@@ -30,6 +47,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import EssentialLink from './EssentialLink.vue'
+import InstallPWA from '@/components/common/InstallPWA.vue'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 

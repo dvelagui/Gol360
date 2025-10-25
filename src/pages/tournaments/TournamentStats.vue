@@ -92,6 +92,7 @@
 
       <q-tab-panel name="clips" class="q-pa-none">
         <ClipsPanel
+          v-if="highlightsData"
           :highlights-data="highlightsData"
           :youtube-video-id="youtubeVideoId"
           :var-time="varTime"
@@ -101,9 +102,12 @@
 
       <q-tab-panel name="destacados" class="q-pa-none">
         <DestacadosPanel
+          v-if="playerMomentsData"
           :player-moments-data="playerMomentsData"
           :youtube-video-id="youtubeVideoId"
           :match-start="matchStart"
+          :tournament-id="selectedMatch?.tournamentId || ''"
+          :match-id="selectedMatch?.matchId || ''"
           :loading="isLoadingAnalytics"
         />
       </q-tab-panel>
@@ -124,6 +128,20 @@ import { getMatchMetadata, determineTeamSide } from '@/services/matchMetadataSer
 import { getPlayerParticipation } from '@/services/playerParticipationService'
 import type { Tournament } from '@/types/auth'
 import type { Match } from '@/types/competition'
+
+// Import PlayerMomentsData type from DestacadosPanel
+interface PlayerMomentsData {
+  side: 'home' | 'away'
+  team: string
+  namePlayer: string
+  momentsCount: number
+  moments: Array<{
+    startTime: string
+    duration: string
+    trackingStart: number
+    trackingEnd: number
+  }>
+}
 
 // Lazy load panels
 const AnalyticsPanel = defineAsyncComponent(() => import('@/components/tournaments/panels/AnalyticsPanel.vue'))
@@ -168,12 +186,15 @@ const tId = computed<string>(() => selectedTournament.value?.tournamentId || '')
 
 const highlightsData = computed(() => {
   if (!analyticsData.value?.data) return undefined
-  return (analyticsData.value.data as Record<string, unknown>).highlights
+  const data = analyticsData.value.data as Record<string, unknown>
+  return data.highlights as Highlight[] | undefined
 })
 
 const playerMomentsData = computed(() => {
   if (!analyticsData.value?.data) return undefined
-  return (analyticsData.value.data as Record<string, unknown>).playerMoments
+  const data = analyticsData.value.data as Record<string, unknown>
+  // PlayerMomentsData[] is the correct type for DestacadosPanel
+  return data.playerMoments as PlayerMomentsData[]
 })
 
 // Functions

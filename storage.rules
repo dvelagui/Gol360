@@ -1,10 +1,26 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
+    // Profile photos - users can only read/write their own photos
+    match /profiles/{userId}/{allPaths=**} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+
+      // Allow write only to own profile folder
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024 // Max 5MB
+                   && request.resource.contentType.matches('image/.*'); // Only images
+    }
+
+    // Raw tournament data (tracking, etc.) - read only for authenticated users
+    match /raw/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only admin/backend can write
+    }
+
+    // Default: deny all other access
     match /{allPaths=**} {
       allow read, write: if false;
     }

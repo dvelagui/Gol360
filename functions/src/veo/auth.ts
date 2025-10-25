@@ -68,9 +68,9 @@ export const authRoutes = (app: express.Express) => {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
 
-      res.redirect("/?veo=connected");
+      return res.redirect("/?veo=connected");
     } catch (e: any) {
-      res.status(500).send(e.message ?? "Auth error");
+      return res.status(500).send(e.message ?? "Auth error");
     }
   });
 };

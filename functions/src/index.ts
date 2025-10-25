@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { authRoutes } from "./veo/auth";
 import { apiRoutes } from "./veo/api";
+import { trackingRoutes } from "./tracking";
 
 admin.initializeApp();
 
@@ -16,5 +17,8 @@ app.use(express.json());
 // Rutas OAuth (login/callback) y API (primer fetch a Veo)
 authRoutes(app);
 apiRoutes(app);
+
+// Rutas para servir archivos de tracking (CORS-free proxy)
+trackingRoutes(app);
 
 export const api = functions.https.onRequest(app);

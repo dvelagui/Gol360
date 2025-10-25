@@ -89,6 +89,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/admin/DataMigration.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' },
     },
+    // Profile - admin
+    {
+      path: 'profile',
+      name: 'profile-admin',
+      component: () => import('@/pages/profile/ProfilePage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
   ],
 },
 
@@ -128,6 +135,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/tournaments/TournamentStats.vue'),
       meta: { requiresAuth: true, requiresRole: 'manager' }
     },
+    // Profile - manager
+    {
+      path: 'profile',
+      name: 'profile-manager',
+      component: () => import('@/pages/profile/ProfilePage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'manager' },
+    },
   ],
 },
 
@@ -160,6 +174,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/tournaments/TournamentStats.vue'),
       meta: { requiresAuth: true, requiresRole: 'team' }
     },
+    // Profile - team
+    {
+      path: 'profile',
+      name: 'profile-team',
+      component: () => import('@/pages/profile/ProfilePage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'team' },
+    },
   ],
 },
 
@@ -191,6 +212,13 @@ const routes: RouteRecordRaw[] = [
       name: 'tournament-stats-player',
       component: () => import('@/pages/tournaments/TournamentStats.vue'),
       meta: { requiresAuth: true, requiresRole: 'player' }
+    },
+    // Profile - player
+    {
+      path: 'profile',
+      name: 'profile-player',
+      component: () => import('@/pages/profile/ProfilePage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'player' },
     },
   ],
 },

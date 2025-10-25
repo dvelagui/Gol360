@@ -20,9 +20,19 @@
 
       <q-card-section class="q-pa-md">
         <MatchForm
+          v-if="formModel"
           :tournament-id="tournamentId"
           :teams="teams"
+          v-bind="existingRounds ? { existingRounds } : {}"
           :model-value="formModel"
+          @save="onSave"
+          @cancel="() => (model = false)"
+        />
+        <MatchForm
+          v-else
+          :tournament-id="tournamentId"
+          :teams="teams"
+          v-bind="existingRounds ? { existingRounds } : {}"
           @save="onSave"
           @cancel="() => (model = false)"
         />
@@ -43,6 +53,7 @@ const props = defineProps<{
   modelValue: boolean
   tournamentId: string
   teams: { id: string; name: string }[]
+  existingRounds?: string[] // Rounds that already exist in the tournament
   modelValue2?: {
     tournamentId: string
     round: string

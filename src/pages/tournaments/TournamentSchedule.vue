@@ -99,7 +99,7 @@
       </q-tab-panel>
     </q-tab-panels>
 
-    <MatchFormDialog v-model="showMatchForm" :tournament-id="tId" :teams="teams" :model-value2="matchModel"
+    <MatchFormDialog v-model="showMatchForm" :tournament-id="tId" :teams="teams" :existing-rounds="existingRounds" :model-value2="matchModel"
       @saved="afterMatchSaved" />
 
     <ResultsDialog v-model="showResults" :match="resultsMatch" :teams="teams" :can-edit="canEditMatch"
@@ -250,6 +250,42 @@ async function loadTeams(): Promise<void> {
   }
 }
 
+/* Existing rounds for round selector */
+const existingRounds = ref<string[]>([])
+
+async function loadExistingRounds(): Promise<void> {
+  if (!tId.value) return;
+
+  try {
+    // Get all matches from the store
+    const mStore = await import('@/stores/matches')
+    const matchStore = mStore.useMatchStore()
+    await matchStore.fetch(tId.value)
+
+    // Extract unique rounds from matches
+    const rounds = new Set<string>()
+    matchStore.items.forEach(match => {
+      if (match.round) {
+        rounds.add(String(match.round))
+      }
+    })
+
+    existingRounds.value = Array.from(rounds).sort((a, b) => {
+      // Sort by number if both start with "Fecha"
+      const aMatch = a.match(/Fecha\s+(\d+)/)
+      const bMatch = b.match(/Fecha\s+(\d+)/)
+      if (aMatch?.[1] && bMatch?.[1]) {
+        return parseInt(aMatch[1], 10) - parseInt(bMatch[1], 10)
+      }
+      return a.localeCompare(b)
+    })
+
+    console.log('[TournamentSchedule] Existing rounds:', existingRounds.value)
+  } catch (e: unknown) {
+    console.error('Error loading existing rounds:', e)
+  }
+}
+
 //funcion para traer doc con tournamentId usando fetchById de store
 async function fetchTournament(tournamentId?: string) {
   if (!tournamentId) return
@@ -299,7 +335,10 @@ function openEventDialog() { showEvent.value = true }
 /* Callbacks post‑save */
 async function afterMatchSaved() {
   showMatchForm.value = false
-  await scheduleRef.value?.refetch()
+  await Promise.all([
+    scheduleRef.value?.refetch(),
+    loadExistingRounds() // Reload rounds after saving a match
+  ])
 }
 
 /* Confirmar marcador final */
@@ -374,6 +413,14 @@ onMounted(async () => {
   await fetchByRole();
   await fetchTournament(tId.value);
 
+  // Load teams and existing rounds initially if tournament is already selected
+  if (tId.value) {
+    await Promise.all([
+      loadTeams(),
+      loadExistingRounds()
+    ]);
+  }
+
   // Mostrar selector si no hay torneo seleccionado
   if (!selectedTournament.value) {
     showSelector.value = true
@@ -386,11 +433,14 @@ onMounted(async () => {
     }
   }, { immediate: false });
 
-  // Watch tournament ID changes and load teams
+  // Watch tournament ID changes and load teams and rounds
   watch(tId, async (newTId, oldTId) => {
     if (newTId !== oldTId) {
       await fetchTournament(newTId);
-      await loadTeams();
+      await Promise.all([
+        loadTeams(),
+        loadExistingRounds()
+      ]);
     }
   }, { immediate: false });
 })

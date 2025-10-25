@@ -103,6 +103,7 @@ const allLinks = computed(() => {
          link.id === 'competition' ? `${rolePrefix}/tournaments/competition` :
          link.id === 'schedule' ? `${rolePrefix}/tournaments/schedule` :
          link.id === 'stats' ? `${rolePrefix}/tournaments/stats` :
+         link.id === 'profile' ? `${rolePrefix}/profile` :
          `${rolePrefix}/${link.id}`
   }));
 })
@@ -116,7 +117,8 @@ function go(path: string) {
 }
 
 function goToProfile() {
-  void router.push('/profile')
+  const rolePrefix = `/${role.value}`;
+  void router.push(`${rolePrefix}/profile`)
 }
 
 async function logOut() {
