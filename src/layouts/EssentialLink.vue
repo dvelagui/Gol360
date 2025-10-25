@@ -104,6 +104,7 @@ const allLinks = computed(() => {
          link.id === 'schedule' ? `${rolePrefix}/tournaments/schedule` :
          link.id === 'stats' ? `${rolePrefix}/tournaments/stats` :
          link.id === 'profile' ? `${rolePrefix}/profile` :
+         link.id === 'contact' ? `${rolePrefix}/contact` :
          `${rolePrefix}/${link.id}`
   }));
 })

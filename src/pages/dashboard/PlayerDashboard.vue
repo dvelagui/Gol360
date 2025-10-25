@@ -52,105 +52,6 @@
       </div>
     </div>
 
-    <div class="stats-section">
-      <h5 class="section-title">
-        <q-icon name="bar_chart" size="24px" />
-        Estadísticas Rápidas
-      </h5>
-      <div class="stats-grid">
-        <q-card class="stat-card">
-          <q-card-section class="stat-content">
-            <q-icon name="sports_soccer" size="32px" color="positive" />
-            <div class="stat-info">
-              <div class="stat-value">{{ quickStats.goals }}</div>
-              <div class="stat-label">Goles</div>
-            </div>
-          </q-card-section>
-        </q-card>
-
-        <q-card class="stat-card">
-          <q-card-section class="stat-content">
-            <q-icon name="timer" size="32px" color="primary" />
-            <div class="stat-info">
-              <div class="stat-value">{{ quickStats.minutesPlayed }}'</div>
-              <div class="stat-label">Minutos</div>
-            </div>
-          </q-card-section>
-        </q-card>
-
-        <q-card class="stat-card">
-          <q-card-section class="stat-content">
-            <q-icon name="emoji_events" size="32px" color="warning" />
-            <div class="stat-info">
-              <div class="stat-value">{{ quickStats.matches }}</div>
-              <div class="stat-label">Partidos</div>
-            </div>
-          </q-card-section>
-        </q-card>
-
-        <q-card class="stat-card">
-          <q-card-section class="stat-content">
-            <q-icon name="movie" size="32px" color="info" />
-            <div class="stat-info">
-              <div class="stat-value">{{ quickStats.clips }}</div>
-              <div class="stat-label">Clips</div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-
-    <div class="tournaments-section">
-      <div class="section-header">
-        <h5 class="section-title">
-          <q-icon name="emoji_events" size="24px" />
-          Mis Torneos
-        </h5>
-        <q-btn
-          flat
-          dense
-          color="primary"
-          icon="open_in_new"
-          label="Ver todos"
-          size="sm"
-          @click="goToTournaments"
-        />
-      </div>
-
-      <div v-if="myTournaments.length === 0" class="empty-state">
-        <q-icon name="emoji_events" size="64px" color="grey-4" />
-        <p class="text-grey-6">No estás registrado en ningún torneo aún</p>
-      </div>
-
-      <div v-else class="tournaments-list">
-        <q-card
-          v-for="tournament in myTournaments"
-          :key="tournament.id"
-          class="tournament-card"
-          @click="goToTournament(tournament.id)"
-        >
-          <q-card-section class="tournament-content">
-            <div class="tournament-icon">
-              <q-icon name="emoji_events" size="32px" color="primary" />
-            </div>
-            <div class="tournament-info">
-              <div class="tournament-name">{{ tournament.name }}</div>
-              <div class="tournament-meta">
-                <q-chip size="sm" color="grey-3" text-color="grey-8">
-                  <q-icon name="groups" size="16px" class="q-mr-xs" />
-                  {{ tournament.teamName }}
-                </q-chip>
-                <q-chip size="sm" :color="tournament.statusColor" text-color="white">
-                  {{ tournament.status }}
-                </q-chip>
-              </div>
-            </div>
-            <q-icon name="chevron_right" size="24px" color="grey-6" />
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-
     <div class="matches-section">
       <div class="section-header">
         <h5 class="section-title">
@@ -279,6 +180,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useDatabaseStore } from '@/stores/database'
+import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore'
+import { db } from '@/boot/firebase'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -293,84 +196,24 @@ const userPhotoURL = computed(() => {
   return databaseStore.userData?.photoURL || userStore.user?.photoURL || null
 })
 
-// Mock data - Replace with real data from Firestore/API
-const quickStats = ref({
-  goals: 8,
-  minutesPlayed: 450,
-  matches: 12,
-  clips: 24
-})
+// Match display interface
+interface DisplayMatch {
+  id: string
+  date: string
+  time?: string
+  homeTeam: string
+  awayTeam: string
+  homeScore?: number
+  awayScore?: number
+  myTeam: 'home' | 'away'
+  field?: string
+  hasVideo?: boolean
+}
 
-const myTournaments = ref([
-  {
-    id: 't1',
-    name: 'Copa Veteranos Tunja 2025',
-    teamName: 'Colo Colo',
-    status: 'En curso',
-    statusColor: 'positive'
-  },
-  {
-    id: 't2',
-    name: 'Liga Local Primavera',
-    teamName: 'Tigres FC',
-    status: 'Finalizado',
-    statusColor: 'grey-6'
-  }
-])
-
-const upcomingMatches = ref([
-  {
-    id: 'um1',
-    date: '22 Oct 2025',
-    time: '15:00',
-    homeTeam: 'Colo Colo',
-    awayTeam: 'Tigres FC',
-    myTeam: 'home',
-    field: 'Cancha Principal'
-  },
-  {
-    id: 'um2',
-    date: '25 Oct 2025',
-    time: '18:30',
-    homeTeam: 'Real Central',
-    awayTeam: 'Colo Colo',
-    myTeam: 'away',
-    field: 'Estadio Norte'
-  }
-])
-
-const recentMatches = ref([
-  {
-    id: 'm1',
-    date: '15 Oct 2025',
-    homeTeam: 'Colo Colo',
-    awayTeam: 'Ind. Valle',
-    homeScore: 3,
-    awayScore: 2,
-    myTeam: 'home',
-    hasVideo: true
-  },
-  {
-    id: 'm2',
-    date: '10 Oct 2025',
-    homeTeam: 'Atlético Norte',
-    awayTeam: 'Colo Colo',
-    homeScore: 1,
-    awayScore: 1,
-    myTeam: 'away',
-    hasVideo: true
-  },
-  {
-    id: 'm3',
-    date: '05 Oct 2025',
-    homeTeam: 'Colo Colo',
-    awayTeam: 'Real Central',
-    homeScore: 2,
-    awayScore: 0,
-    myTeam: 'home',
-    hasVideo: false
-  }
-])
+// Real data from Firestore
+const upcomingMatches = ref<DisplayMatch[]>([])
+const recentMatches = ref<DisplayMatch[]>([])
+const loading = ref(false)
 
 // Navigation functions
 function goToCompetition() {
@@ -385,25 +228,150 @@ function goToStats() {
   void router.push('/player/tournaments/stats')
 }
 
-function goToTournaments() {
-  void router.push('/player/tournaments')
-}
-
-function goToTournament(id: string) {
-  void router.push(`/player/tournaments/${id}`)
-}
-
 function goToMatchStats() {
   void router.push('/player/tournaments/stats')
 }
 
+// Helper function to format date
+function formatDate(date: Date | Timestamp): string {
+  const d = date instanceof Timestamp ? date.toDate() : date
+  const day = d.getDate()
+  const month = d.toLocaleDateString('es', { month: 'short' })
+  const year = d.getFullYear()
+  return `${day} ${month} ${year}`
+}
+
+// Helper function to format time
+function formatTime(date: Date | Timestamp): string {
+  const d = date instanceof Timestamp ? date.toDate() : date
+  return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+}
+
+// Load player's matches
+async function loadPlayerMatches() {
+  if (!userStore.user?.uid) return
+
+  loading.value = true
+  try {
+    // 1. Get player participations to find their teams
+    const participationsRef = collection(db, 'playerParticipations')
+    const participationsQuery = query(
+      participationsRef,
+      where('playerId', '==', userStore.user.uid)
+    )
+    const participationsSnapshot = await getDocs(participationsQuery)
+
+    if (participationsSnapshot.empty) {
+      console.log('[PlayerDashboard] No participations found for player')
+      upcomingMatches.value = []
+      recentMatches.value = []
+      return
+    }
+
+    // Get all team IDs where player participates
+    const teamIds = new Set<string>()
+    participationsSnapshot.forEach(doc => {
+      const data = doc.data()
+      if (data.teamId) {
+        teamIds.add(data.teamId)
+      }
+    })
+
+    if (teamIds.size === 0) {
+      console.log('[PlayerDashboard] No teams found in participations')
+      upcomingMatches.value = []
+      recentMatches.value = []
+      return
+    }
+
+    const teamIdsArray = Array.from(teamIds)
+    console.log('[PlayerDashboard] Found teams:', teamIdsArray)
+
+    // 2. Get ALL matches and filter by player's teams
+    const matchesRef = collection(db, 'matches')
+    const allMatchesQuery = query(matchesRef)
+    const allMatchesSnapshot = await getDocs(allMatchesQuery)
+
+    console.log('[PlayerDashboard] Total matches in DB:', allMatchesSnapshot.size)
+
+    const upcoming: DisplayMatch[] = []
+    const recent: DisplayMatch[] = []
+    const now = new Date()
+
+    for (const matchDoc of allMatchesSnapshot.docs) {
+      const matchData = matchDoc.data()
+
+      // Check if player's team is in this match
+      const isPlayerMatch = teamIdsArray.includes(matchData.homeTeamId as string) || teamIdsArray.includes(matchData.awayTeamId as string)
+
+      if (!isPlayerMatch) continue
+
+      console.log('[PlayerDashboard] Found player match:', matchDoc.id)
+
+      // Get team names
+      const homeTeamDoc = await getDocs(query(collection(db, 'teams'), where('id', '==', matchData.homeTeamId)))
+      const awayTeamDoc = await getDocs(query(collection(db, 'teams'), where('id', '==', matchData.awayTeamId)))
+
+      const homeTeamData = homeTeamDoc.docs[0]?.data()
+      const awayTeamData = awayTeamDoc.docs[0]?.data()
+
+      const homeTeamName = homeTeamData?.name || 'Equipo Local'
+      const awayTeamName = awayTeamData?.name || 'Equipo Visitante'
+
+      const matchDate = new Date(matchData.dateISO as string)
+
+      if (matchDate > now) {
+        // Upcoming match
+        const displayMatch: DisplayMatch = {
+          id: matchDoc.id,
+          date: formatDate(matchDate),
+          time: formatTime(matchDate),
+          homeTeam: homeTeamName,
+          awayTeam: awayTeamName,
+          myTeam: teamIdsArray.includes(matchData.homeTeamId as string) ? 'home' : 'away'
+        }
+
+        if (matchData.field) {
+          displayMatch.field = matchData.field as string
+        }
+
+        upcoming.push(displayMatch)
+      } else {
+        // Past match
+        recent.push({
+          id: matchDoc.id,
+          date: formatDate(matchDate),
+          homeTeam: homeTeamName,
+          awayTeam: awayTeamName,
+          homeScore: (matchData.homeScore as number) || 0,
+          awayScore: (matchData.awayScore as number) || 0,
+          myTeam: teamIdsArray.includes(matchData.homeTeamId as string) ? 'home' : 'away',
+          hasVideo: !!(matchData.veoMatchId)
+        })
+      }
+    }
+
+    // Sort upcoming by date ascending
+    upcoming.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+    upcomingMatches.value = upcoming.slice(0, 3)
+    recentMatches.value = recent.slice(0, 3)
+
+    console.log('[PlayerDashboard] Loaded matches:', {
+      upcoming: upcomingMatches.value.length,
+      recent: recentMatches.value.length
+    })
+  } catch (error) {
+    console.error('[PlayerDashboard] Error loading matches:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
 // Load data on mount
 onMounted(() => {
-  // TODO: Fetch real data from Firestore
-  // - Player stats from tournaments
-  // - Recent matches
-  // - Tournaments where player is registered
-  console.log('PlayerDashboard mounted - Load real data here')
+  console.log('[PlayerDashboard] Mounted - loading player matches')
+  void loadPlayerMatches()
 })
 </script>
 
@@ -416,7 +384,7 @@ onMounted(() => {
 // Hero Section
 .dashboard-hero {
   background: linear-gradient(135deg, #064F34 0%, #138A59 100%);
-  padding: 32px 16px;
+  padding: 32px 24px;
   margin: -16px -16px 24px -16px;
   color: white;
 }
@@ -427,6 +395,7 @@ onMounted(() => {
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 8px;
 }
 
 .welcome-section {
@@ -568,107 +537,6 @@ onMounted(() => {
   font-size: 0.7rem;
   color: #666;
   font-weight: 500;
-}
-
-// Stats Section
-.stats-section {
-  padding: 0 16px;
-  margin-bottom: 32px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.stat-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  cursor: default;
-
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px !important;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #064F34;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.85rem;
-  color: #666;
-  margin-top: 4px;
-}
-
-// Tournaments Section
-.tournaments-section {
-  padding: 0 16px;
-  margin-bottom: 32px;
-}
-
-.tournaments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.tournament-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  cursor: pointer;
-
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    transform: translateX(4px);
-  }
-}
-
-.tournament-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px !important;
-}
-
-.tournament-icon {
-  flex-shrink: 0;
-}
-
-.tournament-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.tournament-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.tournament-meta {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 // Matches Section
@@ -816,10 +684,6 @@ onMounted(() => {
 
   .action-subtitle {
     font-size: 0.8rem;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
   }
 
   .dashboard-hero {

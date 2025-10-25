@@ -24,12 +24,10 @@
         <div class="row q-col-gutter-md q-mt-sm">
           <div class="col-12 col-sm-6">
             <q-select
-              v-model="form.homeTeamId"
+              v-model="form.homeTeam"
               :options="teamOptions"
               option-value="id"
               option-label="name"
-              emit-value
-              map-options
               label="Equipo Local"
               :rules="[val => !!val || 'Selecciona el equipo local']"
               :disable="teamOptions.length === 0"
@@ -51,14 +49,12 @@
 
           <div class="col-12 col-sm-6">
             <q-select
-              v-model="form.awayTeamId"
+              v-model="form.awayTeam"
               :options="teamOptions"
               option-value="id"
               option-label="name"
-              emit-value
-              map-options
               label="Equipo Visitante"
-              :rules="[val => !!val || 'Selecciona el equipo visitante', val => val !== form.homeTeamId || 'Los equipos deben ser diferentes']"
+              :rules="[val => !!val || 'Selecciona el equipo visitante', val => val?.id !== form.homeTeam?.id || 'Los equipos deben ser diferentes']"
               :disable="teamOptions.length === 0"
               filled
               dense
@@ -77,7 +73,7 @@
           </div>
         </div>
 
-        <div v-if="form.homeTeamId && form.homeTeamId === form.awayTeamId" class="q-mt-sm">
+        <div v-if="form.homeTeam && form.awayTeam && form.homeTeam.id === form.awayTeam.id" class="q-mt-sm">
           <q-banner class="bg-negative text-white" dense>
             <template #avatar>
               <q-icon name="warning" />
@@ -263,11 +259,11 @@ interface MatchFormData {
   round: string
   phase: MatchPhase
   dateISO: string
-  field?: string
-  referee?: string
-  homeTeamId: string
-  awayTeamId: string
-  notes?: string
+  field?: string | undefined
+  referee?: string | undefined
+  homeTeamId: { id: string; name: string }
+  awayTeamId: { id: string; name: string }
+  notes?: string | undefined
 }
 
 const props = defineProps<{
@@ -336,22 +332,44 @@ const phaseOptions = computed(() => [
   { label: '🏆 Final', value: 'final' }
 ])
 
-const form = ref({
+const form = ref<{
+  tournamentId: string
+  round: string
+  phase: MatchPhase
+  dateISO: string
+  field: string
+  referee: string
+  homeTeam: { id: string; name: string } | null
+  awayTeam: { id: string; name: string } | null
+  notes: string
+}>({
   tournamentId: props.tournamentId,
   round: '',
   phase: 'grupos' as MatchPhase,
   dateISO: '',
   field: '',
   referee: '',
-  homeTeamId: '',
-  awayTeamId: '',
+  homeTeam: null,
+  awayTeam: null,
   notes: ''
 })
 
 const saving = ref(false)
 
 // si es edición, precargar (opcional)
-if (props.modelValue) Object.assign(form.value, props.modelValue)
+if (props.modelValue) {
+  Object.assign(form.value, {
+    tournamentId: props.modelValue.tournamentId,
+    round: props.modelValue.round,
+    phase: props.modelValue.phase,
+    dateISO: props.modelValue.dateISO,
+    field: props.modelValue.field || '',
+    referee: props.modelValue.referee || '',
+    homeTeam: props.modelValue.homeTeamId,
+    awayTeam: props.modelValue.awayTeamId,
+    notes: props.modelValue.notes || ''
+  })
+}
 
 // Validación mejorada
 const validateFutureDate = (val: string) => {
@@ -364,11 +382,11 @@ const validateFutureDate = (val: string) => {
 const validationErrors = computed(() => {
   const errors: string[] = []
 
-  if (!form.value.homeTeamId || !form.value.awayTeamId) {
+  if (!form.value.homeTeam || !form.value.awayTeam) {
     errors.push('Selecciona ambos equipos')
   }
 
-  if (form.value.homeTeamId === form.value.awayTeamId) {
+  if (form.value.homeTeam && form.value.awayTeam && form.value.homeTeam.id === form.value.awayTeam.id) {
     errors.push('Los equipos deben ser diferentes')
   }
 
@@ -391,11 +409,23 @@ const validationErrors = computed(() => {
 const canSave = computed(() => validationErrors.value.length === 0)
 
 function onSave() {
-  if (!canSave.value) return
+  if (!canSave.value || !form.value.homeTeam || !form.value.awayTeam) return
 
   saving.value = true
   try {
-    emit('save', { ...form.value })
+    // Convertir a formato MatchFormData para emitir
+    const payload: MatchFormData = {
+      tournamentId: form.value.tournamentId,
+      round: form.value.round,
+      phase: form.value.phase,
+      dateISO: form.value.dateISO,
+      field: form.value.field || undefined,
+      referee: form.value.referee || undefined,
+      homeTeamId: form.value.homeTeam,
+      awayTeamId: form.value.awayTeam,
+      notes: form.value.notes || undefined
+    }
+    emit('save', payload)
   } finally {
     saving.value = false
   }

@@ -100,8 +100,8 @@ interface MatchFormModel {
   dateISO: string
   field?: string
   referee?: string
-  homeTeamId: string
-  awayTeamId: string
+  homeTeamId: { id: string; name: string }
+  awayTeamId: { id: string; name: string }
   notes?: string
   id?: string
 }
@@ -169,13 +169,30 @@ function openMatchCreate() {
   showMatchForm.value = true
 }
 function openMatchEdit(m: Match) {
+  // Convertir homeTeamId y awayTeamId a objetos si son strings
+  const homeId = typeof m.homeTeamId === 'object' && m.homeTeamId !== null
+    ? m.homeTeamId.id
+    : m.homeTeamId as string
+
+  const awayId = typeof m.awayTeamId === 'object' && m.awayTeamId !== null
+    ? m.awayTeamId.id
+    : m.awayTeamId as string
+
+  const homeTeamId = typeof m.homeTeamId === 'object' && m.homeTeamId !== null
+    ? m.homeTeamId
+    : { id: homeId, name: teams.value.find(t => t.id === homeId)?.name || '' }
+
+  const awayTeamId = typeof m.awayTeamId === 'object' && m.awayTeamId !== null
+    ? m.awayTeamId
+    : { id: awayId, name: teams.value.find(t => t.id === awayId)?.name || '' }
+
   matchModel.value = {
     tournamentId: m.tournamentId,
     round: String(m.round),
     phase: m.phase,
     dateISO: new Date(m.date).toISOString().slice(0, 16),
-    homeTeamId: typeof m.homeTeamId === 'object' && m.homeTeamId !== null ? m.homeTeamId.id : m.homeTeamId,
-    awayTeamId: typeof m.awayTeamId === 'object' && m.awayTeamId !== null ? m.awayTeamId.id : m.awayTeamId,
+    homeTeamId,
+    awayTeamId,
     ...(m.field ? { field: m.field } : {}),
     ...(m.referee ? { referee: m.referee } : {}),
     ...(m.notes ? { notes: m.notes } : {}),

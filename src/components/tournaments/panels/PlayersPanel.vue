@@ -13,7 +13,7 @@
     <div v-if="team" class="header-card q-mb-xs row">
       <div class="header-overlay">
         <div class="row justify-between items-end full-width">
-          <div class="col-6 col-md-10 row items-center q-gutter-sm">
+          <div class="col-10 col-md-10 row items-center q-gutter-sm">
             <q-avatar size="56px" class="bg-white">
               <img v-if="team.crestUrl" :src="team.crestUrl" alt="crest" />
               <q-icon v-else name="emoji_events" />

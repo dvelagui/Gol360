@@ -144,7 +144,7 @@
                   </q-select>
                 </div>
 
-                <div class="form-field">
+               <!--  <div class="form-field">
                   <label class="field-label">Altura - cm (opcional)</label>
                   <q-input
                     v-model.number="form.height"
@@ -187,7 +187,7 @@
                       <q-icon name="directions_run" />
                     </template>
                   </q-select>
-                </div>
+                </div> -->
               </template>
 
               <div class="form-field">
@@ -320,11 +320,11 @@ const positionToSpanish: Record<string, string> = {
   'striker': 'Delantero Centro'
 }
 
-const footOptions = [
+/* const footOptions = [
   { label: 'Derecho', value: 'right' },
   { label: 'Izquierdo', value: 'left' },
   { label: 'Ambos', value: 'both' }
-]
+] */
 
 // Computed
 const userData = computed(() => databaseStore.userData)

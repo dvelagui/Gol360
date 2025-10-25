@@ -206,10 +206,12 @@ async function onSubmit () {
     let photoURL = form.value.photoURL || DEFAULT_TEAM_AVATAR
     let path: string | undefined = undefined
     if (localFile.value) {
+      console.log('[TeamForm] Subiendo imagen...')
       const up = await uploadImage(
         localFile.value,
         'teams'
       ) as UploadResult
+      console.log('[TeamForm] Resultado de upload:', up)
       if (typeof up === 'string') {
         photoURL = up
       } else if (up && typeof up === 'object' && 'url' in up && 'path' in up) {
@@ -227,9 +229,12 @@ async function onSubmit () {
       ...(path ? { __storagePath__: path } : {})
     }
 
+    console.log('[TeamForm] Emitiendo payload:', payload)
     emit('save', payload)
-  } catch {
-    Notify.create({ type: 'negative', message: 'No se pudo guardar el equipo' })
+  } catch (error) {
+    console.error('[TeamForm] Error al guardar:', error)
+    const errorMessage = error instanceof Error ? error.message : 'No se pudo guardar el equipo'
+    Notify.create({ type: 'negative', message: errorMessage, caption: 'Revisa la consola para más detalles' })
   } finally {
     submitting.value = false
   }

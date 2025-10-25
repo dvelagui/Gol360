@@ -96,6 +96,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/profile/ProfilePage.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' },
     },
+    // Contact - admin
+    {
+      path: 'contact',
+      name: 'contact-admin',
+      component: () => import('@/pages/ContactPage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
   ],
 },
 
@@ -142,6 +149,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/profile/ProfilePage.vue'),
       meta: { requiresAuth: true, requiresRole: 'manager' },
     },
+    // Contact - manager
+    {
+      path: 'contact',
+      name: 'contact-manager',
+      component: () => import('@/pages/ContactPage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'manager' },
+    },
   ],
 },
 
@@ -181,6 +195,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/profile/ProfilePage.vue'),
       meta: { requiresAuth: true, requiresRole: 'team' },
     },
+    // Contact - team
+    {
+      path: 'contact',
+      name: 'contact-team',
+      component: () => import('@/pages/ContactPage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'team' },
+    },
   ],
 },
 
@@ -218,6 +239,13 @@ const routes: RouteRecordRaw[] = [
       path: 'profile',
       name: 'profile-player',
       component: () => import('@/pages/profile/ProfilePage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'player' },
+    },
+    // Contact - player
+    {
+      path: 'contact',
+      name: 'contact-player',
+      component: () => import('@/pages/ContactPage.vue'),
       meta: { requiresAuth: true, requiresRole: 'player' },
     },
   ],

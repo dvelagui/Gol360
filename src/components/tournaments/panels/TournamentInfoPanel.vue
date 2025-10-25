@@ -22,14 +22,78 @@
                 unelevated
                 color="primary"
                 icon="gavel"
-                label="Ver Reglamento del Torneo"
+                :label="$q.screen.gt.xs ? 'Ver Reglamento del Torneo' : 'Reglamento'"
                 @click="showRulesDialog = true"
-                class="full-width"
-                size="lg"
-                style="font-weight: 600;"
+                class="full-width rules-btn"
+                :size="$q.screen.gt.xs ? 'lg' : 'md'"
               >
-                <q-icon name="open_in_new" size="20px" class="q-ml-sm" />
+                <q-icon name="open_in_new" :size="$q.screen.gt.xs ? '20px' : '16px'" class="q-ml-xs" />
               </q-btn>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <div class="row q-col-gutter-md q-mb-md">
+        <div class="col-12">
+          <q-card class="info-card fees-card" flat bordered>
+            <q-card-section>
+              <div class="text-h6 text-primary q-mb-md">
+                <q-icon name="attach_money" class="q-mr-xs" />
+                Valores y Tarifas
+              </div>
+
+              <div class="row q-col-gutter-sm">
+                <div class="col-12 col-sm-6 col-md">
+                  <div class="info-row">
+                    <div class="info-label">
+                      <q-icon name="sports_soccer" size="20px" class="q-mr-xs" />
+                      Arbitraje por equipo:
+                    </div>
+                    <div class="info-value">{{ formatCurrency(105000) }}</div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md">
+                  <div class="info-row">
+                    <div class="info-label">
+                      <q-icon name="warning" size="20px" class="q-mr-xs" style="color: #FFC107" />
+                      Tarjeta amarilla:
+                    </div>
+                    <div class="info-value">{{ formatCurrency(12000) }}</div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md">
+                  <div class="info-row">
+                    <div class="info-label">
+                      <q-icon name="block" size="20px" class="q-mr-xs" style="color: #F44336" />
+                      Tarjeta roja:
+                    </div>
+                    <div class="info-value">{{ formatCurrency(20000) }}</div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md">
+                  <div class="info-row">
+                    <div class="info-label">
+                      <q-icon name="gavel" size="20px" class="q-mr-xs" />
+                      Demanda:
+                    </div>
+                    <div class="info-value">{{ formatCurrency(50000) }}</div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md">
+                  <div class="info-row">
+                    <div class="info-label">
+                      <q-icon name="sports_soccer" size="20px" class="q-mr-xs" />
+                      Multa por balón:
+                    </div>
+                    <div class="info-value">{{ formatCurrency(20000) }}</div>
+                  </div>
+                </div>
+              </div>
             </q-card-section>
           </q-card>
         </div>
@@ -90,16 +154,6 @@
                 </div>
                 <div class="info-value">{{ tournament.season || '—' }}</div>
               </div>
-
-              <q-separator class="q-my-sm" />
-
-              <div class="info-row">
-                <div class="info-label">
-                  <q-icon name="sports" size="20px" class="q-mr-xs" />
-                  Tipo de competición
-                </div>
-                <div class="info-value">{{ getTournamentType(tournament.type) }}</div>
-              </div>
             </q-card-section>
           </q-card>
         </div>
@@ -140,26 +194,6 @@
                 <span v-else class="text-positive text-weight-bold">
                   ¡Todos los equipos registrados!
                 </span>
-              </div>
-            </q-card-section>
-          </q-card>
-
-          <q-card class="info-card q-mt-md" flat bordered>
-            <q-card-section>
-              <div class="text-h6 text-primary q-mb-md">
-                <q-icon name="flag" class="q-mr-xs" />
-                Estado
-              </div>
-
-              <div class="text-center q-py-md">
-                <q-badge
-                  :color="getStatusColor(tournament.status)"
-                  text-color="white"
-                  class="text-h6 q-pa-md"
-                  style="border-radius: 8px;"
-                >
-                  {{ getStatusLabel(tournament.status) }}
-                </q-badge>
               </div>
             </q-card-section>
           </q-card>
@@ -232,16 +266,29 @@
           </q-card>
         </div>
 
-        <div v-if="tournament.managerName" class="col-12">
+        <div v-if="tournament.managerName" class="col-12 col-md-6">
           <q-card class="info-card" flat bordered>
             <q-card-section>
               <div class="text-h6 text-primary q-mb-md">
                 <q-icon name="person" class="q-mr-xs" />
                 Organizador
               </div>
-              <div class="text-body1 text-grey-8">
-                <q-icon name="account_circle" class="q-mr-sm" />
-                {{ tournament.managerName }}
+              <div class="info-row">
+                <div class="info-label">
+                  <q-icon name="account_circle" size="20px" class="q-mr-xs" />
+                  Nombre:
+                </div>
+                <div class="info-value">{{ tournament.managerName }}</div>
+              </div>
+
+              <q-separator v-if="managerPhone" class="q-my-sm" />
+
+              <div v-if="managerPhone" class="info-row">
+                <div class="info-label">
+                  <q-icon name="phone" size="20px" class="q-mr-xs" />
+                  Teléfono:
+                </div>
+                <div class="info-value">{{ managerPhone }}</div>
               </div>
             </q-card-section>
           </q-card>
@@ -284,7 +331,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/boot/firebase'
 import type { Tournament } from '@/types/auth'
 
 interface Props {
@@ -301,6 +350,34 @@ const props = withDefaults(defineProps<Props>(), {
 // Estado del diálogo de reglamento
 const showRulesDialog = ref(false)
 
+// Estado para el teléfono del manager
+const managerPhone = ref<string>('')
+
+// Cargar datos del manager desde Firestore
+async function loadManagerData(managerId: string) {
+  try {
+    const managerDoc = await getDoc(doc(db, 'managers', managerId))
+    if (managerDoc.exists()) {
+      const data = managerDoc.data()
+      managerPhone.value = data.phone || ''
+    } else {
+      managerPhone.value = ''
+    }
+  } catch (error) {
+    console.error('Error loading manager data:', error)
+    managerPhone.value = ''
+  }
+}
+
+// Watch para cargar datos del manager cuando cambie el torneo
+watch(() => props.tournament?.managerId, (newManagerId) => {
+  if (newManagerId) {
+    void loadManagerData(newManagerId)
+  } else {
+    managerPhone.value = ''
+  }
+}, { immediate: true })
+
 // Computed properties
 const remainingTeams = computed(() =>
   Math.max((props.tournament?.numTeams ?? 0) - props.registeredTeams, 0)
@@ -312,16 +389,6 @@ const teamsProgress = computed(() => {
 })
 
 // Helper functions
-function getTournamentType(type?: 'league' | 'league_playoff' | 'playoff' | ''): string {
-  const types: Record<string, string> = {
-    league: 'Liga',
-    league_playoff: 'Liga + Playoff',
-    playoff: 'Playoff',
-    '': 'Por definir'
-  }
-  return types[type || ''] || 'Sin definir'
-}
-
 function formatDate(dateStr?: string): string {
   if (!dateStr) return '—'
 
@@ -344,26 +411,6 @@ function formatCurrency(amount: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(amount)
-}
-
-function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    active: 'positive',
-    upcoming: 'primary',
-    finished: 'grey',
-    cancelled: 'negative'
-  }
-  return colors[status?.toLowerCase()] || 'grey'
-}
-
-function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    active: 'EN CURSO',
-    upcoming: 'PRÓXIMAMENTE',
-    finished: 'FINALIZADO',
-    cancelled: 'CANCELADO'
-  }
-  return labels[status?.toLowerCase()]?.toUpperCase() || status?.toUpperCase() || 'SIN DEFINIR'
 }
 
 function openRulesInNewTab() {
@@ -481,6 +528,44 @@ function openRulesInNewTab() {
 
 .awards-card {
   background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+}
+
+.fees-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+  border: 1px solid rgba(25, 118, 210, 0.2);
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .info-label {
+    font-size: 0.75rem;
+    color: #616161;
+  }
+
+  .info-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--q-primary);
+  }
+}
+
+.rules-btn {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 600px) {
+  .rules-btn {
+    font-size: 0.875rem;
+    padding: 8px 16px;
+  }
+
+  .rules-card .q-card-section {
+    padding: 12px !important;
+  }
 }
 
 .award-item {

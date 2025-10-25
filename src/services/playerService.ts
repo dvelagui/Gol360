@@ -235,17 +235,25 @@ export async function createPlayerWithParticipation(data: {
     }
   }
 
-  // 3) Crear participación
-  const participationId = await createParticipation({
+  // 3) Crear participación (solo incluir campos que no son undefined)
+  const participationData: any = {
     playerId,
     tournamentId: data.tournamentId,
     teamId: data.teamId,
-    jersey: data.jersey,
-    position: data.position,
     role: data.role || 'player',
     active: true,
     createdBy: data.createdBy
-  } as any)
+  }
+
+  // Solo agregar jersey y position si tienen valores definidos
+  if (data.jersey !== undefined && data.jersey !== null) {
+    participationData.jersey = data.jersey
+  }
+  if (data.position !== undefined && data.position !== null && data.position !== '') {
+    participationData.position = data.position
+  }
+
+  const participationId = await createParticipation(participationData)
 
   console.log(`✅ Participación creada: ${participationId}`)
 
@@ -371,17 +379,25 @@ export async function createPlayerWithAccountAndParticipation(data: {
     }
   }
 
-  // 5) Crear participación
-  const participationId = await createParticipation({
+  // 5) Crear participación (solo incluir campos que no son undefined)
+  const participationData: any = {
     playerId,
     tournamentId: data.tournamentId,
     teamId: data.teamId,
-    jersey: data.jersey,
-    position: data.position,
     role: data.role || 'player',
     active: true,
     createdBy: data.createdBy
-  } as any)
+  }
+
+  // Solo agregar jersey y position si tienen valores definidos
+  if (data.jersey !== undefined && data.jersey !== null) {
+    participationData.jersey = data.jersey
+  }
+  if (data.position !== undefined && data.position !== null && data.position !== '') {
+    participationData.position = data.position
+  }
+
+  const participationId = await createParticipation(participationData)
 
   console.log(`✅ Participación creada: ${participationId}`)
 

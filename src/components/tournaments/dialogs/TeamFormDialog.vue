@@ -78,8 +78,10 @@ type TeamFormPayload = Omit<Team, 'id' | 'createdAt' | 'createdBy'> & {
 
 async function onSave(payload: TeamFormPayload) {
   try {
+    console.log('[TeamFormDialog] Guardando equipo con payload:', payload)
     if (isEdit.value && props.modelValue2?.id) {
       // UPDATE
+      console.log('[TeamFormDialog] Actualizando equipo ID:', props.modelValue2.id)
       await store.update(props.modelValue2.id, {
         displayName: payload.displayName,
         city: payload.city,
@@ -92,6 +94,7 @@ async function onSave(payload: TeamFormPayload) {
       Notify.create({ type: 'positive', message: 'Equipo actualizado' })
     } else {
       // CREATE
+      console.log('[TeamFormDialog] Creando nuevo equipo')
       const id = await store.add({
         tournamentId: payload.tournamentId,
         displayName: payload.displayName,
@@ -103,13 +106,20 @@ async function onSave(payload: TeamFormPayload) {
         captainId: payload.captainId ?? '',
         createdBy: ''
       } as Omit<Team,'id'|'createdAt'>)
+      console.log('[TeamFormDialog] Equipo creado con ID:', id)
       if (id) Notify.create({ type: 'positive', message: 'Equipo creado' })
     }
 
     emit('saved')
     model.value = false
-  } catch {
-    Notify.create({ type: 'negative', message: 'No se pudo guardar el equipo' })
+  } catch (error) {
+    console.error('[TeamFormDialog] Error al guardar equipo:', error)
+    const errorMessage = error instanceof Error ? error.message : 'No se pudo guardar el equipo'
+    Notify.create({
+      type: 'negative',
+      message: errorMessage,
+      caption: 'Revisa la consola del navegador para más detalles'
+    })
   }
 }
 </script>

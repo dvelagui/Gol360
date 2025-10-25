@@ -61,8 +61,8 @@ const props = defineProps<{
     dateISO: string
     field?: string
     referee?: string
-    homeTeamId: string
-    awayTeamId: string
+    homeTeamId: { id: string; name: string }
+    awayTeamId: { id: string; name: string }
     notes?: string
     id?: string // si existe, es edición
   } | null
@@ -83,8 +83,15 @@ const isEdit = computed(() => !!formModel.value?.id)
 
 // Save handler: replica tu lógica original pero encapsulada aquí
 async function onSave(modelForm: {
-  tournamentId: string; round: string; phase: MatchPhase; dateISO: string;
-  field?: string; referee?: string; homeTeamId: string; awayTeamId: string; notes?: string
+  tournamentId: string;
+  round: string;
+  phase: MatchPhase;
+  dateISO: string;
+  field?: string | undefined;
+  referee?: string | undefined;
+  homeTeamId: { id: string; name: string };
+  awayTeamId: { id: string; name: string };
+  notes?: string | undefined;
 }) {
   try {
     if (isEdit.value && formModel.value?.id) {
@@ -92,8 +99,8 @@ async function onSave(modelForm: {
         round: modelForm.round,
         phase: modelForm.phase,
         date: new Date(modelForm.dateISO).getTime(),
-        homeTeamId: props.teams.find(t => t.id === modelForm.homeTeamId) ?? { id: modelForm.homeTeamId, name: '' },
-        awayTeamId: props.teams.find(t => t.id === modelForm.awayTeamId) ?? { id: modelForm.awayTeamId, name: '' },
+        homeTeamId: modelForm.homeTeamId,
+        awayTeamId: modelForm.awayTeamId,
         ...(modelForm.field ?   { field: modelForm.field }     : {}),
         ...(modelForm.referee ? { referee: modelForm.referee } : {}),
         ...(modelForm.notes ?   { notes: modelForm.notes }     : {})
