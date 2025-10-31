@@ -131,7 +131,7 @@ const PlayersDialog = defineAsyncComponent(() => import('@/components/tournament
 const PlayerProfileDialog = defineAsyncComponent(() => import('@/components/tournaments/dialogs/PlayerProfileDialog.vue'))
 
 
-type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
+type Role = 'admin' | 'manager' | 'team' | 'player' | 'coach' | undefined
 interface TeamMin { id: string; name: string }
 
 const tStore = useTournamentStore()
@@ -149,7 +149,40 @@ const { selectedTournament, updateSelection } = useTournamentSelection(tournamen
 // Computed para el ID del torneo seleccionado
 const tId = computed<string>(() => selectedTournament.value?.tournamentId || '')
 
-const role = computed<Role>(() => database.userData?.role)
+// Computed para obtener el rol desde playerParticipations en lugar de users/
+const role = computed<Role>(() => {
+  // Si es admin o manager, usar el rol de userData (estos sí están en users/)
+  const baseRole = database.userData?.role
+  if (baseRole === 'admin' || baseRole === 'manager') {
+    console.log('👤 [TournamentCompetition] Role desde users/:', baseRole)
+    return baseRole
+  }
+
+  // Para player, team y coach, buscar en las participaciones del torneo actual
+  if (uStore.user?.uid && tId.value) {
+    // Buscar la participación del usuario en el torneo actual
+    // pStore.items contiene jugadores con sus participaciones anidadas
+    const userPlayer = pStore.items.find(p =>
+      p.id === uStore.user?.uid && p.tournamentId === tId.value
+    )
+
+    console.log('🔍 [TournamentCompetition] Buscando participación:', {
+      userId: uStore.user?.uid,
+      tournamentId: tId.value,
+      items: pStore.items.length,
+      found: userPlayer
+    })
+
+    if (userPlayer?.role) {
+      console.log('👤 [TournamentCompetition] Role desde participación:', userPlayer.role)
+      return userPlayer.role as Role
+    }
+  }
+
+  // Fallback al rol base
+  console.log('👤 [TournamentCompetition] Role fallback:', baseRole)
+  return baseRole
+})
 const isLoading = ref(false)
 const showPlayerProfile = ref(false)
 const selectedPlayerId = ref<string | null>(null)
@@ -177,6 +210,7 @@ async function fetchByRole() {
         tournaments.value = tStore.items;
         break;
       case 'player':
+      case 'coach':
         await tStore.fetch();
         // Obtener torneos usando el nuevo sistema de participaciones
         if (uStore.user?.email) {
@@ -276,6 +310,38 @@ onMounted(async () => {
     await fetchTournament(tId.value);
     await teamStore.fetch(tId.value);
     await loadTeams();
+
+    // Cargar participaciones del usuario para obtener su rol en este torneo
+    if (uStore.user?.email) {
+      await pStore.fetchByEmail(uStore.user.email);
+      console.log('📋 [onMounted] Participaciones del usuario cargadas:', pStore.items);
+    }
+
+    // Si es coach, team o player, obtener su equipo automáticamente
+    if ((role.value === 'coach' || role.value === 'player' || role.value === 'team') && uStore.user?.uid) {
+      console.log('🔍 Buscando equipo para', role.value, '- UID:', uStore.user.uid, 'Torneo:', tId.value);
+
+      // Las participaciones ya fueron cargadas arriba con fetchByEmail
+      console.log('📋 Participaciones en store:', pStore.items.length);
+
+      // Buscar al usuario en las participaciones del torneo actual
+      const userInTournament = pStore.items.find(p =>
+        p.id === uStore.user?.uid && p.tournamentId === tId.value
+      );
+
+      console.log('🏆 Usuario en este torneo:', userInTournament);
+
+      if (userInTournament?.teamId) {
+        const team = teamStore.items.find(t => t.id === userInTournament.teamId);
+        console.log('⚽ Equipo encontrado:', team);
+        if (team) {
+          currentTeam.value = team;
+          console.log('✅ currentTeam asignado:', currentTeam.value);
+        }
+      } else {
+        console.log('❌ No se encontró teamId para el usuario');
+      }
+    }
   }
 
   // Mostrar selector si no hay torneo seleccionado
@@ -304,6 +370,38 @@ onMounted(async () => {
 
       // Cargar lista mínima de equipos (usado en selects/dialogs)
       await loadTeams();
+
+      // Cargar participaciones del usuario para obtener su rol en este torneo
+      if (uStore.user?.email) {
+        await pStore.fetchByEmail(uStore.user.email);
+        console.log('📋 [Watch] Participaciones del usuario cargadas:', pStore.items);
+      }
+
+      // Si es coach, team o player, obtener su equipo automáticamente
+      if ((role.value === 'coach' || role.value === 'player' || role.value === 'team') && uStore.user?.uid) {
+        console.log('🔍 [Watch] Buscando equipo para', role.value, '- UID:', uStore.user.uid, 'Torneo:', newTId);
+
+        // Las participaciones ya fueron cargadas arriba con fetchByEmail
+        console.log('📋 [Watch] Participaciones en store:', pStore.items.length);
+
+        // Buscar al usuario en las participaciones del torneo actual
+        const userInTournament = pStore.items.find(p =>
+          p.id === uStore.user?.uid && p.tournamentId === newTId
+        );
+
+        console.log('🏆 [Watch] Usuario en este torneo:', userInTournament);
+
+        if (userInTournament?.teamId) {
+          const team = teamStore.items.find(t => t.id === userInTournament.teamId);
+          console.log('⚽ [Watch] Equipo encontrado:', team);
+          if (team) {
+            currentTeam.value = team;
+            console.log('✅ [Watch] currentTeam asignado:', currentTeam.value);
+          }
+        } else {
+          console.log('❌ [Watch] No se encontró teamId para el usuario');
+        }
+      }
     }
   }, { immediate: false });
 })

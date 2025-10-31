@@ -301,26 +301,46 @@ async function loadPlayerMatches() {
     for (const matchDoc of allMatchesSnapshot.docs) {
       const matchData = matchDoc.data()
 
+      // Extraer IDs de los equipos (pueden ser strings o objetos {id, name})
+      const homeTeamId = typeof matchData.homeTeamId === 'object' && matchData.homeTeamId !== null
+        ? (matchData.homeTeamId as { id: string }).id
+        : matchData.homeTeamId as string
+
+      const awayTeamId = typeof matchData.awayTeamId === 'object' && matchData.awayTeamId !== null
+        ? (matchData.awayTeamId as { id: string }).id
+        : matchData.awayTeamId as string
+
       // Check if player's team is in this match
-      const isPlayerMatch = teamIdsArray.includes(matchData.homeTeamId as string) || teamIdsArray.includes(matchData.awayTeamId as string)
+      const isPlayerMatch = teamIdsArray.includes(homeTeamId) || teamIdsArray.includes(awayTeamId)
 
       if (!isPlayerMatch) continue
 
-      console.log('[PlayerDashboard] Found player match:', matchDoc.id)
+      console.log('[PlayerDashboard] Found player match:', matchDoc.id, matchData)
 
-      // Get team names
-      const homeTeamDoc = await getDocs(query(collection(db, 'teams'), where('id', '==', matchData.homeTeamId)))
-      const awayTeamDoc = await getDocs(query(collection(db, 'teams'), where('id', '==', matchData.awayTeamId)))
+      // Nombres de equipos (pueden venir en el objeto o buscar)
+      const homeTeamName = typeof matchData.homeTeamId === 'object' && matchData.homeTeamId !== null
+        ? (matchData.homeTeamId as { name: string }).name
+        : 'Equipo Local'
 
-      const homeTeamData = homeTeamDoc.docs[0]?.data()
-      const awayTeamData = awayTeamDoc.docs[0]?.data()
+      const awayTeamName = typeof matchData.awayTeamId === 'object' && matchData.awayTeamId !== null
+        ? (matchData.awayTeamId as { name: string }).name
+        : 'Equipo Visitante'
 
-      const homeTeamName = homeTeamData?.name || 'Equipo Local'
-      const awayTeamName = awayTeamData?.name || 'Equipo Visitante'
+      // Obtener fecha del partido (puede ser 'date' como number timestamp o 'dateISO' como string)
+      let matchDate: Date
+      if (matchData.date) {
+        matchDate = new Date(matchData.date as number)
+      } else if (matchData.dateISO) {
+        matchDate = new Date(matchData.dateISO as string)
+      } else {
+        console.warn('[PlayerDashboard] Match without date:', matchDoc.id)
+        continue
+      }
 
-      const matchDate = new Date(matchData.dateISO as string)
+      // Determinar si es próximo o pasado
+      const isUpcoming = matchData.status === 'programado' || matchDate > now
 
-      if (matchDate > now) {
+      if (isUpcoming) {
         // Upcoming match
         const displayMatch: DisplayMatch = {
           id: matchDoc.id,
@@ -328,7 +348,7 @@ async function loadPlayerMatches() {
           time: formatTime(matchDate),
           homeTeam: homeTeamName,
           awayTeam: awayTeamName,
-          myTeam: teamIdsArray.includes(matchData.homeTeamId as string) ? 'home' : 'away'
+          myTeam: teamIdsArray.includes(homeTeamId) ? 'home' : 'away'
         }
 
         if (matchData.field) {
@@ -337,22 +357,28 @@ async function loadPlayerMatches() {
 
         upcoming.push(displayMatch)
       } else {
-        // Past match
-        recent.push({
-          id: matchDoc.id,
-          date: formatDate(matchDate),
-          homeTeam: homeTeamName,
-          awayTeam: awayTeamName,
-          homeScore: (matchData.homeScore as number) || 0,
-          awayScore: (matchData.awayScore as number) || 0,
-          myTeam: teamIdsArray.includes(matchData.homeTeamId as string) ? 'home' : 'away',
-          hasVideo: !!(matchData.veoMatchId)
-        })
+        // Past match (solo si está terminado)
+        if (matchData.status === 'terminado') {
+          const homeScore = matchData.score?.home ?? 0
+          const awayScore = matchData.score?.away ?? 0
+
+          recent.push({
+            id: matchDoc.id,
+            date: formatDate(matchDate),
+            homeTeam: homeTeamName,
+            awayTeam: awayTeamName,
+            homeScore,
+            awayScore,
+            myTeam: teamIdsArray.includes(homeTeamId) ? 'home' : 'away',
+            hasVideo: !!(matchData.veoMatchId)
+          })
+        }
       }
     }
 
-    // Sort upcoming by date ascending
+    // Sort upcoming by date ascending, recent by date descending
     upcoming.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    recent.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     upcomingMatches.value = upcoming.slice(0, 3)
     recentMatches.value = recent.slice(0, 3)

@@ -165,35 +165,6 @@
       </q-input>
     </div>
 
-    <div v-if="canSetApproved" class="form-section approval-section">
-      <q-toggle
-        v-model="form.status"
-        true-value="aprobado"
-        false-value="propuesto"
-        color="positive"
-        size="lg"
-      >
-        <template #default>
-          <div class="toggle-label">
-            <q-icon
-              :name="form.status === 'aprobado' ? 'check_circle' : 'schedule'"
-              :color="form.status === 'aprobado' ? 'positive' : 'warning'"
-              size="24px"
-              class="q-mr-sm"
-            />
-            <div>
-              <div class="text-weight-bold">
-                {{ form.status === 'aprobado' ? 'Aprobar inmediatamente' : 'Guardar como propuesto' }}
-              </div>
-              <div class="text-caption text-grey-7">
-                {{ form.status === 'aprobado' ? 'El evento se aprobará y contará en el marcador' : 'El evento necesitará aprobación posterior' }}
-              </div>
-            </div>
-          </div>
-        </template>
-      </q-toggle>
-    </div>
-
     <div class="action-buttons">
       <q-btn
         flat
@@ -226,7 +197,6 @@ const props = defineProps<{
   teamAway: { id: string; name: string }
   tournamentId: string
   teams: { id: string; name: string }[]
-  canApprove?: boolean
   defaultTeamId?: string
 }>()
 
@@ -270,10 +240,9 @@ const form = ref({
   minute: 0,
   extraTime: null as number | null,
   metaDescription: '',
-  status: 'propuesto' as 'propuesto' | 'aprobado'
+  status: 'aprobado' as 'propuesto' | 'aprobado'
 })
 
-const canSetApproved = computed(() => !!props.canApprove)
 const players = ref<{ id: string; name: string }[]>([])
 const loadingPlayers = ref(false)
 
@@ -351,7 +320,7 @@ function submit() {
     minute: Number(form.value.minute || 0),
     extraTime: form.value.extraTime ? Number(form.value.extraTime) : null,
     meta: form.value.metaDescription ? { description: form.value.metaDescription } : undefined,
-    status: canSetApproved.value ? form.value.status : 'propuesto',
+    status: 'aprobado',
     createdBy: userStore.user?.uid || ''
   }
   emit('submit', payload)
@@ -399,17 +368,6 @@ function submit() {
   align-items: center;
 }
 
-.approval-section {
-  background: linear-gradient(135deg, #f0f8ff 0%, #e8f5e9 100%);
-  border: 2px solid rgba(6, 79, 52, 0.2);
-
-  .toggle-label {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
-  }
-}
-
 .action-buttons {
   display: flex;
   gap: 12px;
@@ -448,13 +406,6 @@ function submit() {
     .btn-submit {
       width: 100%;
       min-width: auto;
-    }
-  }
-
-  .approval-section {
-    .toggle-label {
-      flex-direction: row;
-      align-items: flex-start;
     }
   }
 }

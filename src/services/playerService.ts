@@ -179,7 +179,7 @@ export async function createPlayerWithParticipation(data: {
   teamId: string
   jersey?: number
   position?: string
-  role?: 'player' | 'team'
+  role?: 'player' | 'team' | 'coach'
 }): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
   let playerId: string
   let isExisting = false
@@ -314,7 +314,7 @@ export async function createPlayerWithAccountAndParticipation(data: {
   teamId: string
   jersey?: number
   position?: string
-  role?: 'player' | 'team'
+  role?: 'player' | 'team' | 'coach'
 }): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
   // Import dinámico para evitar dependencias circulares
   const { createAuthUserAndUserDoc } = await import('./accountService')

@@ -29,6 +29,7 @@
                 <div class="row items-center no-wrap">
                   <div class="text-body1 ellipsis">{{ p.displayName }}</div>
                   <q-badge v-if="p.role === 'team'" color="warning" class="q-ml-sm" label="Capitán" />
+                  <q-badge v-if="p.role === 'coach'" color="secondary" class="q-ml-sm" label="Entrenador" />
                 </div>
                 <div class="text-caption text-grey-7 q-mt-xs">
                   {{ p.position || '—' }}
@@ -130,6 +131,23 @@
                   <span>Marcar como Capitán del equipo</span>
                 </div>
               </div>
+
+              <div class="col-12">
+                <div class="row items-center q-py-sm">
+                  <q-toggle
+                    v-model="isEditCoach"
+                    color="secondary"
+                    class="q-mr-sm"
+                  />
+                  <q-icon
+                    name="sports"
+                    :color="isEditCoach ? 'secondary' : 'grey-5'"
+                    size="20px"
+                    class="q-mr-xs"
+                  />
+                  <span>Marcar como Entrenador del equipo</span>
+                </div>
+              </div>
             </div>
 
             <div class="row justify-end q-gutter-sm q-mt-md">
@@ -169,7 +187,7 @@ const props = defineProps<{
   modelValue: boolean
   tournamentId: string
   team: Team | null
-  role?: 'admin' | 'manager' | 'team' | 'player'
+  role?: 'admin' | 'manager' | 'team' | 'player' | 'coach'
 }>()
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
 
@@ -185,6 +203,7 @@ const model = computed({
 const canManagePlayers = computed(() => {
   if (props.role === 'admin' || props.role === 'manager') return true
   if (props.role === 'team' && props.team) return true
+  if (props.role === 'coach' && props.team) return true // Coach puede editar jugadores de su equipo
   return false
 })
 
@@ -193,12 +212,14 @@ const showForm = ref(false)
 const editId = ref<string | null>(null)
 const playerModel = ref<Partial<Player>>({})
 const isEditCaptain = ref(false)
+const isEditCoach = ref(false)
 const savingEdit = ref(false)
 
 function openEdit(p: Player) {
   editId.value = p.id
   playerModel.value = { ...p }
   isEditCaptain.value = p.role === 'team'
+  isEditCoach.value = p.role === 'coach'
   showForm.value = true
 }
 
@@ -222,8 +243,16 @@ async function saveEdit() {
     }
 
     // Preparar datos de actualización
-    const updateData: Partial<{ position: string; jersey: number; role: 'player' | 'team' }> = {
-      role: isEditCaptain.value ? 'team' : 'player'
+    // Determinar el rol basado en las opciones seleccionadas (prioridad: coach > captain > player)
+    let playerRole: 'player' | 'team' | 'coach' = 'player'
+    if (isEditCoach.value) {
+      playerRole = 'coach'
+    } else if (isEditCaptain.value) {
+      playerRole = 'team'
+    }
+
+    const updateData: Partial<{ position: string; jersey: number; role: 'player' | 'team' | 'coach' }> = {
+      role: playerRole
     }
 
     // Solo agregar campos opcionales si tienen valor

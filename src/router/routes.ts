@@ -103,6 +103,19 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/ContactPage.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' },
     },
+    // Videos - admin
+    {
+      path: 'videos',
+      name: 'videos-admin',
+      component: () => import('@/pages/videos/VideosPage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
+    {
+      path: 'videos/manage',
+      name: 'videos-manage-admin',
+      component: () => import('@/pages/admin/AdminVideoManagement.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
   ],
 },
 
@@ -156,6 +169,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/ContactPage.vue'),
       meta: { requiresAuth: true, requiresRole: 'manager' },
     },
+    // Videos - manager
+    {
+      path: 'videos',
+      name: 'videos-manager',
+      component: () => import('@/pages/videos/VideosPage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'manager' },
+    },
   ],
 },
 
@@ -202,6 +222,13 @@ const routes: RouteRecordRaw[] = [
       component: () => import('@/pages/ContactPage.vue'),
       meta: { requiresAuth: true, requiresRole: 'team' },
     },
+    // Videos - team
+    {
+      path: 'videos',
+      name: 'videos-team',
+      component: () => import('@/pages/videos/VideosPage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'team' },
+    },
   ],
 },
 
@@ -246,6 +273,13 @@ const routes: RouteRecordRaw[] = [
       path: 'contact',
       name: 'contact-player',
       component: () => import('@/pages/ContactPage.vue'),
+      meta: { requiresAuth: true, requiresRole: 'player' },
+    },
+    // Videos - player
+    {
+      path: 'videos',
+      name: 'videos-player',
+      component: () => import('@/pages/videos/VideosPage.vue'),
       meta: { requiresAuth: true, requiresRole: 'player' },
     },
   ],

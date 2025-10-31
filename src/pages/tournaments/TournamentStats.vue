@@ -87,6 +87,7 @@
         <AnalyticsPanel
           :analytics-data="analyticsData"
           :loading="isLoadingAnalytics"
+          v-bind="currentPlayerSide ? { playerSide: currentPlayerSide } : {}"
         />
       </q-tab-panel>
 
@@ -112,6 +113,72 @@
         />
       </q-tab-panel>
     </q-tab-panels>
+
+    <!-- Initial Match Selection Dialog -->
+    <q-dialog v-model="showInitialDialog" persistent>
+      <q-card class="initial-match-dialog">
+        <q-card-section class="dialog-header">
+          <div class="dialog-icon-wrapper">
+            <q-icon name="analytics" size="48px" color="primary" />
+          </div>
+          <div class="text-h5 text-weight-bold text-center q-mt-md">
+            Bienvenido a La Pizarra
+          </div>
+          <div class="text-body2 text-grey-7 text-center q-mt-sm">
+            Elige el partido que vas a analizar
+          </div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-select
+            v-model="selectedMatch"
+            :options="matches"
+            option-label="label"
+            filled
+            label="Selecciona un partido"
+            :loading="isLoadingMatches"
+            class="dialog-select"
+            autofocus
+          >
+            <template #prepend>
+              <q-icon name="sports_soccer" color="primary" />
+            </template>
+            <template #option="scope">
+              <q-item v-bind="scope.itemProps">
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">
+                    {{ scope.opt.homeTeam }} vs {{ scope.opt.awayTeam }}
+                  </q-item-label>
+                  <q-item-label caption>
+                    {{ scope.opt.date }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+            <template #no-option>
+              <q-item>
+                <q-item-section class="text-grey-6 text-center">
+                  <div v-if="isLoadingMatches">Cargando partidos...</div>
+                  <div v-else>No hay partidos disponibles</div>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
+        </q-card-section>
+
+        <q-card-actions class="q-px-md q-pb-md">
+          <q-btn
+            unelevated
+            color="primary"
+            label="Analizar este partido"
+            icon-right="arrow_forward"
+            class="full-width"
+            :disable="!selectedMatch"
+            @click="confirmInitialSelection"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -123,7 +190,7 @@ import { useTournamentStore } from '@/stores/tournaments'
 import { useMatchStore } from '@/stores/matches'
 import { useDatabaseStore } from '@/stores/database'
 import { useUserStore } from '@/stores/user'
-import { getAllMatchAnalytics, type PlayerMoment, type Highlight } from '@/services/matchAnalyticsService'
+import { getAllMatchAnalytics } from '@/services/matchAnalyticsService'
 import { getMatchMetadata, determineTeamSide } from '@/services/matchMetadataService'
 import { getPlayerParticipation } from '@/services/playerParticipationService'
 import type { Tournament } from '@/types/auth'
@@ -163,6 +230,7 @@ const analyticsData = ref<Record<string, unknown> | null>(null)
 const youtubeVideoId = ref<string>('DtD7GNuF3xQ') // Default fallback
 const matchStart = ref<string>('') // Tiempo de inicio del partido en el video
 const varTime = ref<number>(0) // Segundos a restar de cada timecode
+const currentPlayerSide = ref<'home' | 'away' | null>(null) // Lado del equipo del jugador
 
 // Match selection
 interface MatchOption {
@@ -177,6 +245,7 @@ interface MatchOption {
 const matches = ref<MatchOption[]>([])
 const selectedMatch = ref<MatchOption | null>(null)
 const showMatchSelector = ref(false)
+const showInitialDialog = ref(false)
 
 // Tournament selection using composable
 const { selectedTournament } = useTournamentSelection(tournaments)
@@ -187,14 +256,22 @@ const tId = computed<string>(() => selectedTournament.value?.tournamentId || '')
 const highlightsData = computed(() => {
   if (!analyticsData.value?.data) return undefined
   const data = analyticsData.value.data as Record<string, unknown>
-  return data.highlights as Highlight[] | undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return data.highlights as any[]
 })
 
 const playerMomentsData = computed(() => {
   if (!analyticsData.value?.data) return undefined
   const data = analyticsData.value.data as Record<string, unknown>
-  // PlayerMomentsData[] is the correct type for DestacadosPanel
-  return data.playerMoments as PlayerMomentsData[]
+  const allPlayerMoments = data.playerMoments as PlayerMomentsData[]
+
+  // Si currentPlayerSide está definido (rol player o team), filtrar solo jugadores de ese lado
+  if (currentPlayerSide.value) {
+    return allPlayerMoments.filter(pm => pm.side === currentPlayerSide.value)
+  }
+
+  // Si no hay playerSide (rol admin/manager), mostrar todos los jugadores
+  return allPlayerMoments
 })
 
 // Functions
@@ -203,10 +280,43 @@ async function loadMatches() {
 
   isLoadingMatches.value = true
   try {
+    const databaseStore = useDatabaseStore()
+    const userStore = useUserStore()
+    const userRole = databaseStore.userData?.role
+
     await mStore.fetch(tId.value)
 
+    // Obtener teamId del jugador si es rol 'player'
+    let playerTeamId: string | null = null
+    if (userRole === 'player') {
+      const playerId = userStore.user?.uid
+      if (playerId) {
+        const participation = await getPlayerParticipation(playerId, tId.value)
+        if (participation) {
+          playerTeamId = participation.teamId
+        }
+      }
+    }
+
     // Convertir matches a opciones para el selector
-    matches.value = mStore.items.map((match: Match) => {
+    let filteredMatches = mStore.items
+
+    // Si es jugador, filtrar solo partidos de su equipo
+    if (userRole === 'player' && playerTeamId) {
+      filteredMatches = mStore.items.filter((match: Match) => {
+        const homeTeamId = typeof match.homeTeamId === 'string'
+          ? match.homeTeamId
+          : match.homeTeamId.id
+
+        const awayTeamId = typeof match.awayTeamId === 'string'
+          ? match.awayTeamId
+          : match.awayTeamId.id
+
+        return homeTeamId === playerTeamId || awayTeamId === playerTeamId
+      })
+    }
+
+    matches.value = filteredMatches.map((match: Match) => {
       const homeTeamName = typeof match.homeTeamId === 'string'
         ? match.homeTeamId
         : match.homeTeamId.name || 'Equipo Local'
@@ -233,14 +343,9 @@ async function loadMatches() {
       }
     })
 
-    // Auto-seleccionar el primer partido si hay disponibles
-    if (matches.value.length > 0 && !selectedMatch.value) {
-      const firstMatch = matches.value[0]
-      if (firstMatch) {
-        selectedMatch.value = firstMatch
-        showMatchSelector.value = false
-        await loadAnalytics()
-      }
+    // Mostrar diálogo inicial si no hay partido seleccionado
+    if (!selectedMatch.value && matches.value.length > 0) {
+      showInitialDialog.value = true
     } else if (matches.value.length === 0) {
       showMatchSelector.value = true
     }
@@ -339,6 +444,7 @@ async function loadAnalytics() {
 
     if (!playerSide) {
       analyticsData.value = null
+      currentPlayerSide.value = null
       Notify.create({
         type: 'info',
         message: 'Tu equipo no participó en este partido',
@@ -346,6 +452,12 @@ async function loadAnalytics() {
       })
       return
     }
+
+    // Guardar el lado del jugador
+    currentPlayerSide.value = playerSide
+  } else {
+    // Si no es player/team, resetear playerSide
+    currentPlayerSide.value = null
   }
 
   isLoadingAnalytics.value = true
@@ -355,29 +467,15 @@ async function loadAnalytics() {
       selectedMatch.value.matchId
     )
 
-    // Filtrar según el rol
-    if (playerSide) {
-      // SOLO mostrar datos del equipo del jugador
-      analyticsData.value = {
-        tournamentId: selectedMatch.value.tournamentId,
-        matchId: selectedMatch.value.matchId,
-        [playerSide]: data[playerSide],  // Solo un equipo
-        data: {
-          playerMoments: data.playerMoments.filter((pm: PlayerMoment) => pm.side === playerSide),
-          highlights: data.highlights.filter((h: Highlight) => h.side === playerSide)
-        }
-      }
-    } else {
-      // Admins/Managers ven TODOS los equipos
-      analyticsData.value = {
-        tournamentId: selectedMatch.value.tournamentId,
-        matchId: selectedMatch.value.matchId,
-        home: data.home,
-        away: data.away,
-        data: {
-          playerMoments: data.playerMoments,
-          highlights: data.highlights
-        }
+    // SIEMPRE mostrar datos de AMBOS equipos
+    analyticsData.value = {
+      tournamentId: selectedMatch.value.tournamentId,
+      matchId: selectedMatch.value.matchId,
+      home: data.home,
+      away: data.away,
+      data: {
+        playerMoments: data.playerMoments,
+        highlights: data.highlights
       }
     }
   } catch (error) {
@@ -401,6 +499,14 @@ function onMatchChange(match: MatchOption | null) {
   }
 }
 
+function confirmInitialSelection() {
+  if (selectedMatch.value) {
+    showInitialDialog.value = false
+    showMatchSelector.value = false
+    void loadAnalytics()
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   // Cargar torneos
@@ -415,9 +521,10 @@ onMounted(async () => {
   // Watch para cambios en el torneo seleccionado
   watch(tId, async (newTId) => {
     if (newTId) {
-      // Reset match selection
+      // Reset match selection and dialogs
       selectedMatch.value = null
-      showMatchSelector.value = true
+      showMatchSelector.value = false
+      showInitialDialog.value = false
       analyticsData.value = null
 
       // Cargar partidos del nuevo torneo
@@ -699,6 +806,71 @@ onMounted(async () => {
   gap: 16px;
 }
 
+// Initial Match Dialog
+.initial-match-dialog {
+  border-radius: 20px;
+  max-width: 500px;
+  width: 90vw;
+
+  .dialog-header {
+    padding: 32px 24px 24px 24px;
+    background: linear-gradient(135deg, rgba(6, 79, 52, 0.05), rgba(19, 138, 89, 0.05));
+    border-radius: 20px 20px 0 0;
+  }
+
+  .dialog-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #064F34, #138A59);
+    border-radius: 50%;
+    box-shadow: 0 4px 20px rgba(6, 79, 52, 0.3);
+
+    .q-icon {
+      color: white;
+    }
+  }
+
+  .text-h5 {
+    color: #064F34;
+    font-size: 1.5rem;
+  }
+
+  .dialog-select {
+    margin-top: 8px;
+
+    :deep(.q-field__control) {
+      border-radius: 12px;
+      min-height: 56px;
+    }
+
+    :deep(.q-field__label) {
+      font-weight: 600;
+    }
+  }
+
+  .q-btn {
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #064F34, #138A59);
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(6, 79, 52, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
 // Responsive
 @media (max-width: 768px) {
   .page-hero {
@@ -751,6 +923,37 @@ onMounted(async () => {
   .panel-placeholder {
     padding: 32px 16px;
     min-height: 300px;
+  }
+
+  .initial-match-dialog {
+    width: 95vw;
+    margin: 0 8px;
+
+    .dialog-header {
+      padding: 24px 16px 16px 16px;
+    }
+
+    .dialog-icon-wrapper {
+      width: 64px;
+      height: 64px;
+
+      .q-icon {
+        font-size: 40px !important;
+      }
+    }
+
+    .text-h5 {
+      font-size: 1.25rem;
+    }
+
+    .text-body2 {
+      font-size: 0.875rem;
+    }
+
+    .q-btn {
+      padding: 10px 20px;
+      font-size: 0.9rem;
+    }
   }
 }
 </style>

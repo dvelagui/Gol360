@@ -82,17 +82,27 @@
         </div>
 
         <div class="col-12 col-md-6">
-          <q-input
+          <q-select
             v-model="form.group"
+            :options="groupOptions"
             label="Grupo (opcional)"
             outlined
-            hint="Ej: A, B, C..."
-            maxlength="10"
+            clearable
+            emit-value
+            map-options
+            hint="Selecciona el grupo del equipo"
           >
             <template #prepend>
-              <q-icon name="category" />
+              <q-icon name="military_tech" />
             </template>
-          </q-input>
+            <template #no-option>
+              <q-item>
+                <q-item-section class="text-grey">
+                  No hay grupos disponibles
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
         </div>
 
         <div class="col-12 col-md-6">
@@ -162,6 +172,16 @@ const req = (v: string) => (!!v && v.toString().trim().length > 0) || 'Requerido
 const submitting = ref(false)
 const localFile = ref<File | null>(null)
 const storedPath = ref<string | undefined>(undefined)
+
+// Opciones de grupos disponibles
+const groupOptions = [
+  { label: 'Grupo A', value: 'A' },
+  { label: 'Grupo B', value: 'B' },
+  { label: 'Grupo C', value: 'C' },
+  { label: 'Grupo D', value: 'D' },
+  { label: 'Grupo E', value: 'E' },
+  { label: 'Grupo F', value: 'F' }
+]
 
 const form = ref<Omit<Team,'id'|'createdAt'|'createdBy'>>({
   tournamentId: props.tournamentId,

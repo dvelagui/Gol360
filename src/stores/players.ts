@@ -208,7 +208,7 @@ export const usePlayerStore = defineStore('players', {
       teamId: string
       jersey?: number
       position?: string
-      role?: 'player' | 'team'
+      role?: 'player' | 'team' | 'coach'
       createdBy: string
     }): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
       this.error = null
@@ -238,7 +238,7 @@ export const usePlayerStore = defineStore('players', {
       teamId: string
       jersey?: number
       position?: string
-      role?: 'player' | 'team'
+      role?: 'player' | 'team' | 'coach'
       createdBy: string
     }): Promise<{ playerId: string; participationId: string; isExisting: boolean }> {
       this.error = null

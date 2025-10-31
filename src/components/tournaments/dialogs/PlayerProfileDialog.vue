@@ -27,6 +27,10 @@
               <q-icon name="star" size="14px" class="q-mr-xs" />
               Capitán
             </q-badge>
+            <q-badge v-if="player?.role === 'coach'" color="secondary" class="q-mt-xs">
+              <q-icon name="sports" size="14px" class="q-mr-xs" />
+              Entrenador
+            </q-badge>
           </div>
         </div>
       </div>
@@ -123,7 +127,7 @@ import { getPlayerStats, type PlayerStats } from '@/services/statsService'
 const props = defineProps<{
   modelValue: boolean
   playerId: string | null
-  role?: 'admin' | 'manager' | 'team' | 'player' | undefined
+  role?: 'admin' | 'manager' | 'team' | 'player' | 'coach' | undefined
 }>()
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()

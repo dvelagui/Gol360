@@ -156,7 +156,7 @@ const CalendarGeneratorDialog = defineAsyncComponent(
 const props = defineProps<{
   tournamentId: string
   tournamentDetail: Tournament
-  role?: 'admin' | 'manager' | 'team' | 'player'
+  role?: 'admin' | 'manager' | 'team' | 'player' | 'coach'
 }>()
 
 defineEmits<{

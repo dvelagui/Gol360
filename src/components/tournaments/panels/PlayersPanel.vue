@@ -58,6 +58,7 @@
                 <div class="text-caption text-grey-7">
                   {{ p.position || '—' }} <span v-if="p.jersey"> · #{{ p.jersey }}</span>
                   <q-badge v-if="p.role === 'team'" color="amber-7" class="q-ml-xs" outline>Capitán</q-badge>
+                  <q-badge v-if="p.role === 'coach'" color="secondary" class="q-ml-xs" outline>Entrenador</q-badge>
                 </div>
               </div>
             </div>
@@ -87,7 +88,7 @@ import { getPlayerStatsByTeam } from '@/services/statsService'
 import type { Team } from '@/types/auth'
 import type { PlayerStats } from '@/services/statsService'
 
-type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
+type Role = 'admin' | 'manager' | 'team' | 'player' | 'coach' | undefined
 
 const props = defineProps<{
   tournamentId: string
@@ -102,7 +103,9 @@ const emit = defineEmits<{
 
 const canCreateMatch = computed<boolean>(() => {
   const userRole = props.role;
-  return userRole === 'admin' || userRole === 'manager';
+  const canEdit = userRole === 'admin' || userRole === 'manager' || userRole === 'team' || userRole === 'coach';
+  console.log('🔐 [PlayersPanel] canCreateMatch:', { userRole, canEdit, team: team.value?.displayName });
+  return canEdit;
 });
 
 const teamStore = useTeamStore()
@@ -159,7 +162,17 @@ watch(selectedTeamId, async (value) => {
   }
 })
 
+// Watch para cuando cambie teamSelected desde el padre
+watch(() => props.teamSelected, (newTeam) => {
+  console.log('👁️ [PlayersPanel] teamSelected cambió:', newTeam);
+  if (newTeam) {
+    selectedTeamId.value = { id: newTeam.id, name: newTeam.displayName }
+    console.log('✅ [PlayersPanel] selectedTeamId actualizado:', selectedTeamId.value);
+  }
+})
+
 onMounted(async () => {
+  console.log('🚀 [PlayersPanel] onMounted - role:', props.role, 'teamSelected:', props.teamSelected);
   // cargar equipos del torneo
   await teamStore.fetch(props.tournamentId)
 
@@ -167,6 +180,7 @@ onMounted(async () => {
     ? { id: props.teamSelected.id, name: props.teamSelected.displayName }
     : { id: '', name: '' }
 
+  console.log('📌 [PlayersPanel] selectedTeamId inicial:', selectedTeamId.value);
 })
 </script>
 

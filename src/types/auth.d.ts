@@ -1,6 +1,6 @@
 import type { Timestamp, FieldValue } from 'firebase/firestore';
 
-export type Role = 'admin' | 'manager' | 'team' | 'player'
+export type Role = 'admin' | 'manager' | 'team' | 'player' | 'coach'
 
 
 
@@ -54,7 +54,7 @@ export interface PlayerParticipation {
   teamId: string;             // Equipo donde juega
   jersey?: number;            // Número de camiseta (puede variar por equipo)
   position?: string;          // Posición (puede variar por equipo)
-  role: 'player' | 'team';    // 'team' = capitán
+  role: 'player' | 'team' | 'coach';    // 'team' = capitán, 'coach' = entrenador
   active: boolean;            // Si está activo en este torneo/equipo
   joinedAt: Timestamp | FieldValue;
   createdBy: string;
@@ -81,7 +81,7 @@ export interface Player {
   teamId?: string;
   position?: string;
   jersey?: number;
-  role?: 'player' | 'team';
+  role?: 'player' | 'team' | 'coach';
   active?: boolean;
 }
 

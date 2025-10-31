@@ -1,20 +1,23 @@
 <template>
   <div class="analytics-panel">
     <div v-if="showTeamSelector" class="team-selector-wrapper">
-      <q-card class="team-selector-card">
-        <q-card-section class="q-pa-md">
+
           <div class="selector-content">
-            <q-btn-toggle
-              v-model="selectedTeam"
-              toggle-color="primary"
-              :options="teamOptions"
-              class="team-toggle"
-              unelevated
-              spread
-            />
+            <div class="team-toggle-wrapper">
+              <q-btn
+                v-for="option in teamOptions"
+                :key="option.value"
+                :class="{ 'active-team': selectedTeam === option.value }"
+                class="team-btn"
+                unelevated
+                @click="selectedTeam = option.value"
+              >
+                <div class="toggle-label">
+                  <span>{{ option.label }}</span>
+                </div>
+              </q-btn>
+            </div>
           </div>
-        </q-card-section>
-      </q-card>
     </div>
 
     <div v-if="loading" class="loading-container">
@@ -373,7 +376,7 @@ import storageService from '@/services/storageService'
 interface Props {
   analyticsData?: Record<string, unknown> | null
   loading?: boolean
-  teamId?: string // ID del equipo actual (para filtrar datos)
+  playerSide?: 'home' | 'away' // Lado del equipo del jugador
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -443,9 +446,9 @@ const availableTeams = computed(() => {
 // Team options for toggle
 const teamOptions = computed(() => availableTeams.value)
 
-// Computed: Mostrar selector solo si hay más de un equipo Y no hay teamId filtrado
+// Computed: Mostrar selector siempre que haya 2 equipos con datos
 const showTeamSelector = computed(() => {
-  return !props.teamId && availableTeams.value.length > 1
+  return availableTeams.value.length === 2
 })
 
 // Period options for all sections
@@ -500,15 +503,22 @@ interface PassesStringsDataType {
 
 const currentStats = computed<StatsData>(() => {
   if (hasRealData.value && props.analyticsData) {
-    const sideData = props.analyticsData[selectedTeam.value] as Record<string, unknown> | undefined
+    // Para stats, el array contiene objetos con propiedades 'home' y 'away' que representan valores de AMBOS equipos
+    // Así que no importa de qué lado tomemos el array, siempre accedemos usando selectedTeam como clave
 
-    if (sideData?.stats) {
-      const statsData = sideData.stats as { data?: Array<{ name: string; home: string | number; away: string | number }> }
+    // Intentar obtener stats desde cualquier lado (home o away tienen el mismo array)
+    const homeSide = props.analyticsData.home as Record<string, unknown> | undefined
+    const awaySide = props.analyticsData.away as Record<string, unknown> | undefined
+    const statsSource = homeSide?.stats || awaySide?.stats
+
+    if (statsSource) {
+      const statsData = statsSource as { data?: Array<{ name: string; home: string | number; away: string | number }> }
 
       if (statsData.data) {
+        // Usar selectedTeam.value como la clave para acceder al valor correcto
         const side = selectedTeam.value
 
-         const goalsData = statsData.data.find(s => s.name.toLowerCase().includes('gol'))
+        const goalsData = statsData.data.find(s => s.name.toLowerCase().includes('gol'))
         const shotsData = statsData.data.find(s => s.name.toLowerCase().includes('tiro') && !s.name.toLowerCase().includes('libre'))
         const occasionsData = statsData.data.find(s => s.name.toLowerCase().includes('ocasiones'))
         const cornersData = statsData.data.find(s => s.name.toLowerCase().includes('esquina'))
@@ -526,6 +536,7 @@ const currentStats = computed<StatsData>(() => {
           possession: possessionData?.[side] || '-',
           penalties: penaltiesData?.[side] || 0
         }
+
         return result
       }
     }
@@ -733,8 +744,11 @@ const maxBarValue = computed(() => {
 // Watch para cuando lleguen datos reales desde Firestore
 watch(() => props.analyticsData, (newData) => {
   if (newData) {
-    // Auto-seleccionar primer equipo disponible si hay datos
-    if (availableTeams.value.length > 0 && availableTeams.value[0]) {
+    // Si hay playerSide, seleccionar ese equipo por defecto
+    if (props.playerSide && (props.playerSide === 'home' || props.playerSide === 'away')) {
+      selectedTeam.value = props.playerSide
+    } else if (availableTeams.value.length > 0 && availableTeams.value[0]) {
+      // Si no hay playerSide, seleccionar el primer equipo disponible
       const firstTeam = availableTeams.value[0].value
       if (firstTeam === 'home' || firstTeam === 'away') {
         selectedTeam.value = firstTeam
@@ -743,14 +757,10 @@ watch(() => props.analyticsData, (newData) => {
   }
 }, { deep: true, immediate: true })
 
-// Watch para filtrar por teamId si se proporciona
-watch(() => props.teamId, (newTeamId) => {
-  if (newTeamId) {
-    // Convertir teamId a 'home' o 'away' si es necesario
-    // Por ahora asumimos que teamId ya viene como 'home' o 'away'
-    if (newTeamId === 'home' || newTeamId === 'away') {
-      selectedTeam.value = newTeamId
-    }
+// Watch para cuando cambie playerSide
+watch(() => props.playerSide, (newPlayerSide) => {
+  if (newPlayerSide && (newPlayerSide === 'home' || newPlayerSide === 'away')) {
+    selectedTeam.value = newPlayerSide
   }
 }, { immediate: true })
 </script>
@@ -767,9 +777,33 @@ watch(() => props.teamId, (newTeamId) => {
   margin-bottom: 24px;
 }
 
+
 .team-selector-card {
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 2px solid #E0E0E0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    border-color: #064F34;
+  }
+}
+.selector-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #E0E0E0;
+}
+
+.selector-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #064F34;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .selector-content {
@@ -777,15 +811,50 @@ watch(() => props.teamId, (newTeamId) => {
   justify-content: center;
 }
 
-.team-toggle {
+.team-toggle-wrapper {
+  display: flex;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
+  background: #F5F7FA;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
 
-  :deep(.q-btn) {
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 12px 24px;
+.team-btn {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: #666;
+
+  &:hover:not(.active-team) {
+    background: rgba(6, 79, 52, 0.05);
+    color: #064F34;
   }
+
+  &.active-team {
+    background: linear-gradient(135deg, #064F34, #138A59);
+    color: white;
+    box-shadow: 0 4px 12px rgba(6, 79, 52, 0.3);
+    transform: scale(1.02);
+
+    .toggle-label {
+      .q-icon {
+        color: white;
+      }
+    }
+  }
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
 }
 
 // Loading
@@ -1117,10 +1186,46 @@ watch(() => props.teamId, (newTeamId) => {
     padding: 8px;
   }
 
-  .team-toggle {
-    :deep(.q-btn) {
+  .team-selector-card {
+    border-radius: 12px;
+
+    .q-card-section {
+      padding: 12px !important;
+    }
+  }
+
+  .selector-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+
+    .q-icon {
+      font-size: 20px !important;
+    }
+  }
+
+  .selector-title {
+    font-size: 0.9rem;
+  }
+
+  .team-toggle-wrapper {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .team-btn {
+    font-size: 0.65rem;
+    padding: 10px 16px;
+  }
+
+  .toggle-label {
+    gap: 4px;
+
+    .q-icon {
+      font-size: 18px !important;
+    }
+
+    span {
       font-size: 0.85rem;
-      padding: 8px 16px;
     }
   }
 

@@ -3,7 +3,7 @@ import { useUserStore } from '@/stores/user'
 import { useDatabaseStore } from '@/stores/database'
 import { roleHome } from '@/utils/roles'
 
-type Role = 'admin' | 'manager' | 'team' | 'player' | undefined
+type Role = 'admin' | 'manager' | 'team' | 'player' | 'coach' | undefined
 
 async function waitForRole(maxMs = 1500) {
   const database = useDatabaseStore()

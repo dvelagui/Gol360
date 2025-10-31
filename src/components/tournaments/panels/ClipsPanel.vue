@@ -1,22 +1,5 @@
 <template>
   <div class="clips-panel">
-    <div v-if="showTeamSelector" class="team-selector-wrapper">
-      <q-card class="team-selector-card">
-        <q-card-section class="q-pa-md">
-          <div class="selector-content">
-            <q-btn-toggle
-              v-model="selectedTeam"
-              toggle-color="primary"
-              :options="teamOptions"
-              class="team-toggle"
-              unelevated
-              spread
-            />
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
-
     <div v-if="loading" class="loading-container">
       <q-spinner-dots color="primary" size="50px" />
       <p class="text-grey-6">Cargando clips...</p>
@@ -69,7 +52,7 @@
 
         <div v-if="currentClips.length === 0" class="no-clips">
           <q-icon name="video_library" size="64px" color="grey-4" />
-          <p class="text-grey-6">No hay clips disponibles para este equipo</p>
+          <p class="text-grey-6">No hay clips disponibles</p>
         </div>
 
         <div v-else class="clips-grid">
@@ -122,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { openURL } from 'quasar'
 
 // Props
@@ -160,7 +143,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // State
-const selectedTeam = ref<'home' | 'away'>('home')
 const youtubePlayer = ref<HTMLIFrameElement | null>(null)
 const isVideoHighlighted = ref(false)
 
@@ -180,47 +162,12 @@ const hasRealData = computed(() => {
   return props.highlightsData && Array.isArray(props.highlightsData) && props.highlightsData.length > 0
 })
 
-// Computed: Extraer equipos disponibles desde datos reales de Firestore
-const availableTeams = computed(() => {
-  if (!hasRealData.value || !props.highlightsData) return []
-
-  const teams: Array<{ label: string; value: 'home' | 'away' }> = []
-  const uniqueSides = new Set<'home' | 'away'>()
-
-  // Encontrar todos los sides únicos en los highlights
-  props.highlightsData.forEach((highlight) => {
-    uniqueSides.add(highlight.side)
-  })
-
-  // Convertir a opciones del toggle
-  uniqueSides.forEach((side) => {
-    const firstHighlight = props.highlightsData?.find((h) => h.side === side)
-    if (firstHighlight) {
-      teams.push({
-        label: firstHighlight.team,
-        value: side
-      })
-    }
-  })
-
-  return teams
-})
-
-// Team options for toggle
-const teamOptions = computed(() => availableTeams.value)
-
-// Computed: Mostrar selector solo si hay más de un equipo
-const showTeamSelector = computed(() => {
-  return availableTeams.value.length > 1
-})
-
-// Computed: Clips actuales filtrados por equipo seleccionado y procesados
+// Computed: Todos los clips combinados de ambos equipos y procesados
 const currentClips = computed<ProcessedHighlight[]>(() => {
   if (!hasRealData.value || !props.highlightsData) return []
 
-  // Filtrar clips por el lado seleccionado y procesarlos
+  // Procesar TODOS los highlights (de ambos equipos)
   return props.highlightsData
-    .filter((highlight) => highlight.side === selectedTeam.value)
     .map((highlight) => {
       // Convertir timecode a segundos
       const rawSeconds = timecodeToSeconds(highlight.timecode)
@@ -228,7 +175,7 @@ const currentClips = computed<ProcessedHighlight[]>(() => {
       // Aplicar VAR_TIME: restar los segundos de ajuste
       const adjustedSeconds = Math.max(0, rawSeconds - (props.varTime || 0))
 
-      console.log(`🎯 Highlight #${highlight.index}: ${highlight.timecode} (${rawSeconds}s) - ${props.varTime}s = ${adjustedSeconds}s`)
+      console.log(`🎯 Highlight #${highlight.index} (${highlight.team}): ${highlight.timecode} (${rawSeconds}s) - ${props.varTime}s = ${adjustedSeconds}s`)
 
       return {
         team: highlight.team,
@@ -240,7 +187,7 @@ const currentClips = computed<ProcessedHighlight[]>(() => {
         videoUrl: highlight.json || null // El campo json contiene la URL del video
       }
     })
-    .sort((a, b) => a.index - b.index) // Ordenar por índice ascendente
+    .sort((a, b) => a.timeInSeconds - b.timeInSeconds) // Ordenar por tiempo (cronológico)
 })
 
 // YouTube embed URL con autoplay habilitado
@@ -305,9 +252,33 @@ function downloadClip(videoUrl: string, tag: string, timecode: string) {
   if (!videoUrl) return
 
   console.log(`⬇️ Downloading clip: ${tag} at ${timecode}`)
+  console.log(`📥 Video URL: ${videoUrl}`)
 
-  // Abrir URL de descarga en nueva pestaña
-  openURL(videoUrl)
+  try {
+    // Crear un elemento <a> temporal para forzar la descarga
+    const link = document.createElement('a')
+    link.href = videoUrl
+
+    // Generar nombre de archivo limpio
+    const cleanTag = tag.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+    const cleanTimecode = timecode.replace(':', '_')
+    link.download = `clip_${cleanTag}_${cleanTimecode}.mp4`
+
+    // Añadir atributo para forzar descarga
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+
+    // Añadir al DOM, hacer click y remover
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    console.log('✅ Descarga iniciada')
+  } catch (error) {
+    console.error('❌ Error al descargar clip:', error)
+    // Fallback: abrir en nueva pestaña
+    openURL(videoUrl)
+  }
 }
 
 function getTagColor(tag: string): string {
@@ -324,19 +295,6 @@ function getTagColor(tag: string): string {
 
   return tagColors[tag] || 'grey-6'
 }
-
-// Watch para cuando lleguen datos reales desde Firestore
-watch(() => props.highlightsData, (newData) => {
-  if (newData && newData.length > 0) {
-    // Auto-seleccionar primer equipo disponible si hay datos
-    if (availableTeams.value.length > 0 && availableTeams.value[0]) {
-      const firstTeam = availableTeams.value[0].value
-      if (firstTeam === 'home' || firstTeam === 'away') {
-        selectedTeam.value = firstTeam
-      }
-    }
-  }
-}, { deep: true, immediate: true })
 </script>
 
 <style scoped lang="scss">
@@ -344,32 +302,6 @@ watch(() => props.highlightsData, (newData) => {
   padding: 16px;
   max-width: 1400px;
   margin: 0 auto;
-}
-
-// Team Selector
-.team-selector-wrapper {
-  margin-bottom: 24px;
-}
-
-.team-selector-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.selector-content {
-  display: flex;
-  justify-content: center;
-}
-
-.team-toggle {
-  width: 100%;
-  max-width: 500px;
-
-  :deep(.q-btn) {
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 12px 24px;
-  }
 }
 
 // Loading
@@ -553,13 +485,6 @@ watch(() => props.highlightsData, (newData) => {
 @media (max-width: 768px) {
   .clips-panel {
     padding: 8px;
-  }
-
-  .team-toggle {
-    :deep(.q-btn) {
-      font-size: 0.85rem;
-      padding: 8px 16px;
-    }
   }
 
   .no-data-container {

@@ -39,7 +39,7 @@
       <q-tab-panel name="scorers" class="q-pa-none">
         <RankingList
           :items="topScorers"
-          title="Top Goleadores"
+          title="Goleadores"
           icon="sports_soccer"
           icon-color="positive"
           :empty-message="'Sin goles registrados aún'"
@@ -66,7 +66,7 @@
       <q-tab-panel name="assists" class="q-pa-none">
         <RankingList
           :items="topAssists"
-          title="Top Asistencias"
+          title="Asistencias"
           icon="sports"
           icon-color="info"
           :empty-message="'Sin asistencias registradas aún'"
@@ -225,7 +225,6 @@ const topScorers = computed(() => {
 
   return Array.from(goalsMap.values())
     .sort((a, b) => b.goals - a.goals)
-    .slice(0, 10)
 })
 
 /* Top Assists */
@@ -248,7 +247,6 @@ const topAssists = computed(() => {
 
   return Array.from(assistsMap.values())
     .sort((a, b) => b.assists - a.assists)
-    .slice(0, 10)
 })
 
 /* Top Goalkeepers - Malla menos vencida */
@@ -283,20 +281,28 @@ const topGoalkeepers = computed(() => {
     teamGoalsMap.set(opposingTeamId, rec)
   }
 
-  // Convertir a array con promedio
-  const goalkeepersData = Array.from(teamGoalsMap.values())
-    .map(rec => ({
-      playerId: rec.teamId,
-      playerName: `Portero ${teamName(rec.teamId)}`,
-      teamId: rec.teamId,
-      goalsAgainst: rec.goalsAgainst,
-      matches: rec.matches.size,
-      average: rec.matches.size > 0 ? rec.goalsAgainst / rec.matches.size : 0
-    }))
-    .sort((a, b) => a.average - b.average)
-    .slice(0, 10)
+  // Incluir TODOS los equipos del torneo
+  const allTeamsData = teams.value.map(team => {
+    const teamData = teamGoalsMap.get(team.id)
+    return {
+      playerId: team.id,
+      playerName: `Portero ${team.displayName}`,
+      teamId: team.id,
+      goalsAgainst: teamData?.goalsAgainst ?? 0,
+      matches: teamData?.matches.size ?? 0,
+      average: teamData && teamData.matches.size > 0 ? teamData.goalsAgainst / teamData.matches.size : 0
+    }
+  })
 
-  return goalkeepersData
+  // Ordenar: primero los de 0 goles en contra, luego por promedio
+  return allTeamsData.sort((a, b) => {
+    // Primero por goles en contra (menos es mejor)
+    if (a.goalsAgainst !== b.goalsAgainst) {
+      return a.goalsAgainst - b.goalsAgainst
+    }
+    // Si tienen los mismos goles, por promedio
+    return a.average - b.average
+  })
 })
 
 /* Fair Play - ordenado de menos a más tarjetas */
@@ -316,10 +322,23 @@ const fairPlay = computed(() => {
     fp.set(tid, row)
   }
 
+  // Incluir TODOS los equipos del torneo
+  const allTeamsData = teams.value.map(team => {
+    const teamData = fp.get(team.id)
+    return {
+      teamId: team.id,
+      yellow: teamData?.yellow ?? 0,
+      red: teamData?.red ?? 0
+    }
+  })
+
   // Ordenar por total de tarjetas (menos es mejor para fair play)
-  return Array.from(fp.values())
-    .sort((a, b) => (a.yellow + a.red) - (b.yellow + b.red))
-    .slice(0, 10)
+  // Los equipos con 0 tarjetas aparecen primero
+  return allTeamsData.sort((a, b) => {
+    const totalA = a.yellow + a.red
+    const totalB = b.yellow + b.red
+    return totalA - totalB
+  })
 })
 
 function teamName(id: string) {

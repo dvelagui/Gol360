@@ -93,7 +93,8 @@
                 Momento {{ currentMomentIndex + 1 }}/{{ currentMoments.length }}
               </q-chip>
 
-              <!-- Toggle para tracking -->
+              <!-- Toggle para tracking - OCULTO TEMPORALMENTE -->
+              <!--
               <q-separator vertical inset class="q-mx-sm" />
 
               <q-btn
@@ -113,6 +114,7 @@
                 icon="visibility"
                 label="Tracking"
               />
+              -->
             </div>
           </div>
 
@@ -618,7 +620,9 @@ function clearIntervals() {
 /**
  * Carga la metadata y descarga los datos de tracking
  * Usa Firebase Storage SDK para evitar problemas de CORS
+ * NOTA: Temporalmente no se usa (botón comentado en template)
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function loadTrackingData() {
   console.log('[loadTrackingData] Starting tracking data download...', {
     tournamentId: props.tournamentId,
