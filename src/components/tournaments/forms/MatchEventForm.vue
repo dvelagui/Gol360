@@ -253,7 +253,11 @@ watch(() => form.value.teamId, async (teamId) => {
     try {
       // Usar el nuevo sistema de participaciones
       await playerStore.fetchByTeamWithParticipations(teamId.id)
-      players.value = playerStore.items.map(p => ({ id: p.id, name: p.displayName }))
+      // Formatear: "10 - Felipe Garcia" o "S/N - Felipe Garcia" si no tiene número
+      players.value = playerStore.items.map(p => ({
+        id: p.id,
+        name: p.jersey ? `${p.jersey} - ${p.displayName}` : `S/N - ${p.displayName}`
+      }))
     } catch (error) {
       console.error('Error loading players:', error)
       players.value = []
